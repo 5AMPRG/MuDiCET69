@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#7a122e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="iconos/icono-192.png">
+<link rel="apple-touch-icon" href="iconos/icono-180.png">
+<title>Créditos · Museo Digital CETIS 69</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>
+<link rel="stylesheet" href="estilos.css">
+<link rel="stylesheet" href="paginas.css">
+<style>
+.crw{max-width:980px}
+.crw h2{font-size:clamp(1.1rem,2.4vw,1.5rem);margin:3rem 0 1rem}
+.crw h2:first-child{margin-top:0}
+.cl{list-style:none}
+.cl li{display:grid;grid-template-columns:minmax(140px,1fr) 2fr;gap:1rem;padding:1rem 0;border-top:1px solid var(--linea)}
+.cl li:last-child{border-bottom:1px solid var(--linea)}
+.cl b{font-weight:600;font-size:.85rem;letter-spacing:.06em}
+.cl span{color:var(--gris);font-size:.88rem;overflow-wrap:anywhere}
+.cl a{color:var(--guinda);text-decoration:underline;text-underline-offset:3px}
+@media (max-width:640px){.cl li{grid-template-columns:1fr;gap:.2rem}}
+</style>
+</head>
+<body>
+<div id="loader"><div class="ld"><h2>CETIS 69</h2><p>MUSEO DIGITAL</p><div class="bar"><i></i></div></div></div>
+<nav id="nav" class="solid"></nav>
+<header class="phead"><div class="rv"><div class="eyebrow">Reconocimientos</div><h1 class="title">Créditos del <b>museo</b></h1><p>Las personas, las fuentes y las herramientas que hicieron posible este museo digital.</p></div></header>
+<section><div class="crw">
+<h2>Equipo del proyecto</h2><ul class="cl" id="cEq"></ul>
+<h2>Agradecimientos</h2><p class="lead" id="cAg"></p>
+<h2>Fuentes de la información y las imágenes</h2><ul class="cl" id="cFu"></ul>
+<h2>Créditos por imagen</h2><ul class="cl" id="cIm"></ul>
+<h2>Herramientas libres utilizadas</h2>
+<ul class="cl">
+<li><b>Montserrat</b><span>Tipografía de Julieta Ulanovsky y colaboradores · Licencia SIL Open Font 1.1 · <a href="https://fonts.google.com/specimen/Montserrat" target="_blank" rel="noopener">fonts.google.com</a></span></li>
+<li><b>Font Awesome Free</b><span>Íconos (CC BY 4.0), tipografías (SIL OFL) y código (MIT) · <a href="https://fontawesome.com" target="_blank" rel="noopener">fontawesome.com</a></span></li>
+</ul>
+</div></section>
+<footer></footer>
+<script src="comun.js"></script>
+<script>
+DATOS.then(D=>{
+const CR=D.creditos;
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fila=(a,b)=>`<li><b>${esc(a)}</b><span>${b}</span></li>`;
+$('#cEq').innerHTML=CR.equipo.map(p=>fila(p.rol,esc(p.nombre)+(p.detalle?' · '+esc(p.detalle):''))).join('');
+$('#cAg').textContent=CR.agradecimientos;
+$('#cFu').innerHTML=CR.fuentes.map(f=>fila(f.tipo,esc(f.fuente))).join('');
+$('#cIm').innerHTML=CR.imagenes.length?CR.imagenes.map(x=>fila(x[0],esc(x[1]))).join(''):'<li><span>Aún no hay créditos por imagen.</span></li>';
+});
+</script>
+</body>
+</html>

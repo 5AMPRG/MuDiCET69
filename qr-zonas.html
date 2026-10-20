@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#7a122e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="iconos/icono-192.png">
+<link rel="apple-touch-icon" href="iconos/icono-180.png">
+<title>Códigos QR por zona · Museo Digital CETIS 69</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>
+<link rel="stylesheet" href="estilos.css">
+<link rel="stylesheet" href="paginas.css">
+<style>
+.acts{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1.4rem}
+.btn.sm{padding:.8rem 1.4rem;font-size:.68rem}
+
+.qbar{display:grid;gap:1rem;max-width:760px;margin-bottom:2rem}
+.qbar .acts{margin-top:0}
+.qaviso{padding:1rem 1.2rem;background:var(--gris-c);border-left:2px solid var(--rojo);font-size:.85rem}
+.qrg{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1.5rem}
+.qc{border:1px solid var(--linea);background:#fff;padding:1.4rem;text-align:center;display:grid;gap:.6rem;justify-items:center}
+.qc svg{width:100%;max-width:210px;height:auto;display:block}
+.qc h3{font-size:.95rem;font-weight:600;letter-spacing:.1em}
+.qc p{font-size:.78rem;color:var(--gris)}
+.qc small{font-size:.62rem;color:var(--gris);overflow-wrap:anywhere}
+.qc .qm{font-size:.62rem;letter-spacing:.24em;text-transform:uppercase;font-weight:600;color:var(--guinda)}
+.qc .tgl{margin-top:.2rem}
+
+@media print{
+ nav,#loader,footer,.qbar,.phead p,.toast,.tgl{display:none!important}
+ body{padding-top:0}
+ .phead{background:#fff;color:#000;padding:0 0 1rem}.phead .eyebrow,.phead .title b{color:var(--guinda)}
+ section{padding:0}
+ .qrg{grid-template-columns:repeat(2,1fr)}
+ .qc{break-inside:avoid;border-color:#999}
+ .rv{opacity:1;transform:none}
+}
+.qc.hl{outline:2px solid var(--guinda);outline-offset:4px;box-shadow:0 18px 40px -22px rgba(92,13,34,.55)}
+</style>
+</head>
+<body>
+<div id="loader"><div class="ld"><h2>CETIS 69</h2><p>MUSEO DIGITAL</p><div class="bar"><i></i></div></div></div>
+<nav id="nav" class="solid"></nav>
+<header class="phead"><div class="rv"><div class="eyebrow">Herramienta interna</div><h1 class="title">Códigos QR <b>por zona</b></h1><p>Genera e imprime un código QR para cada zona del plantel. Al escanearlo, el museo abre directamente la vista 360° de ese lugar.</p></div></header>
+<section>
+<div class="fm qbar">
+<label>Dirección pública del sitio<input id="qb" type="url" placeholder="https://tu-sitio.mx/museo/" autocomplete="off" inputmode="url"></label>
+<div class="qaviso" id="qa" hidden></div>
+<div class="acts"><button class="btn sm" id="qp" type="button"><i class="fa-solid fa-print"></i> Imprimir todos</button></div>
+</div>
+<div class="qrg" id="qg"></div>
+</section>
+<footer></footer>
+<script src="qrcode.js"></script>
+<script src="comun.js"></script>
+<script>
+DATOS.then(D=>{
+const Z=D.zonas;
+const K='c69_qrbase';
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const inp=$('#qb'),lista=$('#qg'),av=$('#qa');
+let base='';try{base=localStorage.getItem(K)||''}catch(e){}
+if(!base&&location.protocol!=='file:')base=location.href.split('#')[0].split('?')[0].replace(/[^/]*$/,'');
+inp.value=base;
+function norm(b){
+ b=b.trim();if(!b)return '';
+ if(!/^https?:\/\//i.test(b))b='https://'+b;
+ b=b.split('#')[0].split('?')[0].replace(/[^/]*\.html?$/i,'');
+ return b.endsWith('/')?b:b+'/';
+}
+function aviso(t){av.hidden=!t;av.textContent=t||''}
+function dibujar(){
+ const b=norm(inp.value);lista.innerHTML='';
+ if(!b){aviso('Escribe la dirección pública donde estará el museo (por ejemplo https://tu-sitio.mx/museo/) para generar los códigos.');return}
+ aviso(/localhost|127\.0\.0\.1|192\.168\.|10\.\d+\.\d+\.\d+/.test(b)?'Esa dirección solo funciona en tu equipo o red local. Antes de imprimir, escribe la dirección pública del sitio.':'');
+ Z.forEach(z=>{
+  const url=b+'mapa-360.html?zona='+z.id;
+  const q=qrcode(0,'M');q.addData(url);q.make();
+  const svg=q.createSvgTag(4,4).replace(/fill="black"/g,'fill="#141214"').replace(/width="\d+px" height="\d+px"/,'role="img" aria-label="Código QR de '+esc(z.n)+'"');
+  const c=document.createElement('div');c.className='qc';c.id='zona-'+z.id;
+  c.innerHTML=`${svg}<span class="qm">Museo Digital · CETIS 69</span><h3>${esc(z.n)}</h3><p>Escanea para ver la vista 360° de esta zona.</p><small><a href="${esc(url)}" target="_blank" rel="noopener">${esc(url)}</a></small><button class="tgl" type="button"><i class="fa-solid fa-download"></i> Descargar SVG</button><a class="tgl" href="mapa-360.html?zona=${z.id}"><i class="fa-solid fa-map-location-dot"></i> Ver en el mapa</a>`;
+  c.querySelector('.tgl').onclick=()=>{
+   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml'}));a.download='qr-'+z.id+'.svg';
+   document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast('Descargando qr-'+z.id+'.svg');
+  };
+  lista.append(c);
+ });
+}
+function resaltar(){
+ const id=decodeURIComponent(location.hash.slice(1)),c=id&&document.getElementById(id.startsWith('zona-')?id:'zona-'+id);
+ document.querySelectorAll('.qc.hl').forEach(x=>x.classList.remove('hl'));
+ if(c){c.classList.add('hl');c.scrollIntoView({block:'center'})}
+}
+addEventListener('hashchange',resaltar);
+inp.oninput=()=>{try{localStorage.setItem(K,inp.value)}catch(e){}dibujar();resaltar()};
+$('#qp').onclick=()=>print();
+dibujar();resaltar();
+});
+</script>
+</body>
+</html>

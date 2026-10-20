@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#7a122e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="iconos/icono-192.png">
+<link rel="apple-touch-icon" href="iconos/icono-180.png">
+<title>Salón de la fama · Museo Digital CETIS 69</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>
+<link rel="stylesheet" href="estilos.css">
+<link rel="stylesheet" href="paginas.css">
+</head>
+<body>
+<div id="loader"><div class="ld"><h2>CETIS 69</h2><p>MUSEO DIGITAL</p><div class="bar"><i></i></div></div></div>
+<nav id="nav" class="solid"></nav>
+<header class="phead"><div class="rv"><div class="eyebrow">Reconocimientos</div><h1 class="title">Salón de la <b>fama</b></h1><p>Trofeos, medallas y reconocimientos de los equipos representativos del plantel en torneos locales, estatales y nacionales.</p></div></header>
+<section><div class="tabs"><button class="on" data-f="all">Todos</button><button data-f="d">Deportivo</button><button data-f="c">Cultural</button></div><div class="grid" id="grid"></div></section>
+<footer></footer>
+<script src="comun.js"></script>
+<script>
+DATOS.then(D=>{
+const it=D.premios;
+let f='all';const g=$('#grid');
+function draw(){g.innerHTML='';it.forEach((o,i)=>{if(f!=='all'&&o.c!==f)return;const b=document.createElement('button');b.className='gc';b.innerHTML=`<figure class="slot" data-slot="salon-${i+1}"><i class="fa-solid fa-${o.c==='d'?'trophy':'music'}"></i></figure><div class="gb"><span class="badge">${o.l} · ${o.y}</span><h3>${o.n}</h3><p>${o.p}</p></div>`;b.onclick=()=>openM({n:o.n,r:o.l+' · '+o.y+' · '+o.p,d:o.d,k:'salon-'+(i+1)});g.append(b)})}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{f=b.dataset.f;document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));draw()});
+draw();
+});
+</script>
+</body>
+</html>

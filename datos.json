@@ -1,0 +1,812 @@
+{
+ "sitio": {
+  "inicio": "index.html",
+  "menu": [
+   {
+    "t": "Inicio",
+    "u": "index.html"
+   },
+   {
+    "t": "Salón de la fama",
+    "u": "salon-fama.html"
+   },
+   {
+    "t": "Libro de visitas",
+    "u": "libro-visitas.html"
+   },
+   {
+    "t": "Mapa 360°",
+    "u": "mapa-360.html"
+   },
+   {
+    "t": "Archivo fotográfico",
+    "u": "archivo-fotografico.html"
+   }
+  ],
+  "menuInicio": [
+   {
+    "t": "Historia",
+    "u": "#historia"
+   },
+   {
+    "t": "Línea del tiempo",
+    "u": "#linea"
+   },
+   {
+    "t": "Oferta educativa",
+    "u": "#oferta"
+   },
+   {
+    "t": "Docentes",
+    "u": "#docentes"
+   },
+   {
+    "t": "Archivo",
+    "u": "#archivo"
+   },
+   {
+    "t": "Eventos",
+    "u": "#eventos"
+   },
+   {
+    "t": "Exalumnos",
+    "u": "#exalumnos"
+   },
+   {
+    "t": "Ciencia",
+    "u": "#ciencia"
+   }
+  ],
+  "paginas": [
+   {
+    "t": "Inicio",
+    "u": "index.html",
+    "x": "Museo Digital CETIS 69 historia línea del tiempo"
+   },
+   {
+    "t": "Salón de la fama",
+    "u": "salon-fama.html",
+    "x": "Trofeos, medallas y reconocimientos de los equipos representativos"
+   },
+   {
+    "t": "Libro de visitas",
+    "u": "libro-visitas.html",
+    "x": "Deja tu mensaje en el museo"
+   },
+   {
+    "t": "Mapa interactivo 360°",
+    "u": "mapa-360.html",
+    "x": "Recorrido virtual por el plantel"
+   },
+   {
+    "t": "Archivo fotográfico y de video",
+    "u": "archivo-fotografico.html",
+    "x": "Fotografías y videos de desfiles, semanas culturales, aniversarios y graduaciones"
+   },
+   {
+    "t": "Créditos del museo",
+    "u": "creditos.html",
+    "x": "Equipo del proyecto, agradecimientos, fuentes y herramientas"
+   },
+   {
+    "t": "Códigos QR por zona",
+    "u": "qr-zonas.html",
+    "x": "Genera e imprime un código QR para cada zona del plantel"
+   }
+  ],
+  "pie": {
+   "descripcion": "Museo Digital conmemorativo de los 46 años del CETIS 69. Un espacio para preservar y compartir nuestra memoria institucional.",
+   "contacto": [
+    {
+     "i": "fa-solid fa-location-dot",
+     "t": "Ciudad Obregón, Sonora"
+    },
+    {
+     "i": "fa-solid fa-phone",
+     "t": "Teléfono"
+    },
+    {
+     "i": "fa-solid fa-envelope",
+     "t": "correo@cetis69.edu.mx"
+    }
+   ],
+   "enlaces": [
+    {
+     "t": "Historia",
+     "u": "#historia"
+    },
+    {
+     "t": "Línea del tiempo",
+     "u": "#linea"
+    },
+    {
+     "t": "Oferta educativa",
+     "u": "#oferta"
+    },
+    {
+     "t": "Eventos",
+     "u": "#eventos"
+    },
+    {
+     "t": "Créditos",
+     "u": "creditos.html"
+    },
+    {
+     "t": "QR",
+     "u": "qr-zonas.html"
+    }
+   ],
+   "redes": [
+    {
+     "i": "fa-brands fa-facebook-f",
+     "t": "Facebook",
+     "u": "#"
+    },
+    {
+     "i": "fa-brands fa-instagram",
+     "t": "Instagram",
+     "u": "#"
+    },
+    {
+     "i": "fa-brands fa-tiktok",
+     "t": "TikTok",
+     "u": "#"
+    },
+    {
+     "i": "fa-brands fa-youtube",
+     "t": "YouTube",
+     "u": "#"
+    }
+   ],
+   "copyright": "© 2026 CETIS 69 · TODOS LOS DERECHOS RESERVADOS"
+  }
+ },
+ "ajustes": {
+  "archivoEndpoint": "",
+  "recorridoSegundos": 8,
+  "kiosco": {
+   "segundosInactividad": 90
+  }
+ },
+ "hitos": [
+  {
+   "y": "1986",
+   "t": "Los primeros años",
+   "d": "Texto sobre la fundación y los primeros años del plantel.",
+   "s": [
+    [
+     "fa-bolt",
+     "Electricidad"
+    ],
+    [
+     "fa-calculator",
+     "Contabilidad"
+    ],
+    [
+     "fa-gears",
+     "Mecánica"
+    ]
+   ],
+   "docentes": [
+    {
+     "n": "Nombre del docente",
+     "m": "Materia"
+    },
+    {
+     "n": "Nombre del docente",
+     "m": "Materia"
+    },
+    {
+     "n": "Nombre del docente",
+     "m": "Materia"
+    },
+    {
+     "n": "Nombre del docente",
+     "m": "Materia"
+    }
+   ]
+  },
+  {
+   "y": "1990",
+   "t": "Crecimiento institucional",
+   "d": "Texto sobre la consolidación y ampliación de la matrícula.",
+   "s": [
+    [
+     "fa-bolt",
+     "Electricidad"
+    ],
+    [
+     "fa-calculator",
+     "Contabilidad"
+    ],
+    [
+     "fa-gears",
+     "Mecánica"
+    ],
+    [
+     "fa-computer",
+     "Computación"
+    ]
+   ],
+   "docentes": [
+    {
+     "n": "Nombre del docente",
+     "m": "Materia"
+    },
+    {
+     "n": "Nombre del docente",
+     "m": "Materia"
+    },
+    {
+     "n": "Nombre del docente",
+     "m": "Materia"
+    },
+    {
+     "n": "Nombre del docente",
+     "m": "Materia"
+    },
+    {
+     "n": "Nombre del docente",
+     "m": "Materia"
+    }
+   ]
+  },
+  {
+   "y": "2000",
+   "t": "Era digital",
+   "d": "Texto sobre la llegada de la tecnología a las aulas.",
+   "s": [
+    [
+     "fa-laptop-code",
+     "Informática"
+    ],
+    [
+     "fa-calculator",
+     "Contabilidad"
+    ],
+    [
+     "fa-bolt",
+     "Electricidad"
+    ],
+    [
+     "fa-leaf",
+     "Ecología"
+    ]
+   ],
+   "docentes": [
+    {
+     "n": "Nombre del docente",
+     "m": "Materia"
+    },
+    {
+     "n": "Nombre del docente",
+     "m": "Materia"
+    },
+    {
+     "n": "Nombre del docente",
+     "m": "Materia"
+    },
+    {
+     "n": "Nombre del docente",
+     "m": "Materia"
+    },
+    {
+     "n": "Nombre del docente",
+     "m": "Materia"
+    }
+   ]
+  },
+  {
+   "y": "2010",
+   "t": "Nuevas generaciones",
+   "d": "Texto sobre los logros y la modernización del plantel.",
+   "s": [
+    [
+     "fa-laptop-code",
+     "Programación"
+    ],
+    [
+     "fa-calculator",
+     "Contabilidad"
+    ],
+    [
+     "fa-leaf",
+     "Ecología"
+    ],
+    [
+     "fa-bolt",
+     "Electricidad"
+    ]
+   ],
+   "docentes": [
+    {
+     "n": "Nombre del docente",
+     "m": "Materia"
+    },
+    {
+     "n": "Nombre del docente",
+     "m": "Materia"
+    },
+    {
+     "n": "Nombre del docente",
+     "m": "Materia"
+    },
+    {
+     "n": "Nombre del docente",
+     "m": "Materia"
+    },
+    {
+     "n": "Nombre del docente",
+     "m": "Materia"
+    },
+    {
+     "n": "Nombre del docente",
+     "m": "Materia"
+    }
+   ]
+  },
+  {
+   "y": "2020",
+   "t": "Resiliencia",
+   "d": "Texto sobre la adaptación y la educación a distancia.",
+   "s": [
+    [
+     "fa-laptop-code",
+     "Programación"
+    ],
+    [
+     "fa-calculator",
+     "Contabilidad"
+    ],
+    [
+     "fa-leaf",
+     "Ecología"
+    ],
+    [
+     "fa-bolt",
+     "Electricidad"
+    ]
+   ],
+   "docentes": [
+    {
+     "n": "Nombre del docente",
+     "m": "Materia"
+    },
+    {
+     "n": "Nombre del docente",
+     "m": "Materia"
+    },
+    {
+     "n": "Nombre del docente",
+     "m": "Materia"
+    },
+    {
+     "n": "Nombre del docente",
+     "m": "Materia"
+    },
+    {
+     "n": "Nombre del docente",
+     "m": "Materia"
+    },
+    {
+     "n": "Nombre del docente",
+     "m": "Materia"
+    }
+   ]
+  },
+  {
+   "y": "2026",
+   "t": "46 años de historia",
+   "d": "Texto sobre el aniversario y el presente de la institución.",
+   "s": [
+    [
+     "fa-laptop-code",
+     "Programación"
+    ],
+    [
+     "fa-calculator",
+     "Contabilidad"
+    ],
+    [
+     "fa-leaf",
+     "Ecología"
+    ],
+    [
+     "fa-bolt",
+     "Electricidad"
+    ]
+   ],
+   "docentes": [
+    {
+     "n": "Nombre del docente",
+     "m": "Materia"
+    },
+    {
+     "n": "Nombre del docente",
+     "m": "Materia"
+    },
+    {
+     "n": "Nombre del docente",
+     "m": "Materia"
+    },
+    {
+     "n": "Nombre del docente",
+     "m": "Materia"
+    },
+    {
+     "n": "Nombre del docente",
+     "m": "Materia"
+    },
+    {
+     "n": "Nombre del docente",
+     "m": "Materia"
+    }
+   ]
+  }
+ ],
+ "hitoImagenes": {
+  "1986": "images/hito-1986.jpg",
+  "1990": "images/hito-1990.jpg",
+  "2000": "images/hito-2000.jpg",
+  "2010": "images/hito-2010.jpg",
+  "2020": "images/hito-2020.jpg",
+  "2026": "images/hito-2026.jpg"
+ },
+ "eventos": [
+  {
+   "d": "00",
+   "m": "MES",
+   "n": "Nombre del evento",
+   "t": "Descripción breve del evento."
+  },
+  {
+   "d": "00",
+   "m": "MES",
+   "n": "Nombre del evento",
+   "t": "Descripción breve del evento."
+  },
+  {
+   "d": "00",
+   "m": "MES",
+   "n": "Nombre del evento",
+   "t": "Descripción breve del evento."
+  }
+ ],
+ "proyectos": [
+  {
+   "i": "fa-gears",
+   "n": "Nombre del proyecto",
+   "t": "Autores y especialidad."
+  },
+  {
+   "i": "fa-microchip",
+   "n": "Nombre del proyecto",
+   "t": "Autores y especialidad."
+  },
+  {
+   "i": "fa-lightbulb",
+   "n": "Nombre del proyecto",
+   "t": "Autores y especialidad."
+  }
+ ],
+ "exalumnos": [
+  {
+   "n": "Nombre del exalumno",
+   "r": "Profesión · Generación 2005",
+   "d": "Describe aquí qué logró, en qué año y por qué es motivo de orgullo para el CETIS 69."
+  },
+  {
+   "n": "Nombre del exalumno",
+   "r": "Científica · Generación 2012",
+   "d": "Describe aquí qué logró, en qué año y por qué es motivo de orgullo para el CETIS 69."
+  },
+  {
+   "n": "Nombre del alumno",
+   "r": "Deportista · Generación 2024",
+   "d": "Describe aquí qué logró, en qué año y por qué es motivo de orgullo para el CETIS 69."
+  },
+  {
+   "n": "Nombre del exalumno",
+   "r": "Artista · Generación 1998",
+   "d": "Describe aquí qué logró, en qué año y por qué es motivo de orgullo para el CETIS 69."
+  }
+ ],
+ "ciencia": [
+  {
+   "n": "Nombre del proyecto",
+   "r": "Robótica · Feria estatal 2019",
+   "d": "Describe aquí el proyecto, sus autores, el año y el reconocimiento obtenido."
+  },
+  {
+   "n": "Nombre del proyecto",
+   "r": "Software · Feria nacional 2022",
+   "d": "Describe aquí el proyecto, sus autores, el año y el reconocimiento obtenido."
+  },
+  {
+   "n": "Nombre del proyecto",
+   "r": "Electrónica · Expo 2016",
+   "d": "Describe aquí el proyecto, sus autores, el año y el reconocimiento obtenido."
+  },
+  {
+   "n": "Nombre del proyecto",
+   "r": "Ecología · Feria regional 2023",
+   "d": "Describe aquí el proyecto, sus autores, el año y el reconocimiento obtenido."
+  }
+ ],
+ "premios": [
+  {
+   "n": "Fútbol varonil",
+   "c": "d",
+   "l": "Estatal",
+   "y": "2019",
+   "p": "Primer lugar",
+   "d": "Describe aquí el torneo, la disciplina, los integrantes del equipo y el reconocimiento obtenido."
+  },
+  {
+   "n": "Básquetbol femenil",
+   "c": "d",
+   "l": "Regional",
+   "y": "2016",
+   "p": "Segundo lugar",
+   "d": "Describe aquí el torneo, la disciplina, los integrantes del equipo y el reconocimiento obtenido."
+  },
+  {
+   "n": "Banda de guerra",
+   "c": "c",
+   "l": "Nacional",
+   "y": "2018",
+   "p": "Tercer lugar",
+   "d": "Describe aquí el torneo, la disciplina, los integrantes del equipo y el reconocimiento obtenido."
+  },
+  {
+   "n": "Escolta",
+   "c": "c",
+   "l": "Estatal",
+   "y": "2021",
+   "p": "Primer lugar",
+   "d": "Describe aquí el torneo, la disciplina, los integrantes del equipo y el reconocimiento obtenido."
+  },
+  {
+   "n": "Danza folklórica",
+   "c": "c",
+   "l": "Regional",
+   "y": "2014",
+   "p": "Primer lugar",
+   "d": "Describe aquí el torneo, la disciplina, los integrantes del equipo y el reconocimiento obtenido."
+  },
+  {
+   "n": "Ajedrez",
+   "c": "d",
+   "l": "Estatal",
+   "y": "2022",
+   "p": "Segundo lugar",
+   "d": "Describe aquí el torneo, la disciplina, los integrantes del equipo y el reconocimiento obtenido."
+  }
+ ],
+ "archivo": [
+  {
+   "d": "198",
+   "c": "Desfile cívico",
+   "r": "3/4"
+  },
+  {
+   "d": "199",
+   "c": "Semana cultural",
+   "r": "4/3"
+  },
+  {
+   "d": "200",
+   "c": "Graduación",
+   "r": "1/1"
+  },
+  {
+   "d": "198",
+   "c": "Equipo de fútbol",
+   "r": "4/3"
+  },
+  {
+   "d": "201",
+   "c": "Feria de ciencias",
+   "r": "3/4"
+  },
+  {
+   "d": "199",
+   "c": "Taller de mecánica",
+   "r": "4/3"
+  },
+  {
+   "d": "202",
+   "c": "Aniversario",
+   "r": "1/1"
+  },
+  {
+   "d": "200",
+   "c": "Ceremonia de honores",
+   "r": "3/4"
+  },
+  {
+   "d": "201",
+   "c": "Concurso de danza",
+   "r": "4/3"
+  },
+  {
+   "d": "202",
+   "c": "Expo tecnológica",
+   "r": "3/4"
+  }
+ ],
+ "zonas": [
+  {
+   "id": "entrada",
+   "n": "Entrada principal",
+   "ic": "door-open",
+   "pts": [
+    [
+     73.9,
+     5.8
+    ]
+   ],
+   "pano": "entrada.jpg",
+   "etiquetas": [
+    "Entrada"
+   ],
+   "d": "Describe aquí esta área del plantel. Para activar la vista 360°, coloca la ruta de la imagen panorámica en el campo pano."
+  },
+  {
+   "id": "talleres",
+   "n": "Talleres",
+   "ic": "screwdriver-wrench",
+   "pts": [
+    [
+     70.4,
+     76.4
+    ],
+    [
+     56.8,
+     61.8
+    ],
+    [
+     49.3,
+     31.2
+    ],
+    [
+     37.5,
+     55.9
+    ],
+    [
+     33.3,
+     56.0
+    ]
+   ],
+   "pano": "",
+   "etiquetas": [
+    "TOPEC",
+    "PIN",
+    "MEC",
+    "CULTURA DIGITAL",
+    "OPECT"
+   ],
+   "iconos": [
+    "code",
+    "industry",
+    "robot",
+    "laptop",
+    "laptop"
+   ],
+   "d": "Describe aquí esta área del plantel. Para activar la vista 360°, coloca la ruta de la imagen panorámica en el campo pano."
+  },
+  {
+   "id": "laboratorios",
+   "n": "Laboratorios",
+   "ic": "flask",
+   "pts": [
+    [
+     70.1,
+     34.7
+    ]
+   ],
+   "pano": "",
+   "etiquetas": [
+    "Laboratorio"
+   ],
+   "d": "Describe aquí esta área del plantel. Para activar la vista 360°, coloca la ruta de la imagen panorámica en el campo pano."
+  },
+  {
+   "id": "canchas",
+   "n": "Canchas",
+   "ic": "futbol",
+   "pts": [
+    [
+     84.8,
+     26.1
+    ],
+    [
+     37.9,
+     88.6
+    ]
+   ],
+   "pano": "",
+   "etiquetas": [
+    "Cancha Civica",
+    "Cancha"
+   ],
+   "d": "Describe aquí esta área del plantel. Para activar la vista 360°, coloca la ruta de la imagen panorámica en el campo pano."
+  },
+  {
+   "id": "areas-verdes",
+   "n": "Áreas verdes",
+   "ic": "tree",
+   "pts": [
+    [
+     94.4,
+     39.8
+    ],
+    [
+     79.3,
+     57.9
+    ],
+    [
+     54.8,
+     83.5
+    ]
+   ],
+   "pano": "",
+   "etiquetas": [
+    "Área verde 1",
+    "Área verde 2",
+    "Área verde 3"
+   ],
+   "d": "Describe aquí esta área del plantel. Para activar la vista 360°, coloca la ruta de la imagen panorámica en el campo pano."
+  }
+ ],
+ "creditos": {
+  "equipo": [
+   {
+    "rol": "Coordinación del proyecto",
+    "nombre": "Gabriela Herrera Vilchis",
+    "detalle": "Maestra"
+   },
+   {
+    "rol": "Investigación histórica",
+    "nombre": "Jose Diego Madrid Leyva",
+    "detalle": "Alumno, 5AMPRG"
+   },
+   {
+    "rol": "Diseño y desarrollo web",
+    "nombre": "José Diego Madrid Leyva",
+    "detalle": "Alumno, 5AMPRG"
+   },
+   {
+    "rol": "Fotografía",
+    "nombre": "Direccción escolar",
+    "detalle": "CETis69"
+   }
+  ],
+  "agradecimientos": "Gracias a las generaciones de estudiantes, docentes, personal y familias que han dado vida al CETIS 69 y compartieron sus recuerdos para este museo.",
+  "fuentes": [
+   {
+    "tipo": "Fotografías históricas",
+    "fuente": "Archivo del CETIS 69 y aportaciones de la comunidad."
+   },
+   {
+    "tipo": "Plano del plantel",
+    "fuente": "Imagen satelital con marcas editadas por el equipo del museo."
+   }
+  ],
+  "imagenes": []
+ },
+ "offline": [
+  "mapa-escolar.jpeg",
+  "entrada.jpg",
+  "images/historia-1.jpg",
+  "images/historia-2.jpg",
+  "images/historia-3.jpg",
+  "images/historia-4.jpg",
+  "images/hito-1986.jpg",
+  "images/hito-1990.jpg",
+  "images/hito-2000.jpg",
+  "images/hito-2010.jpg",
+  "images/hito-2020.jpg",
+  "images/hito-2026.jpg"
+ ]
+}

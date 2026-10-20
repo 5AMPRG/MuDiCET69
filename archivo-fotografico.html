@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#7a122e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="iconos/icono-192.png">
+<link rel="apple-touch-icon" href="iconos/icono-180.png">
+<meta name="description" content="Archivo fotográfico y de video del CETIS 69: desfiles, semanas culturales, aniversarios y graduaciones. Comparte tu recuerdo.">
+<meta name="theme-color" content="#7a122e">
+<meta property="og:title" content="Archivo fotográfico · CETIS 69">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='85'%3E%F0%9F%93%B7%3C/text%3E%3C/svg%3E">
+<title>Archivo fotográfico · Museo Digital CETIS 69</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>
+<link rel="stylesheet" href="estilos.css">
+<style>
+.skip{position:absolute;left:-999px;top:0;z-index:300;background:#fff;color:var(--guinda);padding:.7rem 1.1rem;font-size:.75rem;letter-spacing:.12em;font-weight:600}
+.skip:focus{left:1rem;top:1rem}
+#prog{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--guinda),#e8a5b4);z-index:95;transition:width .12s linear}
+.busca{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.8rem}
+#q{flex:1 1 320px;max-width:460px;font:inherit;font-weight:300;padding:.9rem 1.1rem;border:1px solid var(--linea);background:#fff}
+#q:focus{outline:2px solid var(--guinda);outline-offset:-1px}
+.estado{font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gris)}
+.empty{width:100%;padding:2.5rem 1rem;text-align:center;color:var(--gris);border:1px dashed var(--linea)}
+.ph{cursor:pointer;outline:none}
+.ph[hidden]{display:none}
+.ph:focus-visible{outline:2px solid var(--guinda);outline-offset:4px}
+.ph:focus-visible .cp{opacity:1}
+@media (hover:none){.ph .cp{opacity:1}}
+.tabs button:focus-visible,.mx:focus-visible,.mnav:focus-visible,.mshare:focus-visible,.btn:focus-visible{outline:2px solid var(--guinda);outline-offset:3px}
+.mnav{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:46px;background:#fff;border:1px solid var(--linea);display:grid;place-items:center;z-index:2;transition:.3s}
+.mnav:hover{background:var(--guinda);color:#fff;border-color:var(--guinda)}
+.mprev{left:.8rem}
+.mnext{right:.8rem}
+.mshare{margin-top:1.4rem;font-size:.66rem;letter-spacing:.2em;text-transform:uppercase;font-weight:600;color:var(--guinda);display:inline-flex;gap:.6rem;align-items:center;padding:.7rem 1rem;border:1px solid var(--guinda);transition:.3s}
+.mshare:hover{background:var(--guinda);color:#fff}
+.fm .chk{display:flex;gap:.8rem;align-items:flex-start;font-size:.82rem;color:var(--gris);text-transform:none;letter-spacing:normal;font-weight:300}
+.fm .chk input{width:auto;padding:0;border:0;margin-top:.3rem;accent-color:var(--guinda)}
+</style>
+<link rel="stylesheet" href="paginas.css">
+</head>
+<body>
+<a href="#tb" class="skip">Saltar al archivo</a>
+<div id="loader"><div class="ld"><h2>CETIS 69</h2><p>MUSEO DIGITAL</p><div class="bar"><i></i></div></div></div>
+<nav id="nav" class="solid"></nav>
+<header class="phead"><div class="rv"><div class="eyebrow">Memoria colectiva</div><h1 class="title">Archivo fotográfico y <b>de video</b></h1><p>Fotografías y videos de desfiles, semanas culturales, aniversarios y graduaciones. Si tienes un recuerdo, compártelo y ayuda a construir el museo.</p></div></header>
+<section><div class="tabs" id="tb"><button class="on" data-f="all">Todas</button><button data-f="198">1980s</button><button data-f="199">1990s</button><button data-f="200">2000s</button><button data-f="201">2010s</button><button data-f="202">2020s</button></div><div class="busca"><input type="search" id="q" placeholder="Buscar por evento, año o palabra" aria-label="Buscar en el archivo"><p class="estado" id="estado" aria-live="polite"></p></div><div class="mas" id="mas"></div></section>
+<section class="info" id="envia"><div class="rv"><div class="eyebrow">Manda tu recuerdo</div><h2 class="title">Comparte tu <b>fotografía</b> o video</h2></div><form id="f" class="fm" style="max-width:640px"><label>Nombre<input id="nm" required maxlength="60"></label><label>Año aproximado<input id="yr" type="number" min="1980" max="2026" required></label><label>Descripción o anécdota<textarea id="ds" required maxlength="300" rows="4"></textarea></label><label>Archivo<input id="fl" type="file" accept="image/*,video/*" required></label><label class="chk"><input type="checkbox" id="cons" required> Autorizo que el museo publique este recuerdo citando a quien lo aportó.</label><button class="btn" type="submit">Enviar recuerdo <i class="fa-solid fa-paper-plane"></i></button><div class="ok" id="ok" hidden>Gracias. Tu recuerdo fue recibido.</div></form></section>
+<footer></footer>
+<script src="comun.js"></script>
+<script>
+DATOS.then(D=>{
+const ENDPOINT=D.ajustes.archivoEndpoint;
+const P=D.archivo.map(o=>({...o,u:''}));
+let f='all';const mas=$('#mas');
+function draw(){mas.innerHTML='';P.forEach((o,i)=>{if(f!=='all'&&o.d!==f)return;const b=document.createElement('div');b.className='ph';b.tabIndex=0;b.setAttribute('role','button');b.style.aspectRatio=o.r;
+const fg=document.createElement('figure');fg.className='slot';fg.dataset.slot='archivo-'+(i+1);fg.innerHTML=o.u?`<img src="${o.u}" alt="">`:'<i class="fa-regular fa-image"></i>';
+const cp=document.createElement('span');cp.className='cp';cp.textContent=o.c+' · '+o.d+'0s';b.append(fg,cp);b.onclick=()=>openM({n:o.c,r:o.d+'0s',d:'Describe aquí el evento, la fecha y las personas que aparecen en la imagen.',k:'archivo-'+(i+1),th:false});mas.append(b)})}
+$('#tb').querySelectorAll('button').forEach(b=>b.onclick=()=>{f=b.dataset.f;$('#tb').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));draw()});
+$('#f').onsubmit=e=>{e.preventDefault();const fd=new FormData(e.target),fl=$('#fl').files[0];
+if(ENDPOINT)fetch(ENDPOINT,{method:'POST',body:fd}).catch(()=>{});
+P.unshift({d:String($('#yr').value).slice(0,3),c:$('#ds').value.trim().slice(0,60),r:'4/3',u:fl&&fl.type.startsWith('image/')?URL.createObjectURL(fl):''});
+draw();$('#ok').hidden=false;e.target.reset()};
+draw();
+
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const prog=document.createElement('div');prog.id='prog';document.body.prepend(prog);
+addEventListener('scroll',()=>{const max=document.documentElement.scrollHeight-innerHeight||1;prog.style.width=(scrollY/max*100)+'%'},{passive:true});
+
+const tabs=[...$('#tb').querySelectorAll('button')];
+tabs.forEach(b=>b.dataset.label=b.textContent.trim());
+function refreshTabs(){
+ tabs.forEach(b=>{
+  const n=b.dataset.f==='all'?P.length:P.filter(o=>o.d===b.dataset.f).length;
+  b.textContent=b.dataset.label+' ('+n+')';
+  b.setAttribute('aria-pressed',String(b.classList.contains('on')));
+ });
+}
+
+const q=$('#q');
+function aplicar(){
+ const t=q.value.trim().toLowerCase();
+ let vis=0;
+ mas.querySelectorAll('.ph').forEach(el=>{const ok=!t||el.textContent.toLowerCase().includes(t);el.hidden=!ok;if(ok)vis++});
+ $('#estado').textContent=vis?`Mostrando ${vis} ${vis===1?'recuerdo':'recuerdos'}`:'';
+ let vacio=mas.querySelector('.empty');
+ if(!vis&&!vacio){vacio=document.createElement('p');vacio.className='empty';vacio.textContent='Nada coincide en esta época. Prueba otra palabra o cambia de década.';mas.append(vacio)}
+ else if(vis&&vacio)vacio.remove();
+}
+q.addEventListener('input',aplicar);
+tabs.forEach(b=>b.addEventListener('click',()=>{refreshTabs();aplicar()}));
+$('#f').addEventListener('submit',()=>setTimeout(()=>{refreshTabs();aplicar()},0));
+
+const fl=$('#fl');
+fl.addEventListener('change',()=>{const f=fl.files[0];fl.setCustomValidity(f&&f.size>100*1024*1024?'El archivo pasa de 100 MB. Usa una versión más ligera o compártenos un enlace.':'')});
+
+let cur=0,lastF=null;
+mas.addEventListener('click',e=>{
+ const el=e.target.closest('.ph');
+ if(!el)return;
+ lastF=el;
+ cur=[...mas.querySelectorAll('.ph:not([hidden])')].indexOf(el);
+ setTimeout(()=>modal.querySelector('.mx').focus(),60);
+});
+mas.addEventListener('keydown',e=>{
+ if((e.key==='Enter'||e.key===' ')&&e.target.classList&&e.target.classList.contains('ph')){e.preventDefault();e.target.click()}
+});
+const mbox=modal.querySelector('.mbox');
+mbox.insertAdjacentHTML('beforeend','<button class="mnav mprev" type="button" aria-label="Foto anterior"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button><button class="mnav mnext" type="button" aria-label="Foto siguiente"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>');
+function paso(d){
+ const v=[...mas.querySelectorAll('.ph:not([hidden])')];
+ if(!v.length)return;
+ cur=(cur+d+v.length)%v.length;
+ v[cur].click();
+}
+mbox.querySelector('.mprev').onclick=()=>paso(-1);
+mbox.querySelector('.mnext').onclick=()=>paso(1);
+function volver(){if(lastF&&document.contains(lastF))lastF.focus()}
+mbox.querySelector('.mx').addEventListener('click',volver);
+modal.addEventListener('click',e=>{if(e.target===modal)volver()});
+addEventListener('keydown',e=>{
+ if(!modal.classList.contains('on'))return;
+ if(e.key==='Escape')volver();
+ if(e.key==='ArrowRight')paso(1);
+ if(e.key==='ArrowLeft')paso(-1);
+ if(e.key==='Tab'){
+  const f=[...modal.querySelectorAll('button')];
+  const a=f[0],z=f[f.length-1];
+  if(e.shiftKey&&document.activeElement===a){e.preventDefault();z.focus()}
+  else if(!e.shiftKey&&document.activeElement===z){e.preventDefault();a.focus()}
+ }
+});
+
+
+const sh=document.createElement('button');
+sh.type='button';sh.className='mshare';
+sh.innerHTML='<i class="fa-solid fa-link" aria-hidden="true"></i><span>Copiar enlace</span>';
+mbox.querySelector('.mtxt').append(sh);
+sh.onclick=async()=>{
+ const txt=sh.querySelector('span');
+ try{await navigator.clipboard.writeText(location.href);txt.textContent='¡Enlace copiado!'}
+ catch(_){txt.textContent='Copia la dirección de la barra'}
+ setTimeout(()=>txt.textContent='Copiar enlace',2200);
+};
+
+refreshTabs();
+aplicar();
+});
+</script>
+</body>
+</html>
