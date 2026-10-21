@@ -20,7 +20,7 @@
 <link rel="stylesheet" href="estilos.css">
 <link rel="stylesheet" href="paginas.css">
 <style>
-.plan>img{inset:auto;top:50%;left:50%;width:75%;height:133.333%;transform:translate(-50%,-50%) rotate(90deg);object-fit:cover}
+.pstage>img{inset:auto;top:50%;left:50%;width:75%;height:133.333%;transform:translate(-50%,-50%) rotate(90deg);object-fit:cover}
 
 .btn.sm{padding:.8rem 1.4rem;font-size:.68rem}
 :is(.pin,.pctl button,.pfs,.ptog,.macts .btn):focus-visible{outline:2px solid #fff;outline-offset:2px;box-shadow:0 0 0 4px var(--guinda)}
@@ -75,7 +75,7 @@
  .macts .btn{width:100%}
 }
 .plan{aspect-ratio:561/373}
-.plan>img{width:66.5%;height:150.4%}
+.pstage>img{width:66.5%;height:150.4%}
 #al small{display:inline-block;margin-left:.35rem;font-size:.8em;opacity:.6}
 
 /* ===== Plano: pantalla completa y localizador ===== */
@@ -109,6 +109,19 @@
 .geop h3 small{font-size:.6rem;letter-spacing:.2em;color:var(--gris);margin-left:.5rem}
 .geop .macts{margin:1rem 0 .8rem}
 .geop code{font-size:.78rem;background:#fff;padding:0 .3rem}
+/* ===== Zoom del plano, ruta y brújula ===== */
+.pstage{position:absolute;inset:0;transform-origin:0 0;--z:1}
+.pstage>img{position:absolute}
+.pstage .pin{transform:translate(-50%,-50%) scale(calc(1/var(--z)));transition:background .3s,color .3s,border-color .3s}
+.pstage .pin.on{transform:translate(-50%,-50%) scale(calc(1.2/var(--z)))}
+.yo{transform:scale(calc(1/var(--z)))}
+.plan{touch-action:pan-y;-webkit-user-select:none;user-select:none}
+.plan.zm{cursor:grab;touch-action:none}
+.plwrap.isfs .plan{touch-action:none}
+.pzoom{top:auto;bottom:.8rem;flex-direction:column}
+.pruta{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.pruta[hidden],.yo-dir[hidden]{display:none}
+.yo-dir{position:absolute;left:-26px;top:-26px;width:52px;height:52px;background:radial-gradient(circle,rgba(26,115,232,.75),rgba(26,115,232,0) 70%);clip-path:polygon(50% 50%,10% 0,90% 0)}
 .skip{position:absolute;left:-999px;top:0;z-index:300;background:#fff;color:var(--guinda);padding:.7rem 1.1rem;font-size:.75rem;letter-spacing:.12em;font-weight:600}
 .skip:focus{left:1rem;top:1rem}
 </style>
@@ -118,23 +131,23 @@
 <div id="loader"><div class="ld"><h2>CETIS 69</h2><p>MUSEO DIGITAL</p><div class="bar"><i></i></div></div></div>
 <nav id="nav" class="solid"></nav>
 <header class="phead"><div class="rv"><div class="eyebrow">Recorrido virtual</div><h1 class="title">Mapa interactivo <b>360°</b></h1><p>Selecciona un punto del plano y gira la vista panorámica para explorar los talleres, laboratorios, canchas y áreas verdes del plantel.</p></div></header>
-<section><div class="mp"><div class="plcol"><div class="plwrap" id="plwrap"><div class="plan slot" id="plan" data-slot="plano-plantel"><img src="mapa-escolar.jpeg" alt="Plano del plantel"><i class="fa-regular fa-map"></i><span class="tag">Plano del plantel</span><button type="button" class="ptog" id="bLbl" aria-pressed="true"><i class="fa-solid fa-tag"></i> Etiquetas</button>
+<section><div class="mp"><div class="plcol"><div class="plwrap" id="plwrap"><div class="plan slot" id="plan" data-slot="plano-plantel"><div class="pstage" id="pstage"><img src="mapa-escolar.jpeg" alt="Plano del plantel"><svg class="pruta" id="pruta" viewBox="0 0 100 66.488" preserveAspectRatio="none" aria-hidden="true" hidden><polyline id="rC" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round"/><polyline id="rL" fill="none" stroke="#1a73e8" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="yo-acc" id="yoAcc" hidden></span><div class="yo" id="yo" hidden><span class="yo-dir" id="yoD" hidden></span><span class="yo-dot"></span><span class="yo-lbl">Estás aquí</span></div></div><i class="fa-regular fa-map"></i><span class="tag">Plano del plantel</span><button type="button" class="ptog" id="bLbl" aria-pressed="true"><i class="fa-solid fa-tag"></i> Etiquetas</button>
 <div class="pctl"><button type="button" id="bLoc" aria-pressed="false" aria-label="Mostrar mi ubicación en el plano" title="Mi ubicación"><i class="fa-solid fa-location-crosshairs"></i></button><button type="button" id="bPlFs" aria-label="Ver el plano en pantalla completa" title="Pantalla completa"><i class="fa-solid fa-expand"></i></button></div>
-<span class="yo-acc" id="yoAcc" hidden></span><div class="yo" id="yo" hidden><span class="yo-dot"></span><span class="yo-lbl">Estás aquí</span></div></div>
+<div class="pctl pzoom"><button type="button" id="bZin" aria-label="Acercar" title="Acercar"><i class="fa-solid fa-plus"></i></button><button type="button" id="bZout" aria-label="Alejar" title="Alejar"><i class="fa-solid fa-minus"></i></button></div></div>
 <div class="pbot"><div class="pcap"><div><b></b><small></small></div><button type="button" class="btn ghost sm" id="bVer"><i class="fa-solid fa-street-view"></i> Ver vista 360°</button></div><div class="pmsg" id="plMsg" role="status" aria-live="polite" hidden></div></div></div>
 <div class="geop" id="geoP" hidden><h3>Calibrar localizador <small>Herramienta interna</small></h3><p>1) Párate en un lugar reconocible del plantel. 2) Pulsa «Marcar punto» y toca ese mismo lugar en el plano. 3) Repite en otro lugar a más de 20 m del primero. Con 2 o más puntos se activa el localizador. Al terminar, pulsa «Copiar JSON» y pégalo dentro de <code>"ajustes"</code> en datos.json para que funcione en todos los dispositivos.</p><div class="macts"><button type="button" class="btn ghost sm" id="bCalM" aria-pressed="false"><i class="fa-solid fa-crosshairs"></i> Marcar punto</button><button type="button" class="btn ghost sm" id="bCalJ"><i class="fa-solid fa-copy"></i> Copiar JSON</button><button type="button" class="btn ghost sm" id="bCalB"><i class="fa-solid fa-trash"></i> Borrar puntos</button></div><p id="geoL"></p></div></div><div><div class="pwrap" id="pwrap"><div class="pano" id="pano" data-slot="panoramica-360"><span id="hint"><i class="fa-solid fa-arrows-left-right"></i> Arrastra para girar</span></div>
 <div class="pctl"><button type="button" id="bPrev" aria-label="Zona anterior" title="Zona anterior"><i class="fa-solid fa-chevron-left"></i></button><button type="button" id="bNext" aria-label="Zona siguiente" title="Zona siguiente"><i class="fa-solid fa-chevron-right"></i></button><button type="button" id="bSpin" aria-pressed="false" aria-label="Giro automático" title="Giro automático"><i class="fa-solid fa-rotate"></i></button></div>
 <div class="ptit" id="pT"><i class="fa-solid fa-location-dot"></i><div><b></b><small></small></div></div>
 <button type="button" class="pfs" id="bFs" aria-label="Ver en pantalla completa"><i class="fa-solid fa-expand"></i><span>Pantalla completa</span></button>
 <div class="pprog" id="pP"><i></i></div></div><div class="ainfo"><h3 id="aT"></h3><p id="aD"></p></div>
-<div class="macts"><button type="button" class="btn ghost sm" id="bTour" aria-pressed="false"><i class="fa-solid fa-play"></i> Recorrido automático</button><a class="btn ghost sm" id="bQR" href="qr-zonas.html"><i class="fa-solid fa-qrcode"></i> Código QR de esta zona</a><button type="button" class="btn ghost sm" id="bShare"><i class="fa-solid fa-share-nodes"></i> Compartir</button></div><div class="tabs" id="al"></div></div></div></section>
+<div class="macts"><button type="button" class="btn ghost sm" id="bTour" aria-pressed="false"><i class="fa-solid fa-play"></i> Recorrido automático</button><a class="btn ghost sm" id="bQR" href="qr-zonas.html"><i class="fa-solid fa-qrcode"></i> Código QR de esta zona</a><button type="button" class="btn ghost sm" id="bRuta" aria-pressed="false"><i class="fa-solid fa-route"></i> Cómo llegar</button><button type="button" class="btn ghost sm" id="bAuto" aria-pressed="false"><i class="fa-solid fa-person-walking"></i> Abrir zona al acercarme</button><button type="button" class="btn ghost sm" id="bShare"><i class="fa-solid fa-share-nodes"></i> Compartir</button></div><div class="tabs" id="al"></div></div></div></section>
 <footer></footer>
 <script src="comun.js"></script>
 <script>
 DATOS.then(D=>{
 const A=D.zonas;
 const pano=$('#pano'),plan=$('#plan'),al=$('#al');let bx=0,dr=null;
-A.forEach((a,i)=>{a.pts.forEach(([x,y])=>{const p=document.createElement('button');p.className='pin';p.dataset.i=i;p.style.left=x+'%';p.style.top=y+'%';p.setAttribute('aria-label',a.n);p.innerHTML=`<i class="fa-solid fa-${a.ic}"></i>`;p.onclick=()=>sel(i,p);plan.append(p)});
+A.forEach((a,i)=>{a.pts.forEach(([x,y])=>{const p=document.createElement('button');p.className='pin';p.dataset.i=i;p.style.left=x+'%';p.style.top=y+'%';p.setAttribute('aria-label',a.n);p.innerHTML=`<i class="fa-solid fa-${a.ic}"></i>`;p.onclick=()=>sel(i,p);$('#pstage').append(p)});
 const b=document.createElement('button');b.innerHTML=a.n+' <small>'+a.pts.length+'</small>';b.onclick=()=>sel(i);al.append(b)});
 function sel(i,pin){const a=A[i];
 const on=pin||plan.querySelector('.pin[data-i="'+i+'"]');
@@ -361,7 +374,7 @@ function estadoPF(){
  bPF.innerHTML=on?'<i class="fa-solid fa-compress"></i>':'<i class="fa-solid fa-expand"></i>';
  bPF.setAttribute('aria-label',on?'Salir de pantalla completa':'Ver el plano en pantalla completa');bPF.title=on?'Salir':'Pantalla completa';
  if(!on&&!W.classList.contains('fsx'))document.documentElement.style.overflow='';
- setTimeout(colocar,150);
+ ZM.s=1;ZM.x=0;ZM.y=0;aplicaZ();setTimeout(colocar,150);
 }
 function fallbackPF(){PW.classList.add('fsx');document.documentElement.style.overflow='hidden';estadoPF()}
 function salirPF(){
@@ -415,31 +428,140 @@ function pintaRefs(){
 }
 const guardaRefs=()=>{try{localStorage.setItem(GK,JSON.stringify(refs))}catch(e){}};
 
+/* Zoom y desplazamiento del plano (rueda con Ctrl, pellizco, arrastre, botones, doble clic) */
+const stage=$('#pstage'),pR=$('#pruta'),rC=$('#rC'),rL=$('#rL'),yoD=$('#yoD'),ZM={s:1,x:0,y:0},SMAX=4;
+function aplicaZ(){
+ const r=plan.getBoundingClientRect();
+ ZM.s=Math.max(1,Math.min(SMAX,ZM.s));
+ ZM.x=Math.min(0,Math.max(r.width*(1-ZM.s),ZM.x));ZM.y=Math.min(0,Math.max(r.height*(1-ZM.s),ZM.y));
+ stage.style.transform='translate('+ZM.x+'px,'+ZM.y+'px) scale('+ZM.s+')';
+ stage.style.setProperty('--z',ZM.s);plan.classList.toggle('zm',ZM.s>1);
+ if(r.width){const u=r.width*ZM.s/100;rC.setAttribute('stroke-width',8/u);rL.setAttribute('stroke-width',4.5/u)}
+}
+function zoomEn(f,cx,cy){const k=Math.max(1,Math.min(SMAX,ZM.s*f))/ZM.s;ZM.x=cx-(cx-ZM.x)*k;ZM.y=cy-(cy-ZM.y)*k;ZM.s*=k;aplicaZ()}
+function enfoca(x,y,s){const r=plan.getBoundingClientRect();ZM.s=Math.max(ZM.s,Math.min(SMAX,s));ZM.x=r.width/2-x/100*r.width*ZM.s;ZM.y=r.height/2-y/100*r.height*ZM.s;aplicaZ()}
+const centro=f=>{const r=plan.getBoundingClientRect();zoomEn(f,r.width/2,r.height/2)};
+$('#bZin').onclick=()=>centro(1.6);$('#bZout').onclick=()=>centro(1/1.6);
+const ptrs=new Map();let pinch=null,movido=false;
+plan.addEventListener('pointerdown',e=>{
+ if(e.target.closest('.pctl,.ptog'))return;
+ ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});movido=false;
+ if(ptrs.size===2){const[a,b]=[...ptrs.values()];pinch=Math.hypot(a.x-b.x,a.y-b.y)||1}
+});
+plan.addEventListener('pointermove',e=>{
+ const p=ptrs.get(e.pointerId);if(!p)return;
+ const dx=e.clientX-p.x,dy=e.clientY-p.y;
+ if(ptrs.size===2&&pinch){
+  p.x=e.clientX;p.y=e.clientY;
+  const[a,b]=[...ptrs.values()],d=Math.hypot(a.x-b.x,a.y-b.y)||1,r=plan.getBoundingClientRect();
+  zoomEn(d/pinch,(a.x+b.x)/2-r.left,(a.y+b.y)/2-r.top);pinch=d;movido=true;return;
+ }
+ if(ZM.s>1){
+  if(!movido&&Math.hypot(dx,dy)<5)return;
+  if(!movido){movido=true;try{plan.setPointerCapture(e.pointerId)}catch(_){}}
+  ZM.x+=dx;ZM.y+=dy;p.x=e.clientX;p.y=e.clientY;aplicaZ();
+ }
+});
+const finPtr=e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null};
+plan.addEventListener('pointerup',finPtr);plan.addEventListener('pointercancel',finPtr);
+plan.addEventListener('click',e=>{if(movido){e.stopPropagation();e.preventDefault();movido=false}},true);
+plan.addEventListener('wheel',e=>{
+ if(!(e.ctrlKey||e.metaKey||PW.classList.contains('isfs')))return;
+ e.preventDefault();const r=plan.getBoundingClientRect();zoomEn(Math.exp(-e.deltaY*.0015),e.clientX-r.left,e.clientY-r.top);
+},{passive:false});
+plan.addEventListener('dblclick',e=>{
+ if(e.target.closest('.pctl,.ptog'))return;
+ const r=plan.getBoundingClientRect();
+ if(ZM.s>=SMAX){ZM.s=1;ZM.x=0;ZM.y=0;aplicaZ()}else zoomEn(2,e.clientX-r.left,e.clientY-r.top);
+});
+
+/* Rutas: usa ajustes.caminos (nodos y aristas en % del plano); sin caminos dibuja línea recta */
+const CAM=(D.ajustes&&D.ajustes.caminos)||{};
+function camino(a,b){
+ const N=CAM.nodos||[],E=CAM.aristas||[];
+ if(N.length<2||!E.length)return[a,b];
+ const d=(p,q)=>Math.hypot(p[0]-q[0],(p[1]-q[1])*K),ady=N.map(()=>[]);
+ E.forEach(([i,j])=>{if(!N[i]||!N[j])return;const w=d(N[i],N[j]);ady[i].push([j,w]);ady[j].push([i,w])});
+ const cerca=p=>N.reduce((m,n,i)=>d(p,n)<d(p,N[m])?i:m,0),o=cerca(a),t=cerca(b);
+ const dist=N.map(()=>Infinity),prev=N.map(()=>-1),listo=N.map(()=>false);dist[o]=0;
+ for(;;){
+  let u=-1;dist.forEach((v,i)=>{if(!listo[i]&&v<Infinity&&(u<0||v<dist[u]))u=i});
+  if(u<0||u===t)break;listo[u]=true;
+  ady[u].forEach(([v,w])=>{if(dist[u]+w<dist[v]){dist[v]=dist[u]+w;prev[v]=u}});
+ }
+ if(dist[t]===Infinity)return[a,b];
+ const ruta=[];for(let i=t;i>=0;i=prev[i])ruta.unshift(N[i]);
+ return[a,...ruta,b];
+}
+const mts=(a,b)=>Math.hypot((a[0]-b[0])/100,(a[1]-b[1])/100*K)/T.esc;
+let ultPos=null,rutaZ=null,primera=false,auto=false,ultAuto=-1;
+function trazar(){
+ if(rutaZ===null||!ultPos||!T)return'';
+ let best=null,bd=1e9;
+ plan.querySelectorAll('.pin[data-i="'+rutaZ+'"]').forEach(pn=>{const q=[parseFloat(pn.style.left),parseFloat(pn.style.top)],dd=mts(q,[ultPos.x,ultPos.y]);if(dd<bd){bd=dd;best=q}});
+ if(!best)return'';
+ const pts=camino([ultPos.x,ultPos.y],best),pp=pts.map(p=>p[0].toFixed(2)+','+(p[1]*K).toFixed(2)).join(' ');
+ rC.setAttribute('points',pp);rL.setAttribute('points',pp);pR.removeAttribute('hidden');
+ let m=0;for(let i=1;i<pts.length;i++)m+=mts(pts[i],pts[i-1]);m=Math.round(m);
+ const nom=A[rutaZ].n;
+ if(m<=8)return'Llegaste a '+nom;
+ return'Hacia '+nom+': ≈ '+m+' m'+(pts.length>2?' · ~'+Math.max(1,Math.round(m/75))+' min a pie':' en línea recta (aún no hay caminos trazados)');
+}
+$('#bRuta').onclick=e=>{
+ const b=e.currentTarget;
+ if(rutaZ!==null){rutaZ=null;pR.setAttribute('hidden','');b.setAttribute('aria-pressed','false');msg('');return}
+ if(!T){msg(modoCal?'Primero calibra el plano en el panel de abajo.':'La ruta aún no está disponible: falta calibrar el plano.');return}
+ rutaZ=cur;b.setAttribute('aria-pressed','true');
+ if(watch===null){ubicar(true);if(watch===null){rutaZ=null;b.setAttribute('aria-pressed','false')}}
+ else msg(trazar()||'Esperando tu ubicación…',true);
+};
+$('#bAuto').onclick=e=>{auto=!auto;ultAuto=-1;e.currentTarget.setAttribute('aria-pressed',auto);if(auto&&watch===null)ubicar(true)};
+
+/* Brújula: gira el cono del punto azul según hacia dónde apuntas */
+function onRumbo(e){
+ let h=e.webkitCompassHeading;
+ if(h==null&&e.absolute&&e.alpha!=null)h=360-e.alpha;
+ if(h==null||!T)return;
+ const t=h*rad,wr=Math.sin(t),wi=-Math.cos(t),zr=T.ar*wr-T.ai*wi,zi=T.ar*wi+T.ai*wr;
+ yoD.style.transform='rotate('+(Math.atan2(zi,zr)/rad+90).toFixed(1)+'deg)';yoD.hidden=false;
+}
+async function brujula(on){
+ removeEventListener('deviceorientationabsolute',onRumbo);removeEventListener('deviceorientation',onRumbo);yoD.hidden=true;
+ if(!on)return;
+ try{const DO=window.DeviceOrientationEvent;if(DO&&typeof DO.requestPermission==='function'&&await DO.requestPermission()!=='granted')return}catch(_){return}
+ addEventListener('deviceorientationabsolute',onRumbo);addEventListener('deviceorientation',onRumbo);
+}
+
 /* Localizador */
 function onPos(p){
  if(!T){ubicar(false);return}
  const q=proyecta(T,p.coords.latitude,p.coords.longitude),acc=Math.round(p.coords.accuracy||0);
  if(!(q.x>=-3&&q.x<=103&&q.y>=-3&&q.y<=103)){
-  yo.hidden=true;yoAcc.hidden=true;
+  yo.hidden=true;yoAcc.hidden=true;ultPos=null;
   msg('Parece que no estás dentro del plantel, por eso no se muestra tu punto en el plano.',true);return;
  }
  const x=Math.max(0,Math.min(100,q.x)),y=Math.max(0,Math.min(100,q.y));
- yo.style.left=x+'%';yo.style.top=y+'%';yo.hidden=false;
+ ultPos={x,y};yo.style.left=x+'%';yo.style.top=y+'%';yo.hidden=false;
  const d=Math.min(60,2*acc*q.esc*100);
  yoAcc.style.left=x+'%';yoAcc.style.top=y+'%';yoAcc.style.width=d+'%';yoAcc.hidden=d<2;
+ if(primera){primera=false;enfoca(x,y,2.2)}
  let best=null,bd=1e9;
- plan.querySelectorAll('.pin').forEach(pn=>{const dd=Math.hypot(parseFloat(pn.style.left)-x,(parseFloat(pn.style.top)-y)*K);if(dd<bd){bd=dd;best=pn}});
- msg('Estás en el plantel'+(best&&bd<=12?' · Cerca de: '+best.getAttribute('aria-label'):'')+(acc?' (±'+acc+' m)':''),true);
+ plan.querySelectorAll('.pin').forEach(pn=>{const dd=mts([parseFloat(pn.style.left),parseFloat(pn.style.top)],[x,y]);if(dd<bd){bd=dd;best=pn}});
+ const cerca=best&&bd<=20;
+ if(auto&&cerca&&+best.dataset.i!==ultAuto){ultAuto=+best.dataset.i;sel(ultAuto,best)}
+ const rt=trazar();
+ msg((rt?rt+' · ':'')+'Estás en el plantel'+(cerca?' · Cerca de: '+best.getAttribute('aria-label'):'')+(acc?' (±'+acc+' m)':''),true);
 }
 function ubicar(on){
  if(!on){
   if(watch!==null&&navigator.geolocation)navigator.geolocation.clearWatch(watch);
-  watch=null;yo.hidden=true;yoAcc.hidden=true;bLoc.setAttribute('aria-pressed','false');return;
+  watch=null;ultPos=null;rutaZ=null;pR.setAttribute('hidden','');yo.hidden=true;yoAcc.hidden=true;
+  bLoc.setAttribute('aria-pressed','false');$('#bRuta').setAttribute('aria-pressed','false');brujula(false);return;
  }
  if(!('geolocation' in navigator)){msg('Tu navegador no permite obtener la ubicación.');return}
  if(!window.isSecureContext){msg('La ubicación solo funciona con una dirección segura (https).');return}
  if(!T){msg(modoCal?'Primero calibra el plano en el panel de abajo.':'El localizador aún no está disponible: falta calibrar el plano. Avisa a quien administra el museo.');return}
- bLoc.setAttribute('aria-pressed','true');msg('Buscando tu ubicación…',true);
+ bLoc.setAttribute('aria-pressed','true');msg('Buscando tu ubicación…',true);primera=true;brujula(true);
  watch=navigator.geolocation.watchPosition(onPos,err=>{
   msg(err.code===1?'Permiso de ubicación denegado. Actívalo en los ajustes del navegador.':err.code===3?'Tardó demasiado en obtener tu ubicación. Intenta al aire libre.':'No se pudo obtener tu ubicación.');
   if(err.code===1)ubicar(false);
