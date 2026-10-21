@@ -1,5 +1,5 @@
 const VERSION='museo-cetis69-v1';
-const NUCLEO=['index.html','salon-fama.html','libro-visitas.html','mapa-360.html','archivo-fotografico.html','creditos.html','qr-zonas.html','estilos.css','paginas.css','comun.js','qrcode.js','datos.json','manifest.webmanifest','iconos/icono-180.png','iconos/icono-192.png','iconos/icono-512.png'];
+const NUCLEO=['index.html','salon-fama.html','libro-visitas.html','mapa-360.html','archivo-fotografico.html','creditos.html','qr-zonas.html','estilos.css','paginas.css','comun.js','qrcode.js','datos.json','manifest.webmanifest','icono-180.png','icono-192.png','icono-512.png'];
 const EXTERNOS=['https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js','https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500;600;700;800&display=swap'];
 const ESPERA_RED=4000;
 
