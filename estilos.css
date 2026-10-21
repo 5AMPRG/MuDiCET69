@@ -34,14 +34,16 @@ section{padding:clamp(4rem,9vw,8rem) var(--pad)}
 @keyframes load{to{width:100%}}
 
 nav{position:fixed;top:0;left:0;right:0;height:calc(var(--nav) + env(safe-area-inset-top,0px));padding:env(safe-area-inset-top,0px) var(--pad) 0;z-index:90;display:flex;align-items:center;justify-content:space-between;transition:.4s;color:#fff}
-nav.solid{background:linear-gradient(rgba(255,255,255,.45),rgba(255,255,255,.45)),var(--img-fondo) center/320px repeat;backdrop-filter:blur(10px);color:var(--negro);border-bottom:1px solid var(--linea);box-shadow:0 10px 30px -20px rgba(92,13,34,.45)}
+nav::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:0;transition:opacity .4s;background:linear-gradient(rgba(255,255,255,.45),rgba(255,255,255,.45)),var(--img-fondo) center/320px repeat;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+nav.solid::before{opacity:1}
+nav.solid{color:var(--negro);border-bottom:1px solid var(--linea);box-shadow:0 10px 30px -20px rgba(92,13,34,.45)}
 nav .logo .mark{border:0;width:46px;height:46px;background:currentColor;-webkit-mask:var(--img-logo) center/contain no-repeat;mask:var(--img-logo) center/contain no-repeat;transition:background .4s}
 nav.solid .logo .mark{background:var(--guinda)}
 footer .logo .mark.dgeti{border:0;width:54px;height:54px;background:#fff;-webkit-mask:var(--img-dgeti) center/contain no-repeat;mask:var(--img-dgeti) center/contain no-repeat}
-.logo{display:flex;align-items:center;gap:.8rem;font-weight:700;letter-spacing:.2em;font-size:.9rem}
+.logo{flex:none;white-space:nowrap;display:flex;align-items:center;gap:.8rem;font-weight:700;letter-spacing:.2em;font-size:.9rem}
 .logo .mark{width:34px;height:34px;border:1px solid currentColor;display:grid;place-items:center;font-size:.9rem}
 .menu{display:flex;gap:2rem;list-style:none}
-.menu a{font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;font-weight:500;position:relative;padding:.4rem 0}
+.menu a{font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;font-weight:500;position:relative;padding:.4rem 0;white-space:nowrap}
 .menu a::after{content:"";position:absolute;left:0;bottom:0;height:1px;width:0;background:currentColor;transition:.3s}
 .menu a:hover::after{width:100%}
 .burger{display:none;font-size:1.3rem}
@@ -151,7 +153,7 @@ footer .logo{color:#fff;margin-bottom:1rem}
 .rv.in{opacity:1;transform:none}
 
 @media (max-width:960px){
- .menu{position:fixed;inset:0 0 0 auto;width:min(320px,82vw);background:#fff;color:var(--negro);flex-direction:column;padding:6rem 2rem;transform:translateX(100%);transition:.45s;gap:1.4rem;box-shadow:-20px 0 40px rgba(0,0,0,.15)}
+ .menu{position:fixed;inset:0 0 0 auto;width:min(320px,82vw);background:#fff;color:var(--negro);flex-direction:column;align-items:flex-start;padding:calc(6rem + env(safe-area-inset-top,0px)) 2rem 2rem;overflow-y:auto;z-index:99;transform:translateX(100%);transition:.45s;gap:1.4rem;box-shadow:-20px 0 40px rgba(0,0,0,.15)}
  .menu.open{transform:none}
  .burger{display:block;z-index:100}
  .tl-body,.two{grid-template-columns:1fr}
@@ -198,3 +200,17 @@ footer .logo{color:#fff;margin-bottom:1rem}
 .bq-list span{font-size:.8rem;color:var(--gris);overflow-wrap:anywhere}
 .bq-vacio{padding:1.6rem 1.4rem;color:var(--gris);font-size:.85rem}
 @media (max-width:560px){.bq-in kbd{display:none}}
+
+/* ===== Menú del inicio (8 enlaces): compacto en laptops y hamburguesa en pantallas medianas ===== */
+@media (min-width:1181px){
+ body[data-menu="inicio"] .menu{gap:clamp(.8rem,1.4vw,1.6rem)}
+}
+@media (min-width:1181px) and (max-width:1500px){
+ body[data-menu="inicio"] .menu a{font-size:.62rem;letter-spacing:.12em}
+}
+@media (min-width:961px) and (max-width:1180px){
+ body[data-menu="inicio"] .menu{position:fixed;inset:0 0 0 auto;width:min(320px,82vw);background:#fff;color:var(--negro);flex-direction:column;align-items:flex-start;padding:calc(6rem + env(safe-area-inset-top,0px)) 2rem 2rem;overflow-y:auto;z-index:99;transform:translateX(100%);transition:.45s;gap:1.4rem;box-shadow:-20px 0 40px rgba(0,0,0,.15)}
+ body[data-menu="inicio"] .menu a{font-size:.68rem;letter-spacing:.2em}
+ body[data-menu="inicio"] .menu.open{transform:none}
+ body[data-menu="inicio"] .burger{display:block;z-index:100}
+}
