@@ -122,6 +122,10 @@
 .pruta{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .pruta[hidden],.yo-dir[hidden]{display:none}
 .yo-dir{position:absolute;left:-26px;top:-26px;width:52px;height:52px;background:radial-gradient(circle,rgba(26,115,232,.75),rgba(26,115,232,0) 70%);clip-path:polygon(50% 50%,10% 0,90% 0)}
+@media (orientation:portrait){
+ .plwrap.isfs .plan{width:100vw;height:100vh;height:100dvh}
+ .plwrap.isfs .pstage{inset:auto;top:0;left:0;height:100%;width:auto;aspect-ratio:561/373}
+}
 .skip{position:absolute;left:-999px;top:0;z-index:300;background:#fff;color:var(--guinda);padding:.7rem 1.1rem;font-size:.75rem;letter-spacing:.12em;font-weight:600}
 .skip:focus{left:1rem;top:1rem}
 </style>
@@ -164,7 +168,7 @@ const SEG_RECORRIDO=D.ajustes.recorridoSegundos;
 const slug=s=>String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 const idDe=i=>A[i].id||slug(A[i].n);
 const W=$('#pwrap'),bFs=$('#bFs'),bSpin=$('#bSpin'),bTour=$('#bTour'),prog=$('#pP'),pT=$('#pT');
-let ini=true,interno=false,tourT=null;
+let ini=true,interno=false,tourT=null;const ZM={s:1,x:0,y:0};
 
 
 
@@ -178,14 +182,14 @@ plan.querySelectorAll('.pin').forEach((p,n)=>{
  p.style.animationDelay=(n*70)+'ms';
 });
 function colocar(){
- const r=plan.getBoundingClientRect(),Wp=r.width,Hp=r.height;if(!Wp)return;
+ const r=plan.getBoundingClientRect(),stg=$('#pstage'),Wp=stg.offsetWidth,Hp=stg.offsetHeight;if(!Wp)return;
  const pins=[...plan.querySelectorAll('.pin')];
  const pos=pins.map(p=>({x:parseFloat(p.style.left)/100*Wp,y:parseFloat(p.style.top)/100*Hp}));
  const R=23.5,RP=29,ESC=1.2,M=3,BORDE=4,MAXD=120,PASO=6;
  const labs=pins.map(p=>{const l=p.querySelector('.plbl');l.className='plbl';l.style.right='auto';l.style.bottom='auto';l.style.transform='none';return l});
  const dims=labs.map(l=>({w:l.offsetWidth,h:l.offsetHeight}));
  const obst=[];
- plan.querySelectorAll('.ptog,.pctl').forEach(bt=>{if(bt.offsetWidth){const q=bt.getBoundingClientRect();obst.push({x:q.left-r.left-M,y:q.top-r.top-M,w:q.width+2*M,h:q.height+2*M})}});
+ plan.querySelectorAll('.ptog,.pctl').forEach(bt=>{if(bt.offsetWidth){const q=bt.getBoundingClientRect();obst.push({x:(q.left-r.left-ZM.x)/ZM.s-M,y:(q.top-r.top-ZM.y)/ZM.s-M,w:q.width/ZM.s+2*M,h:q.height/ZM.s+2*M})}});
  const hit=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
  const crece=(b,c)=>({x:c.x+(b.x-c.x)*ESC,y:c.y+(b.y-c.y)*ESC,w:b.w*ESC,h:b.h*ESC});
  const inf=(b,m)=>({x:b.x-m,y:b.y-m,w:b.w+2*m,h:b.h+2*m});
@@ -374,7 +378,9 @@ function estadoPF(){
  bPF.innerHTML=on?'<i class="fa-solid fa-compress"></i>':'<i class="fa-solid fa-expand"></i>';
  bPF.setAttribute('aria-label',on?'Salir de pantalla completa':'Ver el plano en pantalla completa');bPF.title=on?'Salir':'Pantalla completa';
  if(!on&&!W.classList.contains('fsx'))document.documentElement.style.overflow='';
- ZM.s=1;ZM.x=0;ZM.y=0;aplicaZ();setTimeout(colocar,150);
+ try{if(on&&fsEl2()===PW)screen.orientation.lock('landscape').catch(()=>{});else if(!on)screen.orientation.unlock()}catch(_){}
+ setTimeout(()=>{reinicia();colocar()},150);
+ if(on)setTimeout(()=>{if(enPF()&&innerHeight>innerWidth)msg('Gira el celular en horizontal para ver todo el plano. Desliza para recorrerlo.')},700);
 }
 function fallbackPF(){PW.classList.add('fsx');document.documentElement.style.overflow='hidden';estadoPF()}
 function salirPF(){
@@ -429,17 +435,18 @@ function pintaRefs(){
 const guardaRefs=()=>{try{localStorage.setItem(GK,JSON.stringify(refs))}catch(e){}};
 
 /* Zoom y desplazamiento del plano (rueda con Ctrl, pellizco, arrastre, botones, doble clic) */
-const stage=$('#pstage'),pR=$('#pruta'),rC=$('#rC'),rL=$('#rL'),yoD=$('#yoD'),ZM={s:1,x:0,y:0},SMAX=4;
+const stage=$('#pstage'),pR=$('#pruta'),rC=$('#rC'),rL=$('#rL'),yoD=$('#yoD'),SMAX=4;
 function aplicaZ(){
- const r=plan.getBoundingClientRect();
+ const vw=plan.clientWidth,vh=plan.clientHeight,sw=stage.offsetWidth,sh=stage.offsetHeight;
  ZM.s=Math.max(1,Math.min(SMAX,ZM.s));
- ZM.x=Math.min(0,Math.max(r.width*(1-ZM.s),ZM.x));ZM.y=Math.min(0,Math.max(r.height*(1-ZM.s),ZM.y));
+ ZM.x=Math.max(Math.min(0,vw-sw*ZM.s),Math.min(0,ZM.x));ZM.y=Math.max(Math.min(0,vh-sh*ZM.s),Math.min(0,ZM.y));
  stage.style.transform='translate('+ZM.x+'px,'+ZM.y+'px) scale('+ZM.s+')';
  stage.style.setProperty('--z',ZM.s);plan.classList.toggle('zm',ZM.s>1);
- if(r.width){const u=r.width*ZM.s/100;rC.setAttribute('stroke-width',8/u);rL.setAttribute('stroke-width',4.5/u)}
+ if(sw){const u=sw*ZM.s/100;rC.setAttribute('stroke-width',8/u);rL.setAttribute('stroke-width',4.5/u)}
 }
+function reinicia(){ZM.s=1;ZM.y=0;ZM.x=(plan.clientWidth-stage.offsetWidth)/2;aplicaZ()}
 function zoomEn(f,cx,cy){const k=Math.max(1,Math.min(SMAX,ZM.s*f))/ZM.s;ZM.x=cx-(cx-ZM.x)*k;ZM.y=cy-(cy-ZM.y)*k;ZM.s*=k;aplicaZ()}
-function enfoca(x,y,s){const r=plan.getBoundingClientRect();ZM.s=Math.max(ZM.s,Math.min(SMAX,s));ZM.x=r.width/2-x/100*r.width*ZM.s;ZM.y=r.height/2-y/100*r.height*ZM.s;aplicaZ()}
+function enfoca(x,y,k){const vw=plan.clientWidth,vh=plan.clientHeight,sw=stage.offsetWidth,sh=stage.offsetHeight;ZM.s=Math.max(ZM.s,Math.min(SMAX,k));ZM.x=vw/2-x/100*sw*ZM.s;ZM.y=vh/2-y/100*sh*ZM.s;aplicaZ()}
 const centro=f=>{const r=plan.getBoundingClientRect();zoomEn(f,r.width/2,r.height/2)};
 $('#bZin').onclick=()=>centro(1.6);$('#bZout').onclick=()=>centro(1/1.6);
 const ptrs=new Map();let pinch=null,movido=false;
@@ -474,6 +481,8 @@ plan.addEventListener('dblclick',e=>{
  const r=plan.getBoundingClientRect();
  if(ZM.s>=SMAX){ZM.s=1;ZM.x=0;ZM.y=0;aplicaZ()}else zoomEn(2,e.clientX-r.left,e.clientY-r.top);
 });
+
+let rz2;addEventListener('resize',()=>{clearTimeout(rz2);rz2=setTimeout(()=>{PW.classList.contains('isfs')?reinicia():aplicaZ()},100)});
 
 /* Rutas: usa ajustes.caminos (nodos y aristas en % del plano); sin caminos dibuja línea recta */
 const CAM=(D.ajustes&&D.ajustes.caminos)||{};
@@ -579,7 +588,7 @@ bCalM.onclick=()=>{
 plan.addEventListener('click',e=>{
  if(!armado||e.target.closest('.pctl,.ptog'))return;
  e.stopPropagation();e.preventDefault();
- const r=plan.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*100,y=(e.clientY-r.top)/r.height*100;
+ const r=stage.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*100,y=(e.clientY-r.top)/r.height*100;
  armado=false;bCalM.setAttribute('aria-pressed','false');
  if(!navigator.geolocation||!window.isSecureContext){msg('Para calibrar se necesita https y el permiso de ubicación.');return}
  msg('Obteniendo tu posición… no te muevas.',true);
