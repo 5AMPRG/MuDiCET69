@@ -77,6 +77,38 @@
 .plan{aspect-ratio:561/373}
 .plan>img{width:66.5%;height:150.4%}
 #al small{display:inline-block;margin-left:.35rem;font-size:.8em;opacity:.6}
+
+/* ===== Plano: pantalla completa y localizador ===== */
+.plcol{display:grid;align-content:start;gap:0}
+.plwrap{position:relative}
+.plwrap.isfs{display:grid;place-items:center;background:#14090d}
+.plwrap.fsx{position:fixed;inset:0;z-index:300}
+.plwrap.isfs .plan{width:min(100vw,calc(100vh*561/373));height:auto}
+@supports (height:100dvh){.plwrap.isfs .plan{width:min(100vw,calc(100dvh*561/373))}}
+.plan .pctl{z-index:6}
+.pbot{display:grid;gap:.5rem;margin-top:.6rem}
+.pcap{display:none}
+.pcap b{display:block;font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;font-weight:600}
+.pcap small{display:block;font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;opacity:.78}
+.pcap .btn{padding:.6rem .9rem;font-size:.6rem}
+.pmsg{padding:.7rem 1rem;background:var(--gris-c);border-left:2px solid var(--guinda);font-size:.8rem;overflow-wrap:anywhere}
+.pmsg[hidden]{display:none}
+.plwrap.isfs .pbot{position:absolute;left:.8rem;right:.8rem;bottom:calc(.8rem + env(safe-area-inset-bottom,0px));margin:0;max-width:540px;z-index:7}
+.plwrap.isfs .pcap{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;background:rgba(20,9,13,.85);color:#fff;padding:.7rem 1rem}
+.plwrap.isfs .pmsg{background:rgba(255,255,255,.96)}
+.yo{position:absolute;z-index:5;width:0;height:0;pointer-events:none}
+.yo[hidden],.yo-acc[hidden]{display:none}
+.yo-dot{position:absolute;left:-9px;top:-9px;width:18px;height:18px;border-radius:50%;background:#1a73e8;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.45)}
+.yo-dot::after{content:"";position:absolute;inset:-3px;border-radius:50%;border:2px solid #1a73e8;animation:yoP 1.8s ease-out infinite}
+@keyframes yoP{to{transform:scale(2.6);opacity:0}}
+.yo-lbl{position:absolute;left:0;top:14px;transform:translateX(-50%);white-space:nowrap;background:#1a73e8;color:#fff;font-size:.56rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:.22rem .5rem;border-radius:2px;box-shadow:0 3px 8px rgba(0,0,0,.3)}
+.yo-acc{position:absolute;z-index:4;transform:translate(-50%,-50%);aspect-ratio:1;border-radius:50%;background:rgba(26,115,232,.16);border:1px solid rgba(26,115,232,.55);pointer-events:none}
+.geop{margin-top:1.4rem;padding:1.2rem 1.4rem;border:1px dashed var(--guinda);background:var(--gris-c);font-size:.82rem}
+.geop[hidden]{display:none}
+.geop h3{font-size:.85rem;color:var(--guinda);margin-bottom:.6rem}
+.geop h3 small{font-size:.6rem;letter-spacing:.2em;color:var(--gris);margin-left:.5rem}
+.geop .macts{margin:1rem 0 .8rem}
+.geop code{font-size:.78rem;background:#fff;padding:0 .3rem}
 .skip{position:absolute;left:-999px;top:0;z-index:300;background:#fff;color:var(--guinda);padding:.7rem 1.1rem;font-size:.75rem;letter-spacing:.12em;font-weight:600}
 .skip:focus{left:1rem;top:1rem}
 </style>
@@ -86,7 +118,11 @@
 <div id="loader"><div class="ld"><h2>CETIS 69</h2><p>MUSEO DIGITAL</p><div class="bar"><i></i></div></div></div>
 <nav id="nav" class="solid"></nav>
 <header class="phead"><div class="rv"><div class="eyebrow">Recorrido virtual</div><h1 class="title">Mapa interactivo <b>360°</b></h1><p>Selecciona un punto del plano y gira la vista panorámica para explorar los talleres, laboratorios, canchas y áreas verdes del plantel.</p></div></header>
-<section><div class="mp"><div class="plan slot" id="plan" data-slot="plano-plantel"><img src="mapa-escolar.jpeg" alt="Plano del plantel"><i class="fa-regular fa-map"></i><span class="tag">Plano del plantel</span><button type="button" class="ptog" id="bLbl" aria-pressed="true"><i class="fa-solid fa-tag"></i> Etiquetas</button></div><div><div class="pwrap" id="pwrap"><div class="pano" id="pano" data-slot="panoramica-360"><span id="hint"><i class="fa-solid fa-arrows-left-right"></i> Arrastra para girar</span></div>
+<section><div class="mp"><div class="plcol"><div class="plwrap" id="plwrap"><div class="plan slot" id="plan" data-slot="plano-plantel"><img src="mapa-escolar.jpeg" alt="Plano del plantel"><i class="fa-regular fa-map"></i><span class="tag">Plano del plantel</span><button type="button" class="ptog" id="bLbl" aria-pressed="true"><i class="fa-solid fa-tag"></i> Etiquetas</button>
+<div class="pctl"><button type="button" id="bLoc" aria-pressed="false" aria-label="Mostrar mi ubicación en el plano" title="Mi ubicación"><i class="fa-solid fa-location-crosshairs"></i></button><button type="button" id="bPlFs" aria-label="Ver el plano en pantalla completa" title="Pantalla completa"><i class="fa-solid fa-expand"></i></button></div>
+<span class="yo-acc" id="yoAcc" hidden></span><div class="yo" id="yo" hidden><span class="yo-dot"></span><span class="yo-lbl">Estás aquí</span></div></div>
+<div class="pbot"><div class="pcap"><div><b></b><small></small></div><button type="button" class="btn ghost sm" id="bVer"><i class="fa-solid fa-street-view"></i> Ver vista 360°</button></div><div class="pmsg" id="plMsg" role="status" aria-live="polite" hidden></div></div></div>
+<div class="geop" id="geoP" hidden><h3>Calibrar localizador <small>Herramienta interna</small></h3><p>1) Párate en un lugar reconocible del plantel. 2) Pulsa «Marcar punto» y toca ese mismo lugar en el plano. 3) Repite en otro lugar a más de 20 m del primero. Con 2 o más puntos se activa el localizador. Al terminar, pulsa «Copiar JSON» y pégalo dentro de <code>"ajustes"</code> en datos.json para que funcione en todos los dispositivos.</p><div class="macts"><button type="button" class="btn ghost sm" id="bCalM" aria-pressed="false"><i class="fa-solid fa-crosshairs"></i> Marcar punto</button><button type="button" class="btn ghost sm" id="bCalJ"><i class="fa-solid fa-copy"></i> Copiar JSON</button><button type="button" class="btn ghost sm" id="bCalB"><i class="fa-solid fa-trash"></i> Borrar puntos</button></div><p id="geoL"></p></div></div><div><div class="pwrap" id="pwrap"><div class="pano" id="pano" data-slot="panoramica-360"><span id="hint"><i class="fa-solid fa-arrows-left-right"></i> Arrastra para girar</span></div>
 <div class="pctl"><button type="button" id="bPrev" aria-label="Zona anterior" title="Zona anterior"><i class="fa-solid fa-chevron-left"></i></button><button type="button" id="bNext" aria-label="Zona siguiente" title="Zona siguiente"><i class="fa-solid fa-chevron-right"></i></button><button type="button" id="bSpin" aria-pressed="false" aria-label="Giro automático" title="Giro automático"><i class="fa-solid fa-rotate"></i></button></div>
 <div class="ptit" id="pT"><i class="fa-solid fa-location-dot"></i><div><b></b><small></small></div></div>
 <button type="button" class="pfs" id="bFs" aria-label="Ver en pantalla completa"><i class="fa-solid fa-expand"></i><span>Pantalla completa</span></button>
@@ -135,8 +171,8 @@ function colocar(){
  const R=23.5,RP=29,ESC=1.2,M=3,BORDE=4,MAXD=120,PASO=6;
  const labs=pins.map(p=>{const l=p.querySelector('.plbl');l.className='plbl';l.style.right='auto';l.style.bottom='auto';l.style.transform='none';return l});
  const dims=labs.map(l=>({w:l.offsetWidth,h:l.offsetHeight}));
- const bt=$('#bLbl'),obst=[];
- if(bt&&bt.offsetWidth){const q=bt.getBoundingClientRect();obst.push({x:q.left-r.left-M,y:q.top-r.top-M,w:q.width+2*M,h:q.height+2*M})}
+ const obst=[];
+ plan.querySelectorAll('.ptog,.pctl').forEach(bt=>{if(bt.offsetWidth){const q=bt.getBoundingClientRect();obst.push({x:q.left-r.left-M,y:q.top-r.top-M,w:q.width+2*M,h:q.height+2*M})}});
  const hit=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
  const crece=(b,c)=>({x:c.x+(b.x-c.x)*ESC,y:c.y+(b.y-c.y)*ESC,w:b.w*ESC,h:b.h*ESC});
  const inf=(b,m)=>({x:b.x-m,y:b.y-m,w:b.w+2*m,h:b.h+2*m});
@@ -302,7 +338,143 @@ sel=function(i,pin){
  bSpin.disabled=!z.pano;if(!z.pano&&spin)girar(false);
  if(!ini){try{history.replaceState(null,'','?zona='+idDe(i))}catch(e){}}
  if(tourT)barra();
+ capPlan(i);
 };
+
+
+/* ===== Plano: pantalla completa y localizador de ubicación ===== */
+const PW=$('#plwrap'),bPF=$('#bPlFs'),bLoc=$('#bLoc'),pMsg=$('#plMsg'),yo=$('#yo'),yoAcc=$('#yoAcc'),geoP=$('#geoP'),geoL=$('#geoL');
+const K=373/561,GK='c69_geo',rad=Math.PI/180;
+const geoCfg=(D.ajustes&&D.ajustes.geoMapa&&D.ajustes.geoMapa.referencias)||[];
+const modoCal=new URLSearchParams(location.search).get('calibrar')==='1';
+let refs=[];try{const l=JSON.parse(localStorage.getItem(GK)||'[]');if(Array.isArray(l))refs=l}catch(e){}
+if(!refs.length)refs=geoCfg.map(r=>({...r}));
+let T=null,watch=null,armado=false,mT;
+
+function msg(t,fijo){pMsg.textContent=t||'';pMsg.hidden=!t;clearTimeout(mT);if(t&&!fijo)mT=setTimeout(()=>{pMsg.hidden=true},7000)}
+
+/* Pantalla completa del plano */
+const fsEl2=()=>document.fullscreenElement||document.webkitFullscreenElement;
+const enPF=()=>fsEl2()===PW||PW.classList.contains('fsx');
+function estadoPF(){
+ const on=enPF();PW.classList.toggle('isfs',on);
+ bPF.innerHTML=on?'<i class="fa-solid fa-compress"></i>':'<i class="fa-solid fa-expand"></i>';
+ bPF.setAttribute('aria-label',on?'Salir de pantalla completa':'Ver el plano en pantalla completa');bPF.title=on?'Salir':'Pantalla completa';
+ if(!on&&!W.classList.contains('fsx'))document.documentElement.style.overflow='';
+ setTimeout(colocar,150);
+}
+function fallbackPF(){PW.classList.add('fsx');document.documentElement.style.overflow='hidden';estadoPF()}
+function salirPF(){
+ if(PW.classList.contains('fsx')){PW.classList.remove('fsx');estadoPF()}
+ else if(fsEl2())(document.exitFullscreen||document.webkitExitFullscreen).call(document);
+}
+function pantallaPlano(){
+ if(enPF()){salirPF();return}
+ const rq=PW.requestFullscreen||PW.webkitRequestFullscreen;
+ if(!rq){fallbackPF();return}
+ try{const pr=rq.call(PW);if(pr&&pr.catch)pr.catch(fallbackPF)}catch(e){fallbackPF()}
+}
+bPF.onclick=pantallaPlano;
+document.addEventListener('fullscreenchange',estadoPF);document.addEventListener('webkitfullscreenchange',estadoPF);
+addEventListener('keydown',e=>{if(e.key==='Escape'&&PW.classList.contains('fsx'))salirPF()});
+$('#bVer').onclick=()=>{salirPF();setTimeout(()=>W.scrollIntoView({behavior:'smooth',block:'start'}),250)};
+function capPlan(i){
+ const z=A[i],c=PW.querySelector('.pcap');
+ c.querySelector('b').textContent=z.n;
+ c.querySelector('small').textContent=(z.pano?'Vista 360° disponible':'Vista 360° próximamente')+' · '+(i+1)+'/'+A.length;
+}
+
+/* Calibración: transformación de semejanza (giro + escala + traslación) por mínimos cuadrados */
+function ajusta(rs){
+ if(!rs||rs.length<2)return null;
+ const n=rs.length,lat0=rs.reduce((t,r)=>t+r.lat,0)/n,lng0=rs.reduce((t,r)=>t+r.lng,0)/n,c=Math.cos(lat0*rad);
+ const Wm=rs.map(r=>[(r.lng-lng0)*c*111320,-(r.lat-lat0)*110540]);
+ const Z=rs.map(r=>[r.x/100,r.y/100*K]);
+ const mw=[0,1].map(k=>Wm.reduce((t,p)=>t+p[k],0)/n),mz=[0,1].map(k=>Z.reduce((t,p)=>t+p[k],0)/n);
+ let nr=0,ni=0,den=0;
+ Wm.forEach((w,j)=>{const wr=w[0]-mw[0],wi=w[1]-mw[1],zr=Z[j][0]-mz[0],zi=Z[j][1]-mz[1];nr+=wr*zr+wi*zi;ni+=wr*zi-wi*zr;den+=wr*wr+wi*wi});
+ if(den<200)return null;
+ return{lat0,lng0,c,mw,mz,ar:nr/den,ai:ni/den};
+}
+function proyecta(t,lat,lng){
+ const wr=(lng-t.lng0)*t.c*111320-t.mw[0],wi=-(lat-t.lat0)*110540-t.mw[1];
+ const zr=t.mz[0]+t.ar*wr-t.ai*wi,zi=t.mz[1]+t.ar*wi+t.ai*wr;
+ return{x:zr*100,y:zi/K*100,esc:Math.hypot(t.ar,t.ai)};
+}
+function errorMedio(){
+ if(!T)return 0;
+ const e=refs.map(r=>{const q=proyecta(T,r.lat,r.lng);return Math.hypot((q.x-r.x)/100,(q.y-r.y)/100*K)/T.esc});
+ return Math.sqrt(e.reduce((t,v)=>t+v*v,0)/e.length);
+}
+function pintaRefs(){
+ T=ajusta(refs);
+ let t=refs.length+(refs.length===1?' punto marcado':' puntos marcados');
+ if(T)t+=' · Calibración lista · error medio ≈ '+errorMedio().toFixed(1)+' m';
+ else t+=refs.length<2?' · Marca al menos 2 puntos.':' · Los puntos están muy juntos; marca otro a más de 20 m.';
+ geoL.textContent=t;
+}
+const guardaRefs=()=>{try{localStorage.setItem(GK,JSON.stringify(refs))}catch(e){}};
+
+/* Localizador */
+function onPos(p){
+ if(!T){ubicar(false);return}
+ const q=proyecta(T,p.coords.latitude,p.coords.longitude),acc=Math.round(p.coords.accuracy||0);
+ if(!(q.x>=-3&&q.x<=103&&q.y>=-3&&q.y<=103)){
+  yo.hidden=true;yoAcc.hidden=true;
+  msg('Parece que no estás dentro del plantel, por eso no se muestra tu punto en el plano.',true);return;
+ }
+ const x=Math.max(0,Math.min(100,q.x)),y=Math.max(0,Math.min(100,q.y));
+ yo.style.left=x+'%';yo.style.top=y+'%';yo.hidden=false;
+ const d=Math.min(60,2*acc*q.esc*100);
+ yoAcc.style.left=x+'%';yoAcc.style.top=y+'%';yoAcc.style.width=d+'%';yoAcc.hidden=d<2;
+ let best=null,bd=1e9;
+ plan.querySelectorAll('.pin').forEach(pn=>{const dd=Math.hypot(parseFloat(pn.style.left)-x,(parseFloat(pn.style.top)-y)*K);if(dd<bd){bd=dd;best=pn}});
+ msg('Estás en el plantel'+(best&&bd<=12?' · Cerca de: '+best.getAttribute('aria-label'):'')+(acc?' (±'+acc+' m)':''),true);
+}
+function ubicar(on){
+ if(!on){
+  if(watch!==null&&navigator.geolocation)navigator.geolocation.clearWatch(watch);
+  watch=null;yo.hidden=true;yoAcc.hidden=true;bLoc.setAttribute('aria-pressed','false');return;
+ }
+ if(!('geolocation' in navigator)){msg('Tu navegador no permite obtener la ubicación.');return}
+ if(!window.isSecureContext){msg('La ubicación solo funciona con una dirección segura (https).');return}
+ if(!T){msg(modoCal?'Primero calibra el plano en el panel de abajo.':'El localizador aún no está disponible: falta calibrar el plano. Avisa a quien administra el museo.');return}
+ bLoc.setAttribute('aria-pressed','true');msg('Buscando tu ubicación…',true);
+ watch=navigator.geolocation.watchPosition(onPos,err=>{
+  msg(err.code===1?'Permiso de ubicación denegado. Actívalo en los ajustes del navegador.':err.code===3?'Tardó demasiado en obtener tu ubicación. Intenta al aire libre.':'No se pudo obtener tu ubicación.');
+  if(err.code===1)ubicar(false);
+ },{enableHighAccuracy:true,maximumAge:2000,timeout:20000});
+}
+bLoc.onclick=()=>ubicar(watch===null);
+
+/* Panel de calibración (solo con ?calibrar=1) */
+geoP.hidden=!modoCal;
+const bCalM=$('#bCalM');
+bCalM.onclick=()=>{
+ armado=!armado;bCalM.setAttribute('aria-pressed',armado);
+ msg(armado?'Párate en un punto reconocible y toca ese mismo lugar en el plano.':'',true);
+};
+plan.addEventListener('click',e=>{
+ if(!armado||e.target.closest('.pctl,.ptog'))return;
+ e.stopPropagation();e.preventDefault();
+ const r=plan.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*100,y=(e.clientY-r.top)/r.height*100;
+ armado=false;bCalM.setAttribute('aria-pressed','false');
+ if(!navigator.geolocation||!window.isSecureContext){msg('Para calibrar se necesita https y el permiso de ubicación.');return}
+ msg('Obteniendo tu posición… no te muevas.',true);
+ navigator.geolocation.getCurrentPosition(p=>{
+  const acc=Math.round(p.coords.accuracy);
+  refs.push({lat:+p.coords.latitude.toFixed(6),lng:+p.coords.longitude.toFixed(6),x:+x.toFixed(1),y:+y.toFixed(1)});
+  guardaRefs();pintaRefs();
+  msg('Punto guardado (precisión ±'+acc+' m).'+(acc>25?' La precisión es baja; conviene repetirlo al aire libre.':''));
+ },()=>msg('No se pudo leer tu ubicación para calibrar.'),{enableHighAccuracy:true,maximumAge:0,timeout:25000});
+},true);
+$('#bCalJ').onclick=async()=>{
+ const j='"geoMapa": '+JSON.stringify({referencias:refs.map(({lat,lng,x,y})=>({lat,lng,x,y}))},null,1);
+ try{await navigator.clipboard.writeText(j);msg('JSON copiado. Pégalo dentro de "ajustes" en datos.json.')}
+ catch(_){prompt('Copia esto y pégalo dentro de "ajustes" en datos.json:',j)}
+};
+$('#bCalB').onclick=()=>{refs=[];try{localStorage.removeItem(GK)}catch(e){}pintaRefs();ubicar(false);msg('Puntos borrados.')};
+pintaRefs();
 
 
 const par=new URLSearchParams(location.search).get('zona')||decodeURIComponent(location.hash.slice(1));
