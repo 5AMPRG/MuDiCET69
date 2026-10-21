@@ -103,7 +103,7 @@
     },
     {
      "i": "fa-solid fa-phone",
-     "t": "Teléfono"
+     "t": "+64 4-243 5127"
     },
     {
      "i": "fa-solid fa-envelope",
@@ -140,22 +140,17 @@
     {
      "i": "fa-brands fa-facebook-f",
      "t": "Facebook",
-     "u": "#"
+     "u": "https://www.facebook.com/cetis69oficial/"
     },
     {
      "i": "fa-brands fa-instagram",
      "t": "Instagram",
-     "u": "#"
+     "u": "https://www.instagram.com/cetis069/?utm_source=ig_web_button_share_sheet"
     },
     {
      "i": "fa-brands fa-tiktok",
      "t": "TikTok",
-     "u": "#"
-    },
-    {
-     "i": "fa-brands fa-youtube",
-     "t": "YouTube",
-     "u": "#"
+     "u": "https://www.tiktok.com/@comite.ce69?is_from_webapp=1&sender_device=pc"
     }
    ],
    "copyright": "© 2026 CETIS 69 · TODOS LOS DERECHOS RESERVADOS"
@@ -366,27 +361,27 @@
    ]
   },
   {
-   "y": "2020",
-   "t": "Resiliencia",
-   "d": "Texto sobre la adaptación y la educación a distancia.",
-   "s": [
-    [
-     "fa-laptop-code",
-     "Programación"
-    ],
-    [
-     "fa-calculator",
-     "Contabilidad"
-    ],
-    [
-     "fa-leaf",
-     "Ecología"
-    ],
-    [
-     "fa-bolt",
-     "Electricidad"
-    ]
-   ],
+      "y": "2020",
+      "t": "Resiliencia",
+      "d": "Texto sobre la adaptación y la educación a distancia.",
+      "s": [
+        [
+          "fa-laptop-code",
+          "Programación"
+        ],
+        [
+          "fa-users",
+          "Administración de recursos humanos"
+        ],
+        [
+          "fa-industry",
+          "Producción industrial"
+        ],
+        [
+          "fa-solar-panel",
+          "Fuentes alternas"
+        ]
+      ],
    "docentes": [
     {
      "n": "Nombre del docente",
@@ -415,27 +410,35 @@
    ]
   },
   {
-   "y": "2026",
-   "t": "46 años de historia",
-   "d": "Texto sobre el aniversario y el presente de la institución.",
-   "s": [
-    [
-     "fa-laptop-code",
-     "Programación"
-    ],
-    [
-     "fa-calculator",
-     "Contabilidad"
-    ],
-    [
-     "fa-leaf",
-     "Ecología"
-    ],
-    [
-     "fa-bolt",
-     "Electricidad"
-    ]
-   ],
+      "y": "2026",
+      "t": "46 años de historia",
+      "d": "Alumnos, docentes, personal y familias nos reunimos para conmemorar 46 años del CETis No. 69 formando técnicos en Cd. Obregón.Eventos como este fortalecen el orgullo y la identidad de nuestra comunidad Pantera.",
+      "s": [
+        [
+          "fa-spa",
+          "Cosmetología"
+        ],
+        [
+          "fa-cart-shopping",
+          "E-commerce"
+        ],
+        [
+          "fa-brain",
+          "Inteligencia artificial"
+        ],
+        [
+          "fa-screwdriver-wrench",
+          "Mantenimiento industrial"
+        ],
+        [
+          "fa-robot",
+          "Robótica y automatización"
+        ],
+        [
+          "fa-headset",
+          "Soporte y gestión de las tecnologías informáticas"
+        ]
+      ],
    "docentes": [
     {
      "n": "Nombre del docente",
@@ -470,7 +473,7 @@
   "2000": "images/hito-2000.jpg",
   "2010": "images/hito-2010.jpg",
   "2020": "images/hito-2020.jpg",
-  "2026": "images/hito-2026.jpg"
+  "2026": "aniversario.jpg"
  },
  "eventos": [
   {
@@ -825,8 +828,8 @@
   "images/hito-1986.jpg",
   "images/hito-1990.jpg",
   "images/hito-2000.jpg",
-  "images/hito-2010.jpg",
-  "images/hito-2020.jpg",
-  "images/hito-2026.jpg"
+  "2010.jpg",
+  "cetis69.jpg",
+  "cetis69.jpg"
  ]
 }
