@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#7a122e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="iconos/icono-192.png">
+<link rel="apple-touch-icon" href="iconos/icono-180.png">
+<meta name="description" content="Libro de visitas del Museo Digital CETIS 69: deja tu mensaje, una felicitación o un recuerdo para la comunidad.">
+<meta property="og:title" content="Libro de visitas · CETIS 69">
+<meta property="og:type" content="website">
+<title>Libro de visitas · Museo Digital CETIS 69</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>
+<link rel="stylesheet" href="estilos.css">
+<link rel="stylesheet" href="paginas.css">
+<style>
+.skip{position:absolute;left:-999px;top:0;z-index:300;background:#fff;color:var(--guinda);padding:.7rem 1.1rem;font-size:.75rem;letter-spacing:.12em;font-weight:600}
+.skip:focus{left:1rem;top:1rem}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.cuenta{display:block;font-size:.68rem;letter-spacing:.1em;color:var(--gris);text-align:right;margin-top:-.4rem}
+.filtros{display:flex;flex-wrap:wrap;gap:.5rem;margin:1.5rem 0}
+.filtros button{padding:.55rem 1rem;border:1px solid var(--linea);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;font-weight:600;transition:.3s}
+.filtros button.on,.filtros button:hover{background:var(--guinda);color:#fff;border-color:var(--guinda)}
+.like{margin-top:.9rem;font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;font-weight:600;color:var(--guinda);display:inline-flex;gap:.5rem;align-items:center;padding:.4rem .7rem;border:1px solid var(--linea);transition:.3s}
+.like:hover:not(:disabled){background:var(--guinda);color:#fff;border-color:var(--guinda)}
+.like.on,.like:disabled{background:var(--guinda);color:#fff;border-color:var(--guinda);cursor:default}
+.ver{margin:1.6rem auto 0;display:flex}
+.filtros button:focus-visible,.like:focus-visible,.ver:focus-visible,.fm .btn:focus-visible{outline:2px solid var(--guinda);outline-offset:3px}
+</style>
+</head>
+<body>
+<a href="#f" class="skip">Saltar al formulario</a>
+<div id="loader"><div class="ld"><h2>CETIS 69</h2><p>MUSEO DIGITAL</p><div class="bar"><i></i></div></div></div>
+<nav id="nav" class="solid"></nav>
+<header class="phead"><div class="rv"><div class="eyebrow">Comunidad</div><h1 class="title">Libro de <b>visitas</b></h1><p>Cuéntanos qué te pareció el recorrido, comparte una felicitación o un recuerdo con la comunidad del CETIS 69.</p></div></header>
+<section><div class="lb"><form id="f" class="fm"><label>Nombre<input id="nm" required maxlength="60" autocomplete="name"></label><label>Eres<select id="rl"><option>Exalumno</option><option>Alumno</option><option>Docente</option><option>Visitante</option></select></label><label>Mensaje<textarea id="ms" required maxlength="400" rows="5"></textarea></label><button class="btn" type="submit">Enviar <i class="fa-solid fa-paper-plane"></i></button></form><div><div class="eyebrow">Mensajes <span id="ct"></span></div><div id="ls" aria-live="polite"></div></div></div></section>
+<footer></footer>
+<script src="comun.js"></script>
+<script>
+DATOS.catch(()=>({})).then(D=>{
+const ENDPOINT=(D.ajustes&&D.ajustes.libroEndpoint)||'';
+const K='cetis69_libro',KL='cetis69_likes',ROLES=['Todos','Exalumno','Alumno','Docente','Visitante'];
+const f=$('#f'),nm=$('#nm'),rl=$('#rl'),ms=$('#ms'),ls=$('#ls');
+let L=[],likes=[],filtro='Todos',tope=10;
+try{L=JSON.parse(localStorage.getItem(K))||[]}catch(e){}
+try{likes=JSON.parse(localStorage.getItem(KL))||[]}catch(e){}
+const nuevoId=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+L.forEach(o=>{if(!o.id)o.id=nuevoId()});
+
+nm.minLength=2;
+ms.minLength=10;
+
+f.insertAdjacentHTML('beforeend','<input type="text" name="web" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">');
+const hp=f.querySelector('.hp');
+
+ms.insertAdjacentHTML('afterend','<small class="cuenta" id="cc"></small>');
+const cc=$('#cc');
+const cuenta=()=>{cc.textContent=ms.value.length+' / '+ms.maxLength+' caracteres'};
+ms.addEventListener('input',cuenta);
+cuenta();
+
+const st=document.createElement('p');st.className='ok';st.setAttribute('role','status');st.hidden=true;f.append(st);
+
+const bar=document.createElement('div');bar.className='filtros';
+bar.innerHTML=ROLES.map(r=>`<button type="button" data-r="${r}">${r}</button>`).join('');
+ls.before(bar);
+bar.addEventListener('click',e=>{
+ const b=e.target.closest('button');
+ if(!b)return;
+ filtro=b.dataset.r;tope=10;draw();
+});
+
+function guardar(){
+ try{localStorage.setItem(K,JSON.stringify(L));localStorage.setItem(KL,JSON.stringify(likes))}catch(e){}
+}
+
+function draw(){
+ bar.querySelectorAll('button').forEach(b=>{
+  const on=b.dataset.r===filtro;
+  b.classList.toggle('on',on);
+  b.setAttribute('aria-pressed',String(on));
+ });
+ $('#ct').textContent='('+L.length+')';
+ const lista=L.filter(o=>filtro==='Todos'||o.r===filtro);
+ ls.innerHTML='';
+ if(!lista.length){
+  const p=document.createElement('p');p.className='lead';
+  p.textContent=L.length?'Todavía no hay mensajes de este tipo.':'Aún no hay mensajes. Sé la primera persona en escribir.';
+  ls.append(p);
+  return;
+ }
+ lista.slice(0,tope).forEach(o=>{
+  const d=document.createElement('article');d.className='msg';
+  const h=document.createElement('h3');h.textContent=o.n;
+  const m=document.createElement('div');m.className='meta';m.textContent=o.r+' · '+o.f;
+  const p=document.createElement('p');p.textContent=o.m;
+  const b=document.createElement('button');
+  b.type='button';
+  const yo=likes.includes(o.id);
+  b.className='like'+(yo?' on':'');
+  b.disabled=yo;
+  b.innerHTML='<i class="fa-solid fa-heart" aria-hidden="true"></i> <span>'+(o.likes||0)+'</span> me emociona';
+  b.onclick=()=>{o.likes=(o.likes||0)+1;likes.push(o.id);guardar();draw()};
+  d.append(h,m,p,b);
+  ls.append(d);
+ });
+ if(lista.length>tope){
+  const v=document.createElement('button');
+  v.type='button';v.className='btn ver';v.textContent='Ver más mensajes';
+  v.onclick=()=>{tope+=10;draw()};
+  ls.append(v);
+ }
+}
+
+f.addEventListener('submit',e=>{
+ e.preventDefault();
+ if(hp.value)return;
+ const o={
+  id:nuevoId(),
+  n:nm.value.trim(),
+  r:rl.value,
+  m:ms.value.trim(),
+  f:new Date().toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'}),
+  likes:0
+ };
+ L.unshift(o);
+ if(ENDPOINT){
+  const fd=new FormData();
+  fd.append('nombre',o.n);fd.append('rol',o.r);fd.append('mensaje',o.m);fd.append('fecha',o.f);
+  fetch(ENDPOINT,{method:'POST',body:fd}).catch(()=>{});
+ }
+ guardar();
+ f.reset();
+ cuenta();
+ filtro='Todos';tope=10;
+ st.textContent='¡Gracias! Tu mensaje ya está en el libro.';
+ st.hidden=false;
+ setTimeout(()=>st.hidden=true,6000);
+ draw();
+});
+
+draw();
+});
+</script>
+</body>
+</html>
