@@ -94,7 +94,7 @@
 .pmsg{padding:.7rem 1rem;background:var(--gris-c);border-left:2px solid var(--guinda);font-size:.8rem;overflow-wrap:anywhere}
 .pmsg[hidden]{display:none}
 .plwrap.isfs .pbot{position:absolute;left:.8rem;right:.8rem;bottom:calc(.8rem + env(safe-area-inset-bottom,0px));margin:0;max-width:540px;z-index:7}
-.plwrap.isfs .pcap{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;background:rgba(20,9,13,.85);color:#fff;padding:.7rem 1rem}
+.plwrap.isfs .pcap{display:block;width:max-content;max-width:100%;background:rgba(20,9,13,.8);color:#fff;padding:.45rem .8rem}
 .plwrap.isfs .pmsg{background:rgba(255,255,255,.96)}
 .yo{position:absolute;z-index:5;width:0;height:0;pointer-events:none}
 .yo[hidden],.yo-acc[hidden]{display:none}
@@ -138,7 +138,7 @@
 <section><div class="mp"><div class="plcol"><div class="plwrap" id="plwrap"><div class="plan slot" id="plan" data-slot="plano-plantel"><div class="pstage" id="pstage"><img src="mapa-escolar.jpeg" alt="Plano del plantel"><svg class="pruta" id="pruta" viewBox="0 0 100 66.488" preserveAspectRatio="none" aria-hidden="true" hidden><polyline id="rC" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round"/><polyline id="rL" fill="none" stroke="#1a73e8" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="yo-acc" id="yoAcc" hidden></span><div class="yo" id="yo" hidden><span class="yo-dir" id="yoD" hidden></span><span class="yo-dot"></span><span class="yo-lbl">Estás aquí</span></div></div><i class="fa-regular fa-map"></i><span class="tag">Plano del plantel</span><button type="button" class="ptog" id="bLbl" aria-pressed="true"><i class="fa-solid fa-tag"></i> Etiquetas</button>
 <div class="pctl"><button type="button" id="bLoc" aria-pressed="false" aria-label="Mostrar mi ubicación en el plano" title="Mi ubicación"><i class="fa-solid fa-location-crosshairs"></i></button><button type="button" id="bPlFs" aria-label="Ver el plano en pantalla completa" title="Pantalla completa"><i class="fa-solid fa-expand"></i></button></div>
 <div class="pctl pzoom"><button type="button" id="bZin" aria-label="Acercar" title="Acercar"><i class="fa-solid fa-plus"></i></button><button type="button" id="bZout" aria-label="Alejar" title="Alejar"><i class="fa-solid fa-minus"></i></button></div></div>
-<div class="pbot"><div class="pcap"><div><b></b><small></small></div><button type="button" class="btn ghost sm" id="bVer"><i class="fa-solid fa-street-view"></i> Ver vista 360°</button></div><div class="pmsg" id="plMsg" role="status" aria-live="polite" hidden></div></div></div>
+<div class="pbot"><div class="pcap"><div><b></b><small></small></div></div><div class="pmsg" id="plMsg" role="status" aria-live="polite" hidden></div></div></div>
 <div class="geop" id="geoP" hidden><h3>Calibrar localizador <small>Herramienta interna</small></h3><p>1) Párate en un lugar reconocible del plantel. 2) Pulsa «Marcar punto» y toca ese mismo lugar en el plano. 3) Repite en otro lugar a más de 20 m del primero. Con 2 o más puntos se activa el localizador. Al terminar, pulsa «Copiar JSON» y pégalo dentro de <code>"ajustes"</code> en datos.json para que funcione en todos los dispositivos.</p><div class="macts"><button type="button" class="btn ghost sm" id="bCalM" aria-pressed="false"><i class="fa-solid fa-crosshairs"></i> Marcar punto</button><button type="button" class="btn ghost sm" id="bCalJ"><i class="fa-solid fa-copy"></i> Copiar JSON</button><button type="button" class="btn ghost sm" id="bCalB"><i class="fa-solid fa-trash"></i> Borrar puntos</button></div><p id="geoL"></p></div></div><div><div class="pwrap" id="pwrap"><div class="pano" id="pano" data-slot="panoramica-360"><span id="hint"><i class="fa-solid fa-arrows-left-right"></i> Arrastra para girar</span></div>
 <div class="pctl"><button type="button" id="bPrev" aria-label="Zona anterior" title="Zona anterior"><i class="fa-solid fa-chevron-left"></i></button><button type="button" id="bNext" aria-label="Zona siguiente" title="Zona siguiente"><i class="fa-solid fa-chevron-right"></i></button><button type="button" id="bSpin" aria-pressed="false" aria-label="Giro automático" title="Giro automático"><i class="fa-solid fa-rotate"></i></button></div>
 <div class="ptit" id="pT"><i class="fa-solid fa-location-dot"></i><div><b></b><small></small></div></div>
@@ -396,7 +396,6 @@ function pantallaPlano(){
 bPF.onclick=pantallaPlano;
 document.addEventListener('fullscreenchange',estadoPF);document.addEventListener('webkitfullscreenchange',estadoPF);
 addEventListener('keydown',e=>{if(e.key==='Escape'&&PW.classList.contains('fsx'))salirPF()});
-$('#bVer').onclick=()=>{salirPF();setTimeout(()=>W.scrollIntoView({behavior:'smooth',block:'start'}),250)};
 function capPlan(i){
  const z=A[i],c=PW.querySelector('.pcap');
  c.querySelector('b').textContent=z.n;
