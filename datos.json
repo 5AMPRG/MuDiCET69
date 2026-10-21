@@ -164,6 +164,9 @@
  "ajustes": {
   "archivoEndpoint": "",
   "recorridoSegundos": 8,
+  "geoMapa": {
+   "referencias": []
+  },
   "kiosco": {
    "segundosInactividad": 90
   }
