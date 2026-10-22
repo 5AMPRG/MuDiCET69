@@ -260,8 +260,8 @@
    }
   },
   "museo3d": {
-   "visor": "museo3d/visor.js",
-   "modelo": "museo3d/museo.glb",
+   "visor": "visor.js",
+   "modelo": "museo.glb",
    "info": {}
   }
  },
