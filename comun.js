@@ -9,7 +9,7 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 const norm=s=>String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 const archivoActual=decodeURIComponent(location.pathname.split('/').pop()||'').toLowerCase();
 const esInicio=cuerpo.dataset.menu==='inicio';
-const raiz=esInicio?'':'museo-cetis69.html';
+const raiz=esInicio?'':'index.html';
 const enlace=u=>u.charAt(0)==='#'?raiz+u:u;
 
 let tEl,tT;
@@ -114,8 +114,7 @@ function indice(D){
  (D.exalumnos||[]).forEach(e=>add('Exalumnos',e.n,e.r+' · '+e.d,inicio+'#exalumnos'));
  (D.ciencia||[]).forEach(c=>add('Ciencia',c.n,c.r+' · '+c.d,inicio+'#ciencia'));
  (D.premios||[]).forEach(p=>add('Salón de la fama',p.n,p.l+' · '+p.y+' · '+p.p,'salon-fama.html'));
- (D.zonas||[]).forEach(z=>add('Mapa 360°',z.n,(z.etiquetas||[]).join(' · ')+' '+z.d,'mapa-360.html?zona='+z.id));
- (D.archivo||[]).forEach(a=>add('Archivo fotográfico',a.c,'Década '+a.d+'0s','archivo-fotografico.html'));
+  (D.archivo||[]).forEach(a=>add('Archivo fotográfico',a.c,'Década '+a.d+'0s','archivo-fotografico.html'));
  const C=D.creditos||{};
  (C.equipo||[]).forEach(p=>add('Créditos',p.nombre,p.rol+(p.detalle?' · '+p.detalle:''),'creditos.html'));
  (C.fuentes||[]).forEach(f=>add('Créditos',f.tipo,f.fuente,'creditos.html'));
@@ -197,7 +196,7 @@ function armarKiosco(D){
  if(!activo)return;
  d.documentElement.classList.add('kiosco');
  const espera=((D&&D.ajustes&&D.ajustes.kiosco&&D.ajustes.kiosco.segundosInactividad)||90)*1000;
- const inicio=(D&&D.sitio&&D.sitio.inicio)||'museo-cetis69.html';
+ const inicio=(D&&D.sitio&&D.sitio.inicio)||'index.html';
  let ultimo=Date.now();
  const tocar=()=>{ultimo=Date.now()};
  ['pointerdown','pointermove','keydown','wheel','touchstart','scroll'].forEach(n=>addEventListener(n,tocar,{passive:true,capture:true}));
