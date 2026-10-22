@@ -7,12 +7,10 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icono-192.png">
 <link rel="apple-touch-icon" href="icono-180.png">
-<meta name="description" content="Mapa interactivo 360° del CETIS 69: talleres, laboratorios, canchas y áreas verdes del plantel.">
-<meta name="theme-color" content="#7a122e">
-<meta property="og:title" content="Mapa 360° · CETIS 69">
+<meta name="description" content="Museo 3D del CETIS 69: recorre en 3D las salas del museo, una por década, y conoce la historia del plantel.">
+<meta property="og:title" content="Museo 3D · CETIS 69">
 <meta property="og:type" content="website">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='85'%3E%F0%9F%93%8D%3C/text%3E%3C/svg%3E">
-<title>Mapa 360° · Museo Digital CETIS 69</title>
+<title>Museo 3D · Museo Digital CETIS 69</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -20,116 +18,25 @@
 <link rel="stylesheet" href="estilos.css">
 <link rel="stylesheet" href="paginas.css">
 <style>
-.pstage>img{inset:auto;top:50%;left:50%;width:75%;height:133.333%;transform:translate(-50%,-50%) rotate(90deg);object-fit:cover}
-
-.btn.sm{padding:.8rem 1.4rem;font-size:.68rem}
-:is(.pin,.pctl button,.pfs,.ptog,.macts .btn):focus-visible{outline:2px solid #fff;outline-offset:2px;box-shadow:0 0 0 4px var(--guinda)}
-
-.pin{animation:pinIn .55s cubic-bezier(.2,1.4,.4,1) backwards}
-@keyframes pinIn{from{opacity:0;transform:translate(-50%,-50%) scale(.2)}}
-.pin.on{z-index:3}
-.pin:hover{z-index:4}
-.pin.on::after{content:"";position:absolute;inset:-3px;border-radius:50%;border:2px solid var(--guinda);animation:pinPulse 1.8s ease-out infinite;pointer-events:none}
-@keyframes pinPulse{to{transform:scale(1.9);opacity:0}}
-.plbl{position:absolute;white-space:nowrap;background:#fff;color:var(--guinda-d);font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;line-height:1.2;padding:.3rem .65rem;border-radius:2px;box-shadow:0 4px 12px rgba(0,0,0,.3);transition:background .3s,color .3s}
-.plbl.r{left:calc(100% + 8px);top:50%;transform:translateY(-50%)}
-.plbl.l{right:calc(100% + 8px);top:50%;transform:translateY(-50%)}
-.plbl.t{left:50%;bottom:calc(100% + 8px);transform:translateX(-50%)}
-.plbl.b{left:50%;top:calc(100% + 8px);transform:translateX(-50%)}
-.pin.on .plbl{background:var(--guinda);color:#fff}
-.plan.nolbl .plbl{display:none}
-.ptog{position:absolute;left:.7rem;top:.7rem;z-index:6;display:inline-flex;gap:.5rem;align-items:center;padding:.55rem .85rem;background:rgba(255,255,255,.94);color:var(--guinda);font-size:.58rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;box-shadow:0 4px 12px rgba(0,0,0,.2);transition:.3s}
-.ptog[aria-pressed="false"]{background:rgba(20,9,13,.72);color:#fff}
-
-.pwrap{position:relative}
-.pwrap:fullscreen,.pwrap:-webkit-full-screen{background:#14090d;width:100%;height:100%}
-.pwrap:fullscreen .pano,.pwrap:-webkit-full-screen .pano,.pwrap.fsx .pano{height:100%}
-.pwrap.fsx{position:fixed;inset:0;z-index:300;background:#14090d}
-.pctl{position:absolute;top:.8rem;right:.8rem;display:flex;gap:.4rem;z-index:3}
-.pwrap.fsx .pctl,.pwrap:fullscreen .pctl{top:calc(.8rem + env(safe-area-inset-top,0px))}
-.pctl button{width:42px;height:42px;display:grid;place-items:center;background:rgba(20,9,13,.62);color:#fff;border:1px solid rgba(255,255,255,.35);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);transition:.3s;font-size:.85rem}
-.pctl button:hover:not(:disabled){background:var(--guinda);border-color:var(--guinda)}
-.pctl button:disabled{opacity:.35;cursor:not-allowed}
-.pctl button[aria-pressed="true"]{background:#fff;color:var(--guinda);border-color:#fff}
-.pfs{position:absolute;right:.8rem;bottom:.8rem;z-index:3;display:inline-flex;align-items:center;gap:.6rem;padding:.75rem 1.1rem;background:#fff;color:var(--guinda);font-size:.64rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;box-shadow:0 8px 20px rgba(0,0,0,.3);transition:.3s}
-.pfs:hover{background:var(--guinda);color:#fff}
-.pwrap.fsx .pfs,.pwrap:fullscreen .pfs{bottom:calc(.8rem + env(safe-area-inset-bottom,0px))}
-.ptit{position:absolute;left:0;right:0;bottom:0;padding:2.8rem 12rem .9rem 1rem;background:linear-gradient(0deg,rgba(20,6,10,.85),rgba(20,6,10,0));color:#fff;z-index:2;pointer-events:none;display:flex;align-items:center;gap:.8rem}
-.pwrap.fsx .ptit,.pwrap:fullscreen .ptit{padding-bottom:calc(.9rem + env(safe-area-inset-bottom,0px))}
-.ptit>i{width:36px;height:36px;border-radius:50%;background:var(--guinda);border:2px solid #fff;display:grid;place-items:center;font-size:.8rem;flex:none}
-.ptit b{display:block;font-size:.85rem;letter-spacing:.14em;text-transform:uppercase;font-weight:600}
-.ptit small{display:block;font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;opacity:.78}
-.pprog{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.18);z-index:4;display:none}
-.pprog.on{display:block}
-.pprog i{display:block;height:100%;width:0;background:#fff}
-.pprog.run i{animation:pprog var(--tour,8s) linear forwards}
-@keyframes pprog{to{width:100%}}
-
-.macts{display:flex;gap:.6rem;flex-wrap:wrap;margin:-.4rem 0 1.6rem}
-.macts .btn.ghost{color:var(--guinda);border-color:var(--guinda)}
-.macts .btn.ghost:hover,.macts .btn[aria-pressed="true"]{background:var(--guinda);color:#fff;border-color:var(--guinda)}
-@media (max-width:560px){
- .pfs span{display:none}.pfs{padding:.75rem .85rem}
- .ptit{padding-right:5rem}
- .plbl{font-size:.54rem;padding:.24rem .45rem;letter-spacing:.08em}
- .macts .btn{width:100%}
-}
-.plan{aspect-ratio:561/373}
-.pstage>img{width:66.5%;height:150.4%}
-#al small{display:inline-block;margin-left:.35rem;font-size:.8em;opacity:.6}
-
-/* ===== Plano: pantalla completa y localizador ===== */
-.plcol{display:grid;align-content:start;gap:0}
-.plwrap{position:relative}
-.plwrap.isfs{display:grid;place-items:center;background:#14090d}
-.plwrap.fsx{position:fixed;inset:0;z-index:300}
-.plwrap.isfs .plan{width:min(100vw,calc(100vh*561/373));height:auto}
-@supports (height:100dvh){.plwrap.isfs .plan{width:min(100vw,calc(100dvh*561/373))}}
-.plan .pctl{z-index:6}
-.pbot{display:grid;gap:.5rem;margin-top:.6rem}
-.pcap{display:none}
-.pcap b{display:block;font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;font-weight:600}
-.pcap small{display:block;font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;opacity:.78}
-.pcap .btn{padding:.6rem .9rem;font-size:.6rem}
-.pmsg{padding:.7rem 1rem;background:var(--gris-c);border-left:2px solid var(--guinda);font-size:.8rem;overflow-wrap:anywhere}
-.pmsg[hidden]{display:none}
-.plwrap.isfs .pbot{position:absolute;left:.8rem;right:.8rem;bottom:calc(.8rem + env(safe-area-inset-bottom,0px));margin:0;max-width:540px;z-index:7}
-.plwrap.isfs .pcap{display:block;width:max-content;max-width:100%;background:rgba(20,9,13,.8);color:#fff;padding:.45rem .8rem}
-.plwrap.isfs .pmsg{background:rgba(255,255,255,.96)}
-.yo{position:absolute;z-index:5;width:0;height:0;pointer-events:none}
-.yo[hidden],.yo-acc[hidden]{display:none}
-.yo-dot{position:absolute;left:-9px;top:-9px;width:18px;height:18px;border-radius:50%;background:#1a73e8;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.45)}
-.yo-dot::after{content:"";position:absolute;inset:-3px;border-radius:50%;border:2px solid #1a73e8;animation:yoP 1.8s ease-out infinite}
-@keyframes yoP{to{transform:scale(2.6);opacity:0}}
-.yo-lbl{position:absolute;left:0;top:14px;transform:translateX(-50%);white-space:nowrap;background:#1a73e8;color:#fff;font-size:.56rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:.22rem .5rem;border-radius:2px;box-shadow:0 3px 8px rgba(0,0,0,.3)}
-.yo-acc{position:absolute;z-index:4;transform:translate(-50%,-50%);aspect-ratio:1;border-radius:50%;background:rgba(26,115,232,.16);border:1px solid rgba(26,115,232,.55);pointer-events:none}
-.geop{margin-top:1.4rem;padding:1.2rem 1.4rem;border:1px dashed var(--guinda);background:var(--gris-c);font-size:.82rem}
-.geop[hidden]{display:none}
-.geop h3{font-size:.85rem;color:var(--guinda);margin-bottom:.6rem}
-.geop h3 small{font-size:.6rem;letter-spacing:.2em;color:var(--gris);margin-left:.5rem}
-.geop .macts{margin:1rem 0 .8rem}
-.geop code{font-size:.78rem;background:#fff;padding:0 .3rem}
-/* ===== Zoom del plano, ruta y brújula ===== */
-.pstage{position:absolute;inset:0;transform-origin:0 0;--z:1}
-.pstage>img{position:absolute}
-.pstage .pin{transform:translate(-50%,-50%) scale(calc(1/var(--z)));transition:background .3s,color .3s,border-color .3s}
-.pstage .pin.on{transform:translate(-50%,-50%) scale(calc(1.2/var(--z)))}
-.yo{transform:scale(calc(1/var(--z)))}
-.plan{touch-action:pan-y;-webkit-user-select:none;user-select:none}
-.plan.zm{cursor:grab;touch-action:none}
-.plwrap.isfs .plan{touch-action:none}
-.pzoom{top:auto;bottom:.8rem;flex-direction:column}
-.pruta{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.pruta[hidden],.yo-dir[hidden]{display:none}
-.yo-dir{position:absolute;left:-26px;top:-26px;width:52px;height:52px;background:radial-gradient(circle,rgba(26,115,232,.75),rgba(26,115,232,0) 70%);clip-path:polygon(50% 50%,10% 0,90% 0)}
-@media (orientation:portrait){
- .plwrap.isfs .plan{width:100vw;height:100vh;height:100dvh}
- .plwrap.isfs .pstage{inset:auto;top:0;left:0;height:100%;width:auto;aspect-ratio:561/373}
-}
+.skip{position:absolute;left:-999px;top:0;z-index:300;background:#fff;color:var(--guinda);padding:.7rem 1.1rem;font-size:.75rem;letter-spacing:.12em;font-weight:600}
+.skip:focus{left:1rem;top:1rem}
+.v3d{position:relative;height:min(78vh,680px);min-height:420px;background:radial-gradient(ellipse at 50% 30%,#3a1520,#14090d 75%);border:1px solid var(--linea);color:#f0c9d2}
+.v3d.isfs{height:100vh;height:100dvh;min-height:0;border:0}
+.v3d.fsx{position:fixed;inset:0;z-index:300;height:auto}
+.visor3d{position:absolute;inset:0;display:grid;place-items:center;align-content:center;gap:1rem;text-align:center;font-size:.75rem;letter-spacing:.2em;text-transform:uppercase}
+.visor3d>i{font-size:3rem;opacity:.6}
+.v3d-msg{max-width:36ch}
+.v3fs{position:absolute;top:.8rem;right:.8rem;z-index:6;width:42px;height:42px;display:grid;place-items:center;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);color:#fff;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);transition:.3s}
+.v3fs:hover{background:#fff;color:var(--guinda)}
+.v3fs:focus-visible,.wip .btn:focus-visible{outline:2px solid #fff;outline-offset:3px}
+.v3h ul{list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin-top:1rem}
+.v3h li{display:flex;gap:1rem;align-items:flex-start;padding:1.1rem 1.3rem;border:1px solid var(--linea);background:#fff;color:var(--gris);font-size:.86rem}
+.v3h li i{color:var(--guinda);font-size:1.3rem;margin-top:.15rem}
+.v3h li b{display:block;color:var(--negro,#141214);font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;margin-bottom:.3rem}
 /* ===== Bloqueo: sección en actualización ===== */
-.wip-on{position:relative;overflow:clip;min-height:min(780px,100vh)}
-.wip-on .mp{filter:blur(7px) saturate(.7);pointer-events:none;user-select:none}
-.wip{position:absolute;inset:0;z-index:5;display:flex;justify-content:center;align-items:flex-start;padding:2rem var(--pad,1.25rem)}
+.wip-on{position:relative;overflow:clip}
+.wip-on .v3d{position:absolute;inset:0;height:auto;filter:blur(7px) saturate(.7);pointer-events:none;user-select:none}
+.wip{position:relative;z-index:5;display:flex;justify-content:center;align-items:flex-start;padding:2rem var(--pad,1.25rem);min-height:min(720px,100vh)}
 .wip[hidden]{display:none}
 .wip-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 25%,rgba(122,18,46,.6),rgba(24,4,11,.93) 72%),repeating-linear-gradient(0deg,rgba(255,255,255,.055) 0 1px,transparent 1px 44px),repeating-linear-gradient(90deg,rgba(255,255,255,.055) 0 1px,transparent 1px 44px);animation:wipGrid 16s linear infinite}
 @keyframes wipGrid{to{background-position:0 0,0 44px,44px 0}}
@@ -177,25 +84,15 @@
 @media (max-height:800px){.wip-card{position:relative;top:auto}}
 @media (max-width:560px){.wip .btn{width:100%}.wip-list em{display:none}}
 @media (prefers-reduced-motion:reduce){.wip *,.wip::before,.wip-card::after{animation:none!important}}
-.skip{position:absolute;left:-999px;top:0;z-index:300;background:#fff;color:var(--guinda);padding:.7rem 1.1rem;font-size:.75rem;letter-spacing:.12em;font-weight:600}
-.skip:focus{left:1rem;top:1rem}
 </style>
 </head>
 <body>
-<a href="#pwrap" class="skip">Saltar al mapa</a>
+<a href="#visor3d" class="skip">Saltar al museo 3D</a>
 <div id="loader"><div class="ld"><h2>CETIS 69</h2><p>MUSEO DIGITAL</p><div class="bar"><i></i></div></div></div>
 <nav id="nav" class="solid"></nav>
-<header class="phead"><div class="rv"><div class="eyebrow">Recorrido virtual</div><h1 class="title">Mapa interactivo <b>360°</b></h1><p>Selecciona un punto del plano y gira la vista panorámica para explorar los talleres, laboratorios, canchas y áreas verdes del plantel.</p></div></header>
-<section class="wip-on" id="wipSec"><div class="mp" inert aria-hidden="true"><div class="plcol"><div class="plwrap" id="plwrap"><div class="plan slot" id="plan" data-slot="plano-plantel"><div class="pstage" id="pstage"><img src="mapa-escolar.jpeg" alt="Plano del plantel"><svg class="pruta" id="pruta" viewBox="0 0 100 66.488" preserveAspectRatio="none" aria-hidden="true" hidden><polyline id="rC" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round"/><polyline id="rL" fill="none" stroke="#1a73e8" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="yo-acc" id="yoAcc" hidden></span><div class="yo" id="yo" hidden><span class="yo-dir" id="yoD" hidden></span><span class="yo-dot"></span><span class="yo-lbl">Estás aquí</span></div></div><i class="fa-regular fa-map"></i><span class="tag">Plano del plantel</span><button type="button" class="ptog" id="bLbl" aria-pressed="true"><i class="fa-solid fa-tag"></i> Etiquetas</button>
-<div class="pctl"><button type="button" id="bLoc" aria-pressed="false" aria-label="Mostrar mi ubicación en el plano" title="Mi ubicación"><i class="fa-solid fa-location-crosshairs"></i></button><button type="button" id="bPlFs" aria-label="Ver el plano en pantalla completa" title="Pantalla completa"><i class="fa-solid fa-expand"></i></button></div>
-<div class="pctl pzoom"><button type="button" id="bZin" aria-label="Acercar" title="Acercar"><i class="fa-solid fa-plus"></i></button><button type="button" id="bZout" aria-label="Alejar" title="Alejar"><i class="fa-solid fa-minus"></i></button></div></div>
-<div class="pbot"><div class="pcap"><div><b></b><small></small></div></div><div class="pmsg" id="plMsg" role="status" aria-live="polite" hidden></div></div></div>
-<div class="geop" id="geoP" hidden><h3>Calibrar localizador <small>Herramienta interna</small></h3><p>1) Párate en un lugar reconocible del plantel. 2) Pulsa «Marcar punto» y toca ese mismo lugar en el plano. 3) Repite en otro lugar a más de 20 m del primero. Con 2 o más puntos se activa el localizador. Al terminar, pulsa «Copiar JSON» y pégalo dentro de <code>"ajustes"</code> en datos.json para que funcione en todos los dispositivos.</p><div class="macts"><button type="button" class="btn ghost sm" id="bCalM" aria-pressed="false"><i class="fa-solid fa-crosshairs"></i> Marcar punto</button><button type="button" class="btn ghost sm" id="bCalJ"><i class="fa-solid fa-copy"></i> Copiar JSON</button><button type="button" class="btn ghost sm" id="bCalB"><i class="fa-solid fa-trash"></i> Borrar puntos</button></div><p id="geoL"></p></div></div><div><div class="pwrap" id="pwrap"><div class="pano" id="pano" data-slot="panoramica-360"><span id="hint"><i class="fa-solid fa-arrows-left-right"></i> Arrastra para girar</span></div>
-<div class="pctl"><button type="button" id="bPrev" aria-label="Zona anterior" title="Zona anterior"><i class="fa-solid fa-chevron-left"></i></button><button type="button" id="bNext" aria-label="Zona siguiente" title="Zona siguiente"><i class="fa-solid fa-chevron-right"></i></button><button type="button" id="bSpin" aria-pressed="false" aria-label="Giro automático" title="Giro automático"><i class="fa-solid fa-rotate"></i></button></div>
-<div class="ptit" id="pT"><i class="fa-solid fa-location-dot"></i><div><b></b><small></small></div></div>
-<button type="button" class="pfs" id="bFs" aria-label="Ver en pantalla completa"><i class="fa-solid fa-expand"></i><span>Pantalla completa</span></button>
-<div class="pprog" id="pP"><i></i></div></div><div class="ainfo"><h3 id="aT"></h3><p id="aD"></p></div>
-<div class="macts"><button type="button" class="btn ghost sm" id="bTour" aria-pressed="false"><i class="fa-solid fa-play"></i> Recorrido automático</button><a class="btn ghost sm" id="bQR" href="qr-zonas.html"><i class="fa-solid fa-qrcode"></i> Código QR de esta zona</a><button type="button" class="btn ghost sm" id="bRuta" aria-pressed="false"><i class="fa-solid fa-route"></i> Cómo llegar</button><button type="button" class="btn ghost sm" id="bAuto" aria-pressed="false"><i class="fa-solid fa-person-walking"></i> Abrir zona al acercarme</button><button type="button" class="btn ghost sm" id="bShare"><i class="fa-solid fa-share-nodes"></i> Compartir</button></div><div class="tabs" id="al"></div></div></div>
+<header class="phead"><div class="rv"><div class="eyebrow">Recorrido virtual</div><h1 class="title">Museo <b>3D</b></h1><p>Camina por las salas del museo, una por década, y toca los cuadros para conocer la historia del CETIS 69.</p></div></header>
+<section class="wip-on" id="s3d">
+<div class="v3d" id="v3d" inert aria-hidden="true"><div class="visor3d" id="visor3d"><i class="fa-solid fa-cube" aria-hidden="true"></i><p>Aquí aparecerá el museo 3D</p></div><button type="button" class="v3fs" id="bFs3" aria-label="Ver el museo 3D en pantalla completa" title="Pantalla completa"><i class="fa-solid fa-expand"></i></button></div>
 <div class="wip" id="wip" role="region" aria-labelledby="wipT">
 <div class="wip-bg" aria-hidden="true"></div>
 <div class="wip-card">
@@ -205,30 +102,49 @@
 <g class="gB"><circle cx="148" cy="54" r="28" stroke="#e8a5b4" stroke-width="12" stroke-dasharray="8.6 7.4"/><circle cx="148" cy="54" r="21" stroke="#fff" stroke-width="2.5"/><circle cx="148" cy="54" r="7" fill="#fff" stroke="none"/></g>
 </svg></div>
 <div class="wip-tag"><i></i><span id="wipE">Actualización en curso</span></div>
-<h2 id="wipT">Estamos armando el <b>recorrido 3D°</b></h2>
-<p id="wipP">Estamos actualizando esta sección del museo con una vista 3D y más información de cada zona del plantel. Muy pronto podrás recorrerlo completo.</p>
-<ul class="wip-list" id="wipL"><li><span class="dot"></span>vista 3D de cada zona del plantel<em>En proceso</em></li><li><span class="dot"></span>Descripciones e historia de cada área<em>En proceso</em></li><li><span class="dot"></span>Rutas y localización dentro del plantel<em>En proceso</em></li></ul>
+<h2 id="wipT">Estamos construyendo el <b>museo 3D</b></h2>
+<p id="wipP">Un recorrido por salas virtuales, una por década, para caminar por la historia del CETIS 69 y ver la información de cada época. Muy pronto podrás entrar.</p>
+<ul class="wip-list" id="wipL"><li><span class="dot"></span>Una sala por década, de los 80 a los 2020<em>En proceso</em></li><li><span class="dot"></span>Fotos y textos de cada época<em>En proceso</em></li><li><span class="dot"></span>Minimapa y controles táctiles<em>En proceso</em></li></ul>
 <div class="wip-bar" id="wipBar" aria-hidden="true"><i></i></div>
 <p class="wip-meta">Disponible: <b id="wipF">Próximamente</b><span id="wipPct"></span></p>
 <div class="wip-acts"><a class="btn" id="wipHome" href="index.html">Volver al inicio <i class="fa-solid fa-house"></i></a><a class="btn ghost" href="archivo-fotografico.html">Ver el archivo fotográfico <i class="fa-regular fa-images"></i></a></div>
 </div></div></section>
+<section class="v3h"><div class="eyebrow">Cómo recorrerlo</div><ul>
+<li><i class="fa-solid fa-keyboard" aria-hidden="true"></i><div><b>Computadora</b>Muévete con W, A, S, D o las flechas y mira alrededor con el mouse.</div></li>
+<li><i class="fa-solid fa-mobile-screen" aria-hidden="true"></i><div><b>Celular</b>Usa el joystick en pantalla y arrastra el dedo para mirar. Gira el teléfono para verlo más grande.</div></li>
+<li><i class="fa-solid fa-hand-pointer" aria-hidden="true"></i><div><b>Información</b>Acércate a un cuadro y tócalo para leer su historia.</div></li>
+</ul></section>
 <footer></footer>
 <script src="comun.js"></script>
 <script>
 (function(){
-const sec=$('#wipSec'),wip=$('#wip'),mp=sec.querySelector('.mp'),skip=document.querySelector('.skip');
 const K='c69_equipo',par=new URLSearchParams(location.search).get('acceso');
 let eq=false;
 try{if(par==='1')sessionStorage.setItem(K,'1');if(par==='0')sessionStorage.removeItem(K);eq=sessionStorage.getItem(K)==='1'}catch(e){eq=par==='1'}
+const sec=$('#s3d'),wip=$('#wip'),cont=$('#v3d'),vis=$('#visor3d'),skip=document.querySelector('.skip');
 if(skip)skip.hidden=true;
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* Visor 3D. Contrato: museo3d/visor.js define window.Museo3D={iniciar(contenedor,datos){}} */
+let DD={},cargado=false;
+function cargar(){
+ if(cargado)return;cargado=true;
+ const s=document.createElement('script'),aviso='<p class="v3d-msg">El visor 3D todavía no está instalado.</p>';
+ s.src=(DD.ajustes&&DD.ajustes.museo3d&&DD.ajustes.museo3d.visor)||'museo3d/visor.js';
+ s.onload=()=>{if(window.Museo3D&&Museo3D.iniciar){vis.innerHTML='';Museo3D.iniciar(vis,DD)}else vis.innerHTML=aviso};
+ s.onerror=()=>{vis.innerHTML=aviso};
+ document.head.append(s);
+}
+
+/* Bloqueo por actualización (datos.json → ajustes.bloqueos["museo-3d"]). Con ?acceso=1 el equipo lo salta. */
 function abrir(chip){
- sec.classList.remove('wip-on');mp.inert=false;mp.removeAttribute('aria-hidden');wip.hidden=true;if(skip)skip.hidden=false;
- window.dispatchEvent(new Event('resize'));
+ sec.classList.remove('wip-on');cont.inert=false;cont.removeAttribute('aria-hidden');wip.hidden=true;if(skip)skip.hidden=false;
  if(chip){const c=document.createElement('div');c.className='wip-eq';c.innerHTML='<i class="fa-solid fa-lock-open" aria-hidden="true"></i><span>Modo equipo: el público ve esta sección bloqueada</span><a href="?acceso=0">Ver como visitante</a>';document.body.append(c)}
+ cargar();dispatchEvent(new Event('resize'));
 }
 DATOS.catch(()=>({})).then(D=>{
- const C=(D.ajustes&&D.ajustes.bloqueos&&D.ajustes.bloqueos['mapa-360'])||{};
+ DD=D;
+ const C=(D.ajustes&&D.ajustes.bloqueos&&D.ajustes.bloqueos['museo-3d'])||{};
  if(C.activo===false){abrir(false);return}
  if(C.etiqueta)$('#wipE').textContent=C.etiqueta;
  if(C.titulo){const t=$('#wipT');t.textContent=C.titulo+' ';if(C.destacado){const b=document.createElement('b');b.textContent=C.destacado;t.append(b)}}
@@ -240,477 +156,28 @@ DATOS.catch(()=>({})).then(D=>{
  if(D.sitio&&D.sitio.inicio)$('#wipHome').href=D.sitio.inicio;
  if(eq)abrir(true);
 });
+
+/* Pantalla completa (en Android bloquea la pantalla en horizontal) */
+const fsEl=()=>document.fullscreenElement||document.webkitFullscreenElement,bf=$('#bFs3');
+const enFs=()=>fsEl()===cont||cont.classList.contains('fsx');
+function estado(){
+ const f=enFs();cont.classList.toggle('isfs',f);
+ bf.innerHTML=f?'<i class="fa-solid fa-compress"></i>':'<i class="fa-solid fa-expand"></i>';
+ bf.setAttribute('aria-label',f?'Salir de pantalla completa':'Ver el museo 3D en pantalla completa');bf.title=f?'Salir':'Pantalla completa';
+ if(!f)document.documentElement.style.overflow='';
+ try{if(f&&fsEl()===cont)screen.orientation.lock('landscape').catch(()=>{});else if(!f)screen.orientation.unlock()}catch(_){}
+ setTimeout(()=>dispatchEvent(new Event('resize')),150);
+}
+function respaldo(){cont.classList.add('fsx');document.documentElement.style.overflow='hidden';estado()}
+bf.onclick=()=>{
+ if(enFs()){if(cont.classList.contains('fsx')){cont.classList.remove('fsx');estado()}else(document.exitFullscreen||document.webkitExitFullscreen).call(document);return}
+ const rq=cont.requestFullscreen||cont.webkitRequestFullscreen;
+ if(!rq){respaldo();return}
+ try{const p=rq.call(cont);if(p&&p.catch)p.catch(respaldo)}catch(e){respaldo()}
+};
+document.addEventListener('fullscreenchange',estado);document.addEventListener('webkitfullscreenchange',estado);
+addEventListener('keydown',e=>{if(e.key==='Escape'&&cont.classList.contains('fsx')){cont.classList.remove('fsx');estado()}});
 })();
-</script>
-<script>
-DATOS.then(D=>{
-const A=D.zonas;
-const pano=$('#pano'),plan=$('#plan'),al=$('#al');let bx=0,dr=null;
-A.forEach((a,i)=>{a.pts.forEach(([x,y])=>{const p=document.createElement('button');p.className='pin';p.dataset.i=i;p.style.left=x+'%';p.style.top=y+'%';p.setAttribute('aria-label',a.n);p.innerHTML=`<i class="fa-solid fa-${a.ic}"></i>`;p.onclick=()=>sel(i,p);$('#pstage').append(p)});
-const b=document.createElement('button');b.innerHTML=a.n+' <small>'+a.pts.length+'</small>';b.onclick=()=>sel(i);al.append(b)});
-function sel(i,pin){const a=A[i];
-const on=pin||plan.querySelector('.pin[data-i="'+i+'"]');
-plan.querySelectorAll('.pin').forEach(p=>p.classList.toggle('on',p===on));
-al.querySelectorAll('button').forEach((p,k)=>p.classList.toggle('on',k===i));
-$('#aT').textContent=a.n;$('#aD').textContent=a.d;pano.style.backgroundImage=a.pano?`url(${a.pano})`:'';$('#hint').style.display=a.pano?'none':'';bx=0;pano.style.backgroundPositionX='0px'}
-pano.onpointerdown=e=>{dr=e.clientX;pano.setPointerCapture(e.pointerId);pano.style.cursor='grabbing'};
-pano.onpointermove=e=>{if(dr===null)return;bx+=e.clientX-dr;dr=e.clientX;pano.style.backgroundPositionX=bx+'px'};
-pano.onpointerup=()=>{dr=null;pano.style.cursor=''};
-sel(0);
-const SEG_RECORRIDO=D.ajustes.recorridoSegundos;
-
-(function(){
-const slug=s=>String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
-const idDe=i=>A[i].id||slug(A[i].n);
-const W=$('#pwrap'),bFs=$('#bFs'),bSpin=$('#bSpin'),bTour=$('#bTour'),prog=$('#pP'),pT=$('#pT');
-let ini=true,interno=false,tourT=null;const ZM={s:1,x:0,y:0};
-
-
-
-const cont=[];
-plan.querySelectorAll('.pin').forEach((p,n)=>{
- const i=+p.dataset.i;cont[i]=(cont[i]||0)+1;
- const k=cont[i]-1,nom=(A[i].etiquetas&&A[i].etiquetas[k])||(A[i].pts.length>1?A[i].n+' '+(k+1):A[i].n);
- p.setAttribute('aria-label',nom);
- if(A[i].iconos&&A[i].iconos[k]){const o=p.querySelector('i,svg'),n=document.createElement('i');n.className='fa-solid fa-'+A[i].iconos[k];if(o)o.replaceWith(n);else p.prepend(n)}
- const l=document.createElement('span');l.className='plbl r';l.textContent=nom;l.setAttribute('aria-hidden','true');p.append(l);
- p.style.animationDelay=(n*70)+'ms';
-});
-function colocar(){
- const r=plan.getBoundingClientRect(),stg=$('#pstage'),Wp=stg.offsetWidth,Hp=stg.offsetHeight;if(!Wp)return;
- const pins=[...plan.querySelectorAll('.pin')];
- const pos=pins.map(p=>({x:parseFloat(p.style.left)/100*Wp,y:parseFloat(p.style.top)/100*Hp}));
- const R=23.5,RP=29,ESC=1.2,M=3,BORDE=4,MAXD=120,PASO=6;
- const labs=pins.map(p=>{const l=p.querySelector('.plbl');l.className='plbl';l.style.right='auto';l.style.bottom='auto';l.style.transform='none';return l});
- const dims=labs.map(l=>({w:l.offsetWidth,h:l.offsetHeight}));
- const obst=[];
- plan.querySelectorAll('.ptog,.pctl').forEach(bt=>{if(bt.offsetWidth){const q=bt.getBoundingClientRect();obst.push({x:(q.left-r.left-ZM.x)/ZM.s-M,y:(q.top-r.top-ZM.y)/ZM.s-M,w:q.width/ZM.s+2*M,h:q.height/ZM.s+2*M})}});
- const hit=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
- const crece=(b,c)=>({x:c.x+(b.x-c.x)*ESC,y:c.y+(b.y-c.y)*ESC,w:b.w*ESC,h:b.h*ESC});
- const inf=(b,m)=>({x:b.x-m,y:b.y-m,w:b.w+2*m,h:b.h+2*m});
- const dist=(c,b)=>{const nx=Math.max(b.x,Math.min(c.x,b.x+b.w)),ny=Math.max(b.y,Math.min(c.y,b.y+b.h));return Math.hypot(nx-c.x,ny-c.y)};
- const fuera=b=>Math.max(0,BORDE-b.x)+Math.max(0,BORDE-b.y)+Math.max(0,b.x+b.w-(Wp-BORDE))+Math.max(0,b.y+b.h-(Hp-BORDE));
- const estatico=(k,b)=>{
-  let sc=0;const f=fuera(b);if(f)sc+=1000+f*10;
-  const fi=fuera(crece(b,pos[k]));if(fi&&!f)sc+=400+fi*8;
-  pos.forEach((q,j)=>{if(dist(q,b)<(j===k?RP:R))sc+=500;else if(j!==k&&dist(q,crece(b,pos[k]))<R)sc+=500});
-  obst.forEach(o=>{if(hit(b,o))sc+=500});
-  return sc;
- };
- const cands=pins.map((p,k)=>{
-  const {x,y}=pos[k],{w,h}=dims[k],lista=[];
-  const pref=x>Wp*.5?-1:1;
-  for(let bx=-w-MAXD;bx<=MAXD;bx+=PASO){
-   for(let by=-h-MAXD;by<=MAXD;by+=PASO){
-    const b={x:x+bx,y:y+by,w,h},d=dist(pos[k],b);
-    if(d<RP||d>MAXD)continue;
-    const sc=estatico(k,b);
-    const lado=(bx>=0?1:-1)===pref&&Math.abs(by+h/2)<=h?0:6;
-    lista.push({b,pen:sc+Math.max(0,d-RP)*(d>80?2.2:.8)+lado});
-   }
-  }
-  lista.sort((m,n)=>m.pen-n.pen);
-  const cerca=lista.slice(0,260),resto=lista.slice(260),paso=Math.max(1,Math.floor(resto.length/140));
-  return cerca.concat(resto.filter((_,i)=>i%paso===0).slice(0,140));
- });
- const dinamico=(k,c,sel)=>{
-  const b=c.b,bi=crece(b,pos[k]);let sc=0;
-  sel.forEach((s,j)=>{if(j===k||!s)return;
-   if(hit(inf(b,M),s.b))sc+=800;
-   else if(hit(inf(b,M),crece(s.b,pos[j]))||hit(inf(bi,M),s.b))sc+=150});
-  return sc;
- };
- const coste=(k,c,sel)=>c.pen+dinamico(k,c,sel);
- const total=sel=>sel.reduce((t,s,k)=>t+coste(k,s,sel),0);
- const vacio=cands.some(l=>!l.length);
- const inicial=()=>cands.map(l=>l[0]||{b:{x:0,y:0,w:0,h:0},pen:2000});
- const descenso=sel=>{
-  for(let it=0;it<30;it++){
-   let cambio=false;
-   for(let k=0;k<sel.length;k++){
-    let m=sel[k],mc=coste(k,m,sel);
-    cands[k].forEach(c=>{const v=coste(k,c,sel);if(v<mc-1e-9){mc=v;m=c}});
-    if(m!==sel[k]){sel[k]=m;cambio=true}
-   }
-   if(!cambio)break;
-  }
-  return sel;
- };
- const t0=performance.now();
- let mejor=descenso(inicial()),mt=total(mejor);
- let sem=12345;const rnd=()=>(sem=(sem*1664525+1013904223)>>>0)/4294967296;
- for(let n=0;n<600&&mt>=150&&performance.now()-t0<140;n++){
-  const t=mejor.slice();
-  const nper=2+Math.floor(rnd()*3);
-  for(let q=0;q<nper;q++){const k=Math.floor(rnd()*t.length);if(cands[k].length)t[k]=cands[k][Math.floor(rnd()*Math.min(cands[k].length,160))]}
-  descenso(t);const v=total(t);
-  if(v<mt){mt=v;mejor=t}
- }
- labs.forEach((l,k)=>{
-  const b=mejor[k].b,v=l.querySelector('.lead');if(v)v.remove();
-  if(!b.w){l.className='plbl r';l.style.cssText='';return}
-  l.style.left=(b.x-pos[k].x+19)+'px';
-  l.style.top=(b.y-pos[k].y+19)+'px';
-  const c=pos[k],d=dist(c,b);
-  if(d>38){
-   const nx=Math.max(b.x,Math.min(c.x,b.x+b.w)),ny=Math.max(b.y,Math.min(c.y,b.y+b.h));
-   const ux=(nx-c.x)/d,uy=(ny-c.y)/d,px=c.x+ux*20,py=c.y+uy*20,len=Math.hypot(nx-px,ny-py);
-   const e=document.createElement('i');e.className='lead';e.setAttribute('aria-hidden','true');
-   e.style.cssText='position:absolute;height:2px;pointer-events:none;background:rgba(92,13,34,.85);transform-origin:0 50%;left:'+(px-b.x)+'px;top:'+(py-b.y-1)+'px;width:'+len+'px;transform:rotate('+Math.atan2(ny-py,nx-px)+'rad)';
-   l.append(e);
-  }
- });
-}
-let rz;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(colocar,120)});
-colocar();alCargar(colocar);
-if(document.fonts&&document.fonts.ready)document.fonts.ready.then(colocar);
-const im=plan.querySelector('img');if(im&&!im.complete)im.addEventListener('load',colocar);
-$('#bLbl').onclick=e=>{const on=plan.classList.toggle('nolbl');e.currentTarget.setAttribute('aria-pressed',!on);if(!on)colocar()};
-
-
-const fsEl=()=>document.fullscreenElement||document.webkitFullscreenElement;
-const enFS=()=>fsEl()===W||W.classList.contains('fsx');
-function estadoFS(){
- const on=enFS();
- bFs.innerHTML=on?'<i class="fa-solid fa-compress"></i><span>Salir</span>':'<i class="fa-solid fa-expand"></i><span>Pantalla completa</span>';
- bFs.setAttribute('aria-label',on?'Salir de pantalla completa':'Ver en pantalla completa');
- if(!on)document.documentElement.style.overflow='';
-}
-function entrarFallback(){W.classList.add('fsx');document.documentElement.style.overflow='hidden';estadoFS()}
-function salirFallback(){W.classList.remove('fsx');estadoFS()}
-function pantalla(){
- if(W.classList.contains('fsx')){salirFallback();return}
- if(fsEl()){(document.exitFullscreen||document.webkitExitFullscreen).call(document);return}
- const rq=W.requestFullscreen||W.webkitRequestFullscreen;
- if(!rq){entrarFallback();return}
- try{const pr=rq.call(W);if(pr&&pr.catch)pr.catch(entrarFallback)}catch(e){entrarFallback()}
-}
-bFs.onclick=pantalla;pano.ondblclick=pantalla;
-document.addEventListener('fullscreenchange',estadoFS);document.addEventListener('webkitfullscreenchange',estadoFS);
-addEventListener('keydown',e=>{
- if(e.key==='Escape'&&W.classList.contains('fsx'))salirFallback();
-});
-estadoFS();
-
-
-let spin=false,ult=0;
-function bucle(t){
- if(!spin)return;
- const dt=Math.min(50,t-(ult||t));ult=t;
- if(dr===null){bx-=dt*0.03;pano.style.backgroundPositionX=bx+'px'}
- requestAnimationFrame(bucle);
-}
-function girar(on){
- spin=on;bSpin.setAttribute('aria-pressed',on);
- if(on){ult=0;requestAnimationFrame(bucle)}
-}
-bSpin.onclick=()=>girar(!spin);
-
-
-pano.tabIndex=0;pano.setAttribute('role','group');pano.setAttribute('aria-label','Vista panorámica. Usa las flechas izquierda y derecha para girar y la tecla F para pantalla completa.');
-pano.addEventListener('keydown',e=>{
- if(e.key==='ArrowLeft'){bx+=40;pano.style.backgroundPositionX=bx+'px';e.preventDefault()}
- else if(e.key==='ArrowRight'){bx-=40;pano.style.backgroundPositionX=bx+'px';e.preventDefault()}
- else if(e.key==='f'||e.key==='F')pantalla();
-});
-
-
-let cur=0;
-function ir(d){sel((cur+d+A.length)%A.length)}
-$('#bPrev').onclick=()=>ir(-1);$('#bNext').onclick=()=>ir(1);
-function barra(){prog.classList.remove('run');void prog.offsetWidth;prog.classList.add('run')}
-function recorrido(on){
- clearInterval(tourT);
- bTour.setAttribute('aria-pressed',on);
- bTour.innerHTML=on?'<i class="fa-solid fa-pause"></i> Detener recorrido':'<i class="fa-solid fa-play"></i> Recorrido automático';
- prog.classList.toggle('on',on);prog.style.setProperty('--tour',SEG_RECORRIDO+'s');
- if(on){barra();tourT=setInterval(()=>{interno=true;sel((cur+1)%A.length);interno=false},SEG_RECORRIDO*1000)}
-}
-bTour.onclick=()=>recorrido(bTour.getAttribute('aria-pressed')!=='true');
-
-
-$('#bShare').onclick=()=>{
- const u=new URL(location.href);u.search='?zona='+idDe(cur);u.hash='';
- const o={title:A[cur].n+' · Mapa 360° CETIS 69',text:'Recorre '+A[cur].n+' en el Museo Digital del CETIS 69',url:u.href};
- if(navigator.share){navigator.share(o).catch(()=>{})}
- else if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(o.url).then(()=>toast('Enlace copiado'),()=>prompt('Copia este enlace:',o.url))}
- else prompt('Copia este enlace:',o.url);
-};
-
-
-const _sel=sel;
-sel=function(i,pin){
- if(!interno&&tourT)recorrido(false);
- _sel(i,pin);cur=i;
- const z=A[i];
- pT.querySelector('i').className='fa-solid fa-'+z.ic;
- pT.querySelector('b').textContent=z.n;
- pT.querySelector('small').textContent=(z.pano?'Vista 360°':'Próximamente')+' · '+(i+1)+'/'+A.length;
- $('#bQR').href='qr-zonas.html#'+idDe(i);
- bSpin.disabled=!z.pano;if(!z.pano&&spin)girar(false);
- if(!ini){try{history.replaceState(null,'','?zona='+idDe(i))}catch(e){}}
- if(tourT)barra();
- capPlan(i);
-};
-
-
-/* ===== Plano: pantalla completa y localizador de ubicación ===== */
-const PW=$('#plwrap'),bPF=$('#bPlFs'),bLoc=$('#bLoc'),pMsg=$('#plMsg'),yo=$('#yo'),yoAcc=$('#yoAcc'),geoP=$('#geoP'),geoL=$('#geoL');
-const K=373/561,GK='c69_geo',rad=Math.PI/180;
-const geoCfg=(D.ajustes&&D.ajustes.geoMapa&&D.ajustes.geoMapa.referencias)||[];
-const modoCal=new URLSearchParams(location.search).get('calibrar')==='1';
-let refs=[];try{const l=JSON.parse(localStorage.getItem(GK)||'[]');if(Array.isArray(l))refs=l}catch(e){}
-if(!refs.length)refs=geoCfg.map(r=>({...r}));
-let T=null,watch=null,armado=false,mT;
-
-function msg(t,fijo){pMsg.textContent=t||'';pMsg.hidden=!t;clearTimeout(mT);if(t&&!fijo)mT=setTimeout(()=>{pMsg.hidden=true},7000)}
-
-/* Pantalla completa del plano */
-const fsEl2=()=>document.fullscreenElement||document.webkitFullscreenElement;
-const enPF=()=>fsEl2()===PW||PW.classList.contains('fsx');
-function estadoPF(){
- const on=enPF();PW.classList.toggle('isfs',on);
- bPF.innerHTML=on?'<i class="fa-solid fa-compress"></i>':'<i class="fa-solid fa-expand"></i>';
- bPF.setAttribute('aria-label',on?'Salir de pantalla completa':'Ver el plano en pantalla completa');bPF.title=on?'Salir':'Pantalla completa';
- if(!on&&!W.classList.contains('fsx'))document.documentElement.style.overflow='';
- try{if(on&&fsEl2()===PW)screen.orientation.lock('landscape').catch(()=>{});else if(!on)screen.orientation.unlock()}catch(_){}
- setTimeout(()=>{reinicia();colocar()},150);
- if(on)setTimeout(()=>{if(enPF()&&innerHeight>innerWidth)msg('Gira el celular en horizontal para ver todo el plano. Desliza para recorrerlo.')},700);
-}
-function fallbackPF(){PW.classList.add('fsx');document.documentElement.style.overflow='hidden';estadoPF()}
-function salirPF(){
- if(PW.classList.contains('fsx')){PW.classList.remove('fsx');estadoPF()}
- else if(fsEl2())(document.exitFullscreen||document.webkitExitFullscreen).call(document);
-}
-function pantallaPlano(){
- if(enPF()){salirPF();return}
- const rq=PW.requestFullscreen||PW.webkitRequestFullscreen;
- if(!rq){fallbackPF();return}
- try{const pr=rq.call(PW);if(pr&&pr.catch)pr.catch(fallbackPF)}catch(e){fallbackPF()}
-}
-bPF.onclick=pantallaPlano;
-document.addEventListener('fullscreenchange',estadoPF);document.addEventListener('webkitfullscreenchange',estadoPF);
-addEventListener('keydown',e=>{if(e.key==='Escape'&&PW.classList.contains('fsx'))salirPF()});
-function capPlan(i){
- const z=A[i],c=PW.querySelector('.pcap');
- c.querySelector('b').textContent=z.n;
- c.querySelector('small').textContent=(z.pano?'Vista 360° disponible':'Vista 360° próximamente')+' · '+(i+1)+'/'+A.length;
-}
-
-/* Calibración: transformación de semejanza (giro + escala + traslación) por mínimos cuadrados */
-function ajusta(rs){
- if(!rs||rs.length<2)return null;
- const n=rs.length,lat0=rs.reduce((t,r)=>t+r.lat,0)/n,lng0=rs.reduce((t,r)=>t+r.lng,0)/n,c=Math.cos(lat0*rad);
- const Wm=rs.map(r=>[(r.lng-lng0)*c*111320,-(r.lat-lat0)*110540]);
- const Z=rs.map(r=>[r.x/100,r.y/100*K]);
- const mw=[0,1].map(k=>Wm.reduce((t,p)=>t+p[k],0)/n),mz=[0,1].map(k=>Z.reduce((t,p)=>t+p[k],0)/n);
- let nr=0,ni=0,den=0;
- Wm.forEach((w,j)=>{const wr=w[0]-mw[0],wi=w[1]-mw[1],zr=Z[j][0]-mz[0],zi=Z[j][1]-mz[1];nr+=wr*zr+wi*zi;ni+=wr*zi-wi*zr;den+=wr*wr+wi*wi});
- if(den<200)return null;
- return{lat0,lng0,c,mw,mz,ar:nr/den,ai:ni/den};
-}
-function proyecta(t,lat,lng){
- const wr=(lng-t.lng0)*t.c*111320-t.mw[0],wi=-(lat-t.lat0)*110540-t.mw[1];
- const zr=t.mz[0]+t.ar*wr-t.ai*wi,zi=t.mz[1]+t.ar*wi+t.ai*wr;
- return{x:zr*100,y:zi/K*100,esc:Math.hypot(t.ar,t.ai)};
-}
-function errorMedio(){
- if(!T)return 0;
- const e=refs.map(r=>{const q=proyecta(T,r.lat,r.lng);return Math.hypot((q.x-r.x)/100,(q.y-r.y)/100*K)/T.esc});
- return Math.sqrt(e.reduce((t,v)=>t+v*v,0)/e.length);
-}
-function pintaRefs(){
- T=ajusta(refs);
- let t=refs.length+(refs.length===1?' punto marcado':' puntos marcados');
- if(T)t+=' · Calibración lista · error medio ≈ '+errorMedio().toFixed(1)+' m';
- else t+=refs.length<2?' · Marca al menos 2 puntos.':' · Los puntos están muy juntos; marca otro a más de 20 m.';
- geoL.textContent=t;
-}
-const guardaRefs=()=>{try{localStorage.setItem(GK,JSON.stringify(refs))}catch(e){}};
-
-/* Zoom y desplazamiento del plano (rueda con Ctrl, pellizco, arrastre, botones, doble clic) */
-const stage=$('#pstage'),pR=$('#pruta'),rC=$('#rC'),rL=$('#rL'),yoD=$('#yoD'),SMAX=4;
-function aplicaZ(){
- const vw=plan.clientWidth,vh=plan.clientHeight,sw=stage.offsetWidth,sh=stage.offsetHeight;
- ZM.s=Math.max(1,Math.min(SMAX,ZM.s));
- ZM.x=Math.max(Math.min(0,vw-sw*ZM.s),Math.min(0,ZM.x));ZM.y=Math.max(Math.min(0,vh-sh*ZM.s),Math.min(0,ZM.y));
- stage.style.transform='translate('+ZM.x+'px,'+ZM.y+'px) scale('+ZM.s+')';
- stage.style.setProperty('--z',ZM.s);plan.classList.toggle('zm',ZM.s>1);
- if(sw){const u=sw*ZM.s/100;rC.setAttribute('stroke-width',8/u);rL.setAttribute('stroke-width',4.5/u)}
-}
-function reinicia(){ZM.s=1;ZM.y=0;ZM.x=(plan.clientWidth-stage.offsetWidth)/2;aplicaZ()}
-function zoomEn(f,cx,cy){const k=Math.max(1,Math.min(SMAX,ZM.s*f))/ZM.s;ZM.x=cx-(cx-ZM.x)*k;ZM.y=cy-(cy-ZM.y)*k;ZM.s*=k;aplicaZ()}
-function enfoca(x,y,k){const vw=plan.clientWidth,vh=plan.clientHeight,sw=stage.offsetWidth,sh=stage.offsetHeight;ZM.s=Math.max(ZM.s,Math.min(SMAX,k));ZM.x=vw/2-x/100*sw*ZM.s;ZM.y=vh/2-y/100*sh*ZM.s;aplicaZ()}
-const centro=f=>{const r=plan.getBoundingClientRect();zoomEn(f,r.width/2,r.height/2)};
-$('#bZin').onclick=()=>centro(1.6);$('#bZout').onclick=()=>centro(1/1.6);
-const ptrs=new Map();let pinch=null,movido=false;
-plan.addEventListener('pointerdown',e=>{
- if(e.target.closest('.pctl,.ptog'))return;
- ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});movido=false;
- if(ptrs.size===2){const[a,b]=[...ptrs.values()];pinch=Math.hypot(a.x-b.x,a.y-b.y)||1}
-});
-plan.addEventListener('pointermove',e=>{
- const p=ptrs.get(e.pointerId);if(!p)return;
- const dx=e.clientX-p.x,dy=e.clientY-p.y;
- if(ptrs.size===2&&pinch){
-  p.x=e.clientX;p.y=e.clientY;
-  const[a,b]=[...ptrs.values()],d=Math.hypot(a.x-b.x,a.y-b.y)||1,r=plan.getBoundingClientRect();
-  zoomEn(d/pinch,(a.x+b.x)/2-r.left,(a.y+b.y)/2-r.top);pinch=d;movido=true;return;
- }
- if(ZM.s>1){
-  if(!movido&&Math.hypot(dx,dy)<5)return;
-  if(!movido){movido=true;try{plan.setPointerCapture(e.pointerId)}catch(_){}}
-  ZM.x+=dx;ZM.y+=dy;p.x=e.clientX;p.y=e.clientY;aplicaZ();
- }
-});
-const finPtr=e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null};
-plan.addEventListener('pointerup',finPtr);plan.addEventListener('pointercancel',finPtr);
-plan.addEventListener('click',e=>{if(movido){e.stopPropagation();e.preventDefault();movido=false}},true);
-plan.addEventListener('wheel',e=>{
- if(!(e.ctrlKey||e.metaKey||PW.classList.contains('isfs')))return;
- e.preventDefault();const r=plan.getBoundingClientRect();zoomEn(Math.exp(-e.deltaY*.0015),e.clientX-r.left,e.clientY-r.top);
-},{passive:false});
-plan.addEventListener('dblclick',e=>{
- if(e.target.closest('.pctl,.ptog'))return;
- const r=plan.getBoundingClientRect();
- if(ZM.s>=SMAX){ZM.s=1;ZM.x=0;ZM.y=0;aplicaZ()}else zoomEn(2,e.clientX-r.left,e.clientY-r.top);
-});
-
-let rz2;addEventListener('resize',()=>{clearTimeout(rz2);rz2=setTimeout(()=>{PW.classList.contains('isfs')?reinicia():aplicaZ()},100)});
-
-/* Rutas: usa ajustes.caminos (nodos y aristas en % del plano); sin caminos dibuja línea recta */
-const CAM=(D.ajustes&&D.ajustes.caminos)||{};
-function camino(a,b){
- const N=CAM.nodos||[],E=CAM.aristas||[];
- if(N.length<2||!E.length)return[a,b];
- const d=(p,q)=>Math.hypot(p[0]-q[0],(p[1]-q[1])*K),ady=N.map(()=>[]);
- E.forEach(([i,j])=>{if(!N[i]||!N[j])return;const w=d(N[i],N[j]);ady[i].push([j,w]);ady[j].push([i,w])});
- const cerca=p=>N.reduce((m,n,i)=>d(p,n)<d(p,N[m])?i:m,0),o=cerca(a),t=cerca(b);
- const dist=N.map(()=>Infinity),prev=N.map(()=>-1),listo=N.map(()=>false);dist[o]=0;
- for(;;){
-  let u=-1;dist.forEach((v,i)=>{if(!listo[i]&&v<Infinity&&(u<0||v<dist[u]))u=i});
-  if(u<0||u===t)break;listo[u]=true;
-  ady[u].forEach(([v,w])=>{if(dist[u]+w<dist[v]){dist[v]=dist[u]+w;prev[v]=u}});
- }
- if(dist[t]===Infinity)return[a,b];
- const ruta=[];for(let i=t;i>=0;i=prev[i])ruta.unshift(N[i]);
- return[a,...ruta,b];
-}
-const mts=(a,b)=>Math.hypot((a[0]-b[0])/100,(a[1]-b[1])/100*K)/T.esc;
-let ultPos=null,rutaZ=null,primera=false,auto=false,ultAuto=-1;
-function trazar(){
- if(rutaZ===null||!ultPos||!T)return'';
- let best=null,bd=1e9;
- plan.querySelectorAll('.pin[data-i="'+rutaZ+'"]').forEach(pn=>{const q=[parseFloat(pn.style.left),parseFloat(pn.style.top)],dd=mts(q,[ultPos.x,ultPos.y]);if(dd<bd){bd=dd;best=q}});
- if(!best)return'';
- const pts=camino([ultPos.x,ultPos.y],best),pp=pts.map(p=>p[0].toFixed(2)+','+(p[1]*K).toFixed(2)).join(' ');
- rC.setAttribute('points',pp);rL.setAttribute('points',pp);pR.removeAttribute('hidden');
- let m=0;for(let i=1;i<pts.length;i++)m+=mts(pts[i],pts[i-1]);m=Math.round(m);
- const nom=A[rutaZ].n;
- if(m<=8)return'Llegaste a '+nom;
- return'Hacia '+nom+': ≈ '+m+' m'+(pts.length>2?' · ~'+Math.max(1,Math.round(m/75))+' min a pie':' en línea recta (aún no hay caminos trazados)');
-}
-$('#bRuta').onclick=e=>{
- const b=e.currentTarget;
- if(rutaZ!==null){rutaZ=null;pR.setAttribute('hidden','');b.setAttribute('aria-pressed','false');msg('');return}
- if(!T){msg(modoCal?'Primero calibra el plano en el panel de abajo.':'La ruta aún no está disponible: falta calibrar el plano.');return}
- rutaZ=cur;b.setAttribute('aria-pressed','true');
- if(watch===null){ubicar(true);if(watch===null){rutaZ=null;b.setAttribute('aria-pressed','false')}}
- else msg(trazar()||'Esperando tu ubicación…',true);
-};
-$('#bAuto').onclick=e=>{auto=!auto;ultAuto=-1;e.currentTarget.setAttribute('aria-pressed',auto);if(auto&&watch===null)ubicar(true)};
-
-/* Brújula: gira el cono del punto azul según hacia dónde apuntas */
-function onRumbo(e){
- let h=e.webkitCompassHeading;
- if(h==null&&e.absolute&&e.alpha!=null)h=360-e.alpha;
- if(h==null||!T)return;
- const t=h*rad,wr=Math.sin(t),wi=-Math.cos(t),zr=T.ar*wr-T.ai*wi,zi=T.ar*wi+T.ai*wr;
- yoD.style.transform='rotate('+(Math.atan2(zi,zr)/rad+90).toFixed(1)+'deg)';yoD.hidden=false;
-}
-async function brujula(on){
- removeEventListener('deviceorientationabsolute',onRumbo);removeEventListener('deviceorientation',onRumbo);yoD.hidden=true;
- if(!on)return;
- try{const DO=window.DeviceOrientationEvent;if(DO&&typeof DO.requestPermission==='function'&&await DO.requestPermission()!=='granted')return}catch(_){return}
- addEventListener('deviceorientationabsolute',onRumbo);addEventListener('deviceorientation',onRumbo);
-}
-
-/* Localizador */
-function onPos(p){
- if(!T){ubicar(false);return}
- const q=proyecta(T,p.coords.latitude,p.coords.longitude),acc=Math.round(p.coords.accuracy||0);
- if(!(q.x>=-3&&q.x<=103&&q.y>=-3&&q.y<=103)){
-  yo.hidden=true;yoAcc.hidden=true;ultPos=null;
-  msg('Parece que no estás dentro del plantel, por eso no se muestra tu punto en el plano.',true);return;
- }
- const x=Math.max(0,Math.min(100,q.x)),y=Math.max(0,Math.min(100,q.y));
- ultPos={x,y};yo.style.left=x+'%';yo.style.top=y+'%';yo.hidden=false;
- const d=Math.min(60,2*acc*q.esc*100);
- yoAcc.style.left=x+'%';yoAcc.style.top=y+'%';yoAcc.style.width=d+'%';yoAcc.hidden=d<2;
- if(primera){primera=false;enfoca(x,y,2.2)}
- let best=null,bd=1e9;
- plan.querySelectorAll('.pin').forEach(pn=>{const dd=mts([parseFloat(pn.style.left),parseFloat(pn.style.top)],[x,y]);if(dd<bd){bd=dd;best=pn}});
- const cerca=best&&bd<=20;
- if(auto&&cerca&&+best.dataset.i!==ultAuto){ultAuto=+best.dataset.i;sel(ultAuto,best)}
- const rt=trazar();
- msg((rt?rt+' · ':'')+'Estás en el plantel'+(cerca?' · Cerca de: '+best.getAttribute('aria-label'):'')+(acc?' (±'+acc+' m)':''),true);
-}
-function ubicar(on){
- if(!on){
-  if(watch!==null&&navigator.geolocation)navigator.geolocation.clearWatch(watch);
-  watch=null;ultPos=null;rutaZ=null;pR.setAttribute('hidden','');yo.hidden=true;yoAcc.hidden=true;
-  bLoc.setAttribute('aria-pressed','false');$('#bRuta').setAttribute('aria-pressed','false');brujula(false);return;
- }
- if(!('geolocation' in navigator)){msg('Tu navegador no permite obtener la ubicación.');return}
- if(!window.isSecureContext){msg('La ubicación solo funciona con una dirección segura (https).');return}
- if(!T){msg(modoCal?'Primero calibra el plano en el panel de abajo.':'El localizador aún no está disponible: falta calibrar el plano. Avisa a quien administra el museo.');return}
- bLoc.setAttribute('aria-pressed','true');msg('Buscando tu ubicación…',true);primera=true;brujula(true);
- watch=navigator.geolocation.watchPosition(onPos,err=>{
-  msg(err.code===1?'Permiso de ubicación denegado. Actívalo en los ajustes del navegador.':err.code===3?'Tardó demasiado en obtener tu ubicación. Intenta al aire libre.':'No se pudo obtener tu ubicación.');
-  if(err.code===1)ubicar(false);
- },{enableHighAccuracy:true,maximumAge:2000,timeout:20000});
-}
-bLoc.onclick=()=>ubicar(watch===null);
-
-/* Panel de calibración (solo con ?calibrar=1) */
-geoP.hidden=!modoCal;
-const bCalM=$('#bCalM');
-bCalM.onclick=()=>{
- armado=!armado;bCalM.setAttribute('aria-pressed',armado);
- msg(armado?'Párate en un punto reconocible y toca ese mismo lugar en el plano.':'',true);
-};
-plan.addEventListener('click',e=>{
- if(!armado||e.target.closest('.pctl,.ptog'))return;
- e.stopPropagation();e.preventDefault();
- const r=stage.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*100,y=(e.clientY-r.top)/r.height*100;
- armado=false;bCalM.setAttribute('aria-pressed','false');
- if(!navigator.geolocation||!window.isSecureContext){msg('Para calibrar se necesita https y el permiso de ubicación.');return}
- msg('Obteniendo tu posición… no te muevas.',true);
- navigator.geolocation.getCurrentPosition(p=>{
-  const acc=Math.round(p.coords.accuracy);
-  refs.push({lat:+p.coords.latitude.toFixed(6),lng:+p.coords.longitude.toFixed(6),x:+x.toFixed(1),y:+y.toFixed(1)});
-  guardaRefs();pintaRefs();
-  msg('Punto guardado (precisión ±'+acc+' m).'+(acc>25?' La precisión es baja; conviene repetirlo al aire libre.':''));
- },()=>msg('No se pudo leer tu ubicación para calibrar.'),{enableHighAccuracy:true,maximumAge:0,timeout:25000});
-},true);
-$('#bCalJ').onclick=async()=>{
- const j='"geoMapa": '+JSON.stringify({referencias:refs.map(({lat,lng,x,y})=>({lat,lng,x,y}))},null,1);
- try{await navigator.clipboard.writeText(j);msg('JSON copiado. Pégalo dentro de "ajustes" en datos.json.')}
- catch(_){prompt('Copia esto y pégalo dentro de "ajustes" en datos.json:',j)}
-};
-$('#bCalB').onclick=()=>{refs=[];try{localStorage.removeItem(GK)}catch(e){}pintaRefs();ubicar(false);msg('Puntos borrados.')};
-pintaRefs();
-
-
-const par=new URLSearchParams(location.search).get('zona')||decodeURIComponent(location.hash.slice(1));
-if(par){
- const s=slug(par),i=A.findIndex((z,k)=>idDe(k)===s||slug(z.n)===s);
- if(i>=0){interno=true;sel(i);interno=false;if(matchMedia('(max-width:960px)').matches)setTimeout(()=>W.scrollIntoView({block:'start'}),500)}
- else sel(0);
-}else sel(0);
-ini=false;
-})();
-});
 </script>
 </body>
 </html>
