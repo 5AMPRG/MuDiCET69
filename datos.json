@@ -261,7 +261,8 @@
   },
   "museo3d": {
    "visor": "museo3d/visor.js",
-   "modelo": "museo3d/museo.glb"
+   "modelo": "museo3d/museo.glb",
+   "info": {}
   }
  },
  "hitos": [
