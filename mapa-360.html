@@ -126,6 +126,57 @@
  .plwrap.isfs .plan{width:100vw;height:100vh;height:100dvh}
  .plwrap.isfs .pstage{inset:auto;top:0;left:0;height:100%;width:auto;aspect-ratio:561/373}
 }
+/* ===== Bloqueo: sección en actualización ===== */
+.wip-on{position:relative;overflow:clip;min-height:min(780px,100vh)}
+.wip-on .mp{filter:blur(7px) saturate(.7);pointer-events:none;user-select:none}
+.wip{position:absolute;inset:0;z-index:5;display:flex;justify-content:center;align-items:flex-start;padding:2rem var(--pad,1.25rem)}
+.wip[hidden]{display:none}
+.wip-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 25%,rgba(122,18,46,.6),rgba(24,4,11,.93) 72%),repeating-linear-gradient(0deg,rgba(255,255,255,.055) 0 1px,transparent 1px 44px),repeating-linear-gradient(90deg,rgba(255,255,255,.055) 0 1px,transparent 1px 44px);animation:wipGrid 16s linear infinite}
+@keyframes wipGrid{to{background-position:0 0,0 44px,44px 0}}
+.wip-card{position:sticky;top:calc(var(--nav,68px) + 1.5rem);width:100%;max-width:720px;padding:clamp(1.6rem,4vw,3rem);text-align:center;color:#fff;background:linear-gradient(160deg,rgba(255,255,255,.13),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.2);-webkit-backdrop-filter:blur(18px) saturate(1.2);backdrop-filter:blur(18px) saturate(1.2);box-shadow:0 40px 90px -30px rgba(0,0,0,.75),inset 0 1px 0 rgba(255,255,255,.25);overflow:hidden}
+.wip-card::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,transparent,#e8a5b4,transparent)}
+.wip-card::after{content:"";position:absolute;top:0;bottom:0;left:-60%;width:40%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.1),transparent);transform:skewX(-18deg);animation:wipSheen 7s ease-in-out infinite;pointer-events:none}
+@keyframes wipSheen{0%,55%{left:-60%}100%{left:130%}}
+.wip-gfx{position:relative;width:230px;height:124px;margin:.4rem auto 1.8rem;filter:drop-shadow(0 0 14px rgba(232,165,180,.45))}
+.wip-gfx svg{position:absolute;inset:0}
+.gA,.gB{will-change:transform}
+.gA{transform-origin:82px 70px;animation:wipA 24s linear infinite}
+.gB{transform-origin:148px 54px;animation:wipB 16.5s linear infinite}
+@keyframes wipA{from{transform:rotate(2.8deg)}to{transform:rotate(362.8deg)}}
+@keyframes wipB{from{transform:rotate(10.3deg)}to{transform:rotate(-349.7deg)}}
+.wip-radar{position:absolute;left:50%;top:50%;width:0;height:0}
+.wip-radar i{position:absolute;left:-120px;top:-120px;width:240px;height:240px;border-radius:50%;background:conic-gradient(from 0deg,transparent 0 68%,rgba(232,165,180,.42) 100%);-webkit-mask:radial-gradient(circle,transparent 0 32%,#000 33%);mask:radial-gradient(circle,transparent 0 32%,#000 33%);animation:wipSpin 5s linear infinite}
+@keyframes wipSpin{to{transform:rotate(360deg)}}
+.ping{position:absolute;left:50%;top:50%;width:150px;height:150px;margin:-75px 0 0 -75px;border:1px solid rgba(240,201,210,.55);border-radius:50%;animation:wipPing 3.2s ease-out infinite}
+.ping.p2{animation-delay:1.6s}
+@keyframes wipPing{from{transform:scale(.5);opacity:.9}to{transform:scale(1.9);opacity:0}}
+.wip-tag{display:inline-flex;align-items:center;gap:.7rem;font-size:.66rem;letter-spacing:.3em;text-transform:uppercase;font-weight:600;color:#f0c9d2}
+.wip-tag i{width:8px;height:8px;border-radius:50%;background:#ff6b8b;box-shadow:0 0 0 0 rgba(255,107,139,.7);animation:wipBlink 1.6s infinite}
+@keyframes wipBlink{70%{box-shadow:0 0 0 10px rgba(255,107,139,0)}100%{box-shadow:0 0 0 0 rgba(255,107,139,0)}}
+.wip h2{font-size:clamp(1.5rem,4.2vw,2.7rem);font-weight:200;letter-spacing:.06em;text-transform:uppercase;line-height:1.15;margin:.9rem 0 1rem}
+.wip h2 b{display:block;font-weight:800;color:#f0c9d2}
+.wip p{color:#e6cfd5;max-width:56ch;margin:0 auto}
+.wip-list{list-style:none;display:grid;gap:.6rem;margin:1.6rem auto;max-width:520px;text-align:left}
+.wip-list li{display:flex;align-items:center;gap:.8rem;padding:.75rem 1rem;background:rgba(0,0,0,.24);border:1px solid rgba(255,255,255,.1);font-size:.84rem}
+.wip-list .dot{flex:none;width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.25);border-top-color:#f0c9d2;animation:wipSpin 1s linear infinite}
+.wip-list li:nth-child(2) .dot{animation-duration:1.4s}.wip-list li:nth-child(3) .dot{animation-duration:1.9s}
+.wip-list em{margin-left:auto;font-style:normal;font-size:.56rem;letter-spacing:.2em;text-transform:uppercase;color:#f0c9d2;white-space:nowrap}
+.wip-bar{height:4px;max-width:520px;margin:0 auto;background:rgba(255,255,255,.14);overflow:hidden}
+.wip-bar i{display:block;height:100%;width:38%;background:linear-gradient(90deg,transparent,#fff,transparent);animation:wipInd 2.2s ease-in-out infinite}
+@keyframes wipInd{from{transform:translateX(-100%)}to{transform:translateX(280%)}}
+.wip-bar.det i{animation:none;background:linear-gradient(90deg,#e8a5b4,#fff)}
+.wip-meta{margin-top:1rem!important;font-size:.7rem;letter-spacing:.22em;text-transform:uppercase}
+.wip-meta b{color:#fff;font-weight:700}.wip-meta span{margin-left:.6rem;color:#f0c9d2}
+.wip-acts{display:flex;flex-wrap:wrap;gap:.7rem;justify-content:center;margin-top:1.8rem}
+.wip .btn{background:#fff;color:var(--guinda,#7a122e);border-color:#fff}
+.wip .btn:hover{background:var(--guinda,#7a122e);color:#fff}
+.wip .btn.ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.55)}
+.wip .btn.ghost:hover{background:#fff;color:var(--guinda,#7a122e)}
+.wip-eq{position:fixed;left:50%;bottom:1rem;transform:translateX(-50%);z-index:150;display:flex;gap:.8rem;align-items:center;max-width:calc(100vw - 2rem);padding:.7rem 1.1rem;background:#14090d;color:#fff;font-size:.72rem;box-shadow:0 12px 30px rgba(0,0,0,.35)}
+.wip-eq a{color:#f0c9d2;text-decoration:underline;white-space:nowrap}
+@media (max-height:800px){.wip-card{position:relative;top:auto}}
+@media (max-width:560px){.wip .btn{width:100%}.wip-list em{display:none}}
+@media (prefers-reduced-motion:reduce){.wip *,.wip::before,.wip-card::after{animation:none!important}}
 .skip{position:absolute;left:-999px;top:0;z-index:300;background:#fff;color:var(--guinda);padding:.7rem 1.1rem;font-size:.75rem;letter-spacing:.12em;font-weight:600}
 .skip:focus{left:1rem;top:1rem}
 </style>
@@ -135,7 +186,7 @@
 <div id="loader"><div class="ld"><h2>CETIS 69</h2><p>MUSEO DIGITAL</p><div class="bar"><i></i></div></div></div>
 <nav id="nav" class="solid"></nav>
 <header class="phead"><div class="rv"><div class="eyebrow">Recorrido virtual</div><h1 class="title">Mapa interactivo <b>360°</b></h1><p>Selecciona un punto del plano y gira la vista panorámica para explorar los talleres, laboratorios, canchas y áreas verdes del plantel.</p></div></header>
-<section><div class="mp"><div class="plcol"><div class="plwrap" id="plwrap"><div class="plan slot" id="plan" data-slot="plano-plantel"><div class="pstage" id="pstage"><img src="mapa-escolar.jpeg" alt="Plano del plantel"><svg class="pruta" id="pruta" viewBox="0 0 100 66.488" preserveAspectRatio="none" aria-hidden="true" hidden><polyline id="rC" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round"/><polyline id="rL" fill="none" stroke="#1a73e8" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="yo-acc" id="yoAcc" hidden></span><div class="yo" id="yo" hidden><span class="yo-dir" id="yoD" hidden></span><span class="yo-dot"></span><span class="yo-lbl">Estás aquí</span></div></div><i class="fa-regular fa-map"></i><span class="tag">Plano del plantel</span><button type="button" class="ptog" id="bLbl" aria-pressed="true"><i class="fa-solid fa-tag"></i> Etiquetas</button>
+<section class="wip-on" id="wipSec"><div class="mp" inert aria-hidden="true"><div class="plcol"><div class="plwrap" id="plwrap"><div class="plan slot" id="plan" data-slot="plano-plantel"><div class="pstage" id="pstage"><img src="mapa-escolar.jpeg" alt="Plano del plantel"><svg class="pruta" id="pruta" viewBox="0 0 100 66.488" preserveAspectRatio="none" aria-hidden="true" hidden><polyline id="rC" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round"/><polyline id="rL" fill="none" stroke="#1a73e8" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="yo-acc" id="yoAcc" hidden></span><div class="yo" id="yo" hidden><span class="yo-dir" id="yoD" hidden></span><span class="yo-dot"></span><span class="yo-lbl">Estás aquí</span></div></div><i class="fa-regular fa-map"></i><span class="tag">Plano del plantel</span><button type="button" class="ptog" id="bLbl" aria-pressed="true"><i class="fa-solid fa-tag"></i> Etiquetas</button>
 <div class="pctl"><button type="button" id="bLoc" aria-pressed="false" aria-label="Mostrar mi ubicación en el plano" title="Mi ubicación"><i class="fa-solid fa-location-crosshairs"></i></button><button type="button" id="bPlFs" aria-label="Ver el plano en pantalla completa" title="Pantalla completa"><i class="fa-solid fa-expand"></i></button></div>
 <div class="pctl pzoom"><button type="button" id="bZin" aria-label="Acercar" title="Acercar"><i class="fa-solid fa-plus"></i></button><button type="button" id="bZout" aria-label="Alejar" title="Alejar"><i class="fa-solid fa-minus"></i></button></div></div>
 <div class="pbot"><div class="pcap"><div><b></b><small></small></div></div><div class="pmsg" id="plMsg" role="status" aria-live="polite" hidden></div></div></div>
@@ -144,9 +195,53 @@
 <div class="ptit" id="pT"><i class="fa-solid fa-location-dot"></i><div><b></b><small></small></div></div>
 <button type="button" class="pfs" id="bFs" aria-label="Ver en pantalla completa"><i class="fa-solid fa-expand"></i><span>Pantalla completa</span></button>
 <div class="pprog" id="pP"><i></i></div></div><div class="ainfo"><h3 id="aT"></h3><p id="aD"></p></div>
-<div class="macts"><button type="button" class="btn ghost sm" id="bTour" aria-pressed="false"><i class="fa-solid fa-play"></i> Recorrido automático</button><a class="btn ghost sm" id="bQR" href="qr-zonas.html"><i class="fa-solid fa-qrcode"></i> Código QR de esta zona</a><button type="button" class="btn ghost sm" id="bRuta" aria-pressed="false"><i class="fa-solid fa-route"></i> Cómo llegar</button><button type="button" class="btn ghost sm" id="bAuto" aria-pressed="false"><i class="fa-solid fa-person-walking"></i> Abrir zona al acercarme</button><button type="button" class="btn ghost sm" id="bShare"><i class="fa-solid fa-share-nodes"></i> Compartir</button></div><div class="tabs" id="al"></div></div></div></section>
+<div class="macts"><button type="button" class="btn ghost sm" id="bTour" aria-pressed="false"><i class="fa-solid fa-play"></i> Recorrido automático</button><a class="btn ghost sm" id="bQR" href="qr-zonas.html"><i class="fa-solid fa-qrcode"></i> Código QR de esta zona</a><button type="button" class="btn ghost sm" id="bRuta" aria-pressed="false"><i class="fa-solid fa-route"></i> Cómo llegar</button><button type="button" class="btn ghost sm" id="bAuto" aria-pressed="false"><i class="fa-solid fa-person-walking"></i> Abrir zona al acercarme</button><button type="button" class="btn ghost sm" id="bShare"><i class="fa-solid fa-share-nodes"></i> Compartir</button></div><div class="tabs" id="al"></div></div></div>
+<div class="wip" id="wip" role="region" aria-labelledby="wipT">
+<div class="wip-bg" aria-hidden="true"></div>
+<div class="wip-card">
+<div class="wip-gfx" aria-hidden="true"><div class="wip-radar"><i></i></div><span class="ping"></span><span class="ping p2"></span>
+<svg viewBox="0 0 230 124" width="230" height="124" fill="none" stroke-linecap="butt">
+<g class="gA"><circle cx="82" cy="70" r="40" stroke="#f0c9d2" stroke-width="12" stroke-dasharray="8.5 7.2"/><circle cx="82" cy="70" r="33" stroke="#fff" stroke-width="2.5"/><circle cx="82" cy="70" r="22" stroke="#e8a5b4" stroke-width="1.5" stroke-dasharray="3 5"/><circle cx="82" cy="70" r="9" fill="#fff" stroke="none"/></g>
+<g class="gB"><circle cx="148" cy="54" r="28" stroke="#e8a5b4" stroke-width="12" stroke-dasharray="8.6 7.4"/><circle cx="148" cy="54" r="21" stroke="#fff" stroke-width="2.5"/><circle cx="148" cy="54" r="7" fill="#fff" stroke="none"/></g>
+</svg></div>
+<div class="wip-tag"><i></i><span id="wipE">Actualización en curso</span></div>
+<h2 id="wipT">Estamos armando el <b>recorrido 3D°</b></h2>
+<p id="wipP">Estamos actualizando esta sección del museo con una vista 3D y más información de cada zona del plantel. Muy pronto podrás recorrerlo completo.</p>
+<ul class="wip-list" id="wipL"><li><span class="dot"></span>vista 3D de cada zona del plantel<em>En proceso</em></li><li><span class="dot"></span>Descripciones e historia de cada área<em>En proceso</em></li><li><span class="dot"></span>Rutas y localización dentro del plantel<em>En proceso</em></li></ul>
+<div class="wip-bar" id="wipBar" aria-hidden="true"><i></i></div>
+<p class="wip-meta">Disponible: <b id="wipF">Próximamente</b><span id="wipPct"></span></p>
+<div class="wip-acts"><a class="btn" id="wipHome" href="index.html">Volver al inicio <i class="fa-solid fa-house"></i></a><a class="btn ghost" href="archivo-fotografico.html">Ver el archivo fotográfico <i class="fa-regular fa-images"></i></a></div>
+</div></div></section>
 <footer></footer>
 <script src="comun.js"></script>
+<script>
+(function(){
+const sec=$('#wipSec'),wip=$('#wip'),mp=sec.querySelector('.mp'),skip=document.querySelector('.skip');
+const K='c69_equipo',par=new URLSearchParams(location.search).get('acceso');
+let eq=false;
+try{if(par==='1')sessionStorage.setItem(K,'1');if(par==='0')sessionStorage.removeItem(K);eq=sessionStorage.getItem(K)==='1'}catch(e){eq=par==='1'}
+if(skip)skip.hidden=true;
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function abrir(chip){
+ sec.classList.remove('wip-on');mp.inert=false;mp.removeAttribute('aria-hidden');wip.hidden=true;if(skip)skip.hidden=false;
+ window.dispatchEvent(new Event('resize'));
+ if(chip){const c=document.createElement('div');c.className='wip-eq';c.innerHTML='<i class="fa-solid fa-lock-open" aria-hidden="true"></i><span>Modo equipo: el público ve esta sección bloqueada</span><a href="?acceso=0">Ver como visitante</a>';document.body.append(c)}
+}
+DATOS.catch(()=>({})).then(D=>{
+ const C=(D.ajustes&&D.ajustes.bloqueos&&D.ajustes.bloqueos['mapa-360'])||{};
+ if(C.activo===false){abrir(false);return}
+ if(C.etiqueta)$('#wipE').textContent=C.etiqueta;
+ if(C.titulo){const t=$('#wipT');t.textContent=C.titulo+' ';if(C.destacado){const b=document.createElement('b');b.textContent=C.destacado;t.append(b)}}
+ if(C.mensaje)$('#wipP').textContent=C.mensaje;
+ if(Array.isArray(C.items)&&C.items.length)$('#wipL').innerHTML=C.items.map(x=>'<li><span class="dot"></span>'+esc(x)+'<em>En proceso</em></li>').join('');
+ if(C.fecha)$('#wipF').textContent=C.fecha;
+ const av=Math.min(100,+C.avance||0);
+ if(av>0){const b=$('#wipBar');b.classList.add('det');b.firstElementChild.style.width=av+'%';$('#wipPct').textContent=Math.round(av)+'% de avance'}
+ if(D.sitio&&D.sitio.inicio)$('#wipHome').href=D.sitio.inicio;
+ if(eq)abrir(true);
+});
+})();
+</script>
 <script>
 DATOS.then(D=>{
 const A=D.zonas;
