@@ -92,6 +92,11 @@
     "t": "Códigos QR por zona",
     "u": "qr-zonas.html",
     "x": "Genera e imprime un código QR para cada zona del plantel"
+   },
+   {
+    "t": "Museo 3D",
+    "u": "mapa-360.html#museo-3d",
+    "x": "Recorrido tridimensional por salas, una por década"
    }
   ],
   "pie": {
@@ -257,7 +262,25 @@
     ],
     "fecha": "Próximamente",
     "avance": 0
+   },
+   "museo-3d": {
+    "activo": true,
+    "etiqueta": "Próximamente",
+    "titulo": "Estamos construyendo el",
+    "destacado": "museo 3D",
+    "mensaje": "Un recorrido por salas virtuales, una por década, para caminar por la historia del CETIS 69 y ver la información de cada época. Muy pronto podrás entrar.",
+    "items": [
+     "Una sala por década, de los 80 a los 2020",
+     "Fotos y textos de cada época",
+     "Minimapa y controles táctiles"
+    ],
+    "fecha": "Próximamente",
+    "avance": 0
    }
+  },
+  "museo3d": {
+   "visor": "museo3d/visor.js",
+   "modelo": "museo3d/museo.glb"
   }
  },
  "hitos": [
