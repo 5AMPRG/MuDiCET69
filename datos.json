@@ -15,7 +15,7 @@
     "u": "libro-visitas.html"
    },
    {
-    "t": "Mapa 360°",
+    "t": "Museo 3D",
     "u": "mapa-360.html"
    },
    {
@@ -74,9 +74,9 @@
     "x": "Deja tu mensaje en el museo"
    },
    {
-    "t": "Mapa interactivo 360°",
+    "t": "Museo 3D",
     "u": "mapa-360.html",
-    "x": "Recorrido virtual por el plantel"
+    "x": "Recorrido virtual en 3D por salas, una por década"
    },
    {
     "t": "Archivo fotográfico y de video",
@@ -92,11 +92,6 @@
     "t": "Códigos QR por zona",
     "u": "qr-zonas.html",
     "x": "Genera e imprime un código QR para cada zona del plantel"
-   },
-   {
-    "t": "Museo 3D",
-    "u": "mapa-360.html#museo-3d",
-    "x": "Recorrido tridimensional por salas, una por década"
    }
   ],
   "pie": {
@@ -249,20 +244,6 @@
   },
   "libroEndpoint": "",
   "bloqueos": {
-   "mapa-360": {
-    "activo": true,
-    "etiqueta": "Actualización en curso",
-    "titulo": "Estamos armando el",
-    "destacado": "recorrido 360°",
-    "mensaje": "Estamos actualizando esta sección del museo con nuevas panorámicas y más información de cada zona del plantel. Muy pronto podrás recorrerlo completo.",
-    "items": [
-     "Panorámicas 360° de cada zona del plantel",
-     "Descripciones e historia de cada área",
-     "Rutas y localización dentro del plantel"
-    ],
-    "fecha": "Próximamente",
-    "avance": 0
-   },
    "museo-3d": {
     "activo": true,
     "etiqueta": "Próximamente",
