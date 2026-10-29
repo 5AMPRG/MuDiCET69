@@ -26,6 +26,10 @@ button:hover{background:#26a870}
 .teclas{display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center;color:#c8d1dc;font-size:.9rem}
 .tactil .teclas{display:none}
 kbd{background:#26303c;border-radius:.35rem;padding:.15rem .5rem;border:1px solid #3a4756}
+#ambientes{position:fixed;top:max(.8rem,env(safe-area-inset-top));right:max(.8rem,env(safe-area-inset-right));z-index:20;display:flex;gap:.4rem}
+#ambientes button{padding:.45rem .85rem;font-size:.85rem;font-weight:500;background:rgba(11,15,20,.65);border:1px solid rgba(255,255,255,.18)}
+#ambientes button:hover{background:rgba(31,143,95,.5)}
+#ambientes button.activo{background:#1f8f5f;border-color:#1f8f5f}
 </style>
 </head>
 <body>
@@ -33,6 +37,11 @@ kbd{background:#26303c;border-radius:.35rem;padding:.15rem .5rem;border:1px soli
 <a id="volver" href="museo-cetis69.html">&larr; Volver al museo</a>
 <div id="mira"></div>
 <div id="joystick"><div id="perilla"></div></div>
+<div id="ambientes">
+  <button data-a="dia">Día</button>
+  <button data-a="galeria">Galería</button>
+  <button data-a="noche">Noche</button>
+</div>
 
 <div id="carga" class="pantalla">
   <h1>Cargando el museo…</h1>
@@ -47,6 +56,7 @@ kbd{background:#26303c;border-radius:.35rem;padding:.15rem .5rem;border:1px soli
     <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> o flechas para caminar</span>
     <span><kbd>Mouse</kbd> para mirar</span>
     <span><kbd>Shift</kbd> para correr</span>
+    <span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> para cambiar la iluminación</span>
     <span><kbd>Esc</kbd> para pausar</span>
   </div>
   <p class="solo-tactil">Usa el joystick para caminar y arrastra con el otro dedo para mirar.</p>
@@ -54,11 +64,12 @@ kbd{background:#26303c;border-radius:.35rem;padding:.15rem .5rem;border:1px soli
 </div>
 
 <script type="importmap">
-{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
 </script>
 <script type="module">
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 
 const CONFIG = {
   modelo: "museo.glb",
@@ -69,7 +80,15 @@ const CONFIG = {
   inicio: { x: 1.6, y: 4.7, z: 11.3 },
   mirarHacia: { x: 1.6, z: 0 },
   sensibilidadMouse: 0.0022,
-  sensibilidadTactil: 0.005
+  sensibilidadTactil: 0.005,
+  intensidadLamparas: 650,
+  ambienteInicial: "galeria"
+};
+
+const AMBIENTES = {
+  dia: { exposicion: 1.0, hemisferio: 0.8, entorno: 0.6, sol: 2.6, lamparas: 0, brillo: 0.1, fondo: 0xbcd9f0, niebla: 0xbcd9f0 },
+  galeria: { exposicion: 1.05, hemisferio: 0.35, entorno: 0.35, sol: 0.7, lamparas: 1, brillo: 1.6, fondo: 0x151b22, niebla: null },
+  noche: { exposicion: 1.15, hemisferio: 0.1, entorno: 0.12, sol: 0, lamparas: 1.5, brillo: 2.2, fondo: 0x04060a, niebla: null }
 };
 
 const contenedor = document.getElementById("escena");
@@ -89,9 +108,11 @@ if (esTactil) {
 }
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, esTactil ? 1.5 : 2));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMapping = THREE.NeutralToneMapping;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 contenedor.appendChild(renderer.domElement);
 
 const escena = new THREE.Scene();
@@ -101,10 +122,95 @@ const camara = new THREE.PerspectiveCamera(70, 1, 0.1, 2000);
 camara.rotation.order = "YXZ";
 camara.position.set(CONFIG.inicio.x, CONFIG.inicio.y, CONFIG.inicio.z);
 
-escena.add(new THREE.HemisphereLight(0xffffff, 0x666666, 1.6));
-const sol = new THREE.DirectionalLight(0xffffff, 1.2);
-sol.position.set(30, 80, 40);
+const generadorEntorno = new THREE.PMREMGenerator(renderer);
+escena.environment = generadorEntorno.fromScene(new RoomEnvironment(), 0.04).texture;
+
+const hemisferio = new THREE.HemisphereLight(0xdfeaff, 0x8a8070, 0.5);
+escena.add(hemisferio);
+
+const sol = new THREE.DirectionalLight(0xfff4e0, 1);
+sol.castShadow = true;
+sol.shadow.mapSize.set(esTactil ? 2048 : 4096, esTactil ? 2048 : 4096);
+sol.shadow.bias = -0.0004;
+sol.shadow.normalBias = 0.3;
 escena.add(sol);
+escena.add(sol.target);
+
+const lamparas = [];
+const materialesLampara = [];
+
+function aplicarAmbiente(clave) {
+  const a = AMBIENTES[clave];
+  renderer.toneMappingExposure = a.exposicion;
+  hemisferio.intensity = a.hemisferio;
+  escena.environmentIntensity = a.entorno;
+  sol.intensity = a.sol;
+  lamparas.forEach((luz) => { luz.intensity = CONFIG.intensidadLamparas * a.lamparas; });
+  materialesLampara.forEach((material) => { material.emissiveIntensity = a.brillo; });
+  escena.background.setHex(a.fondo);
+  escena.fog = a.niebla ? new THREE.Fog(a.niebla, 150, 700) : null;
+  document.querySelectorAll("#ambientes button").forEach((boton) => {
+    boton.classList.toggle("activo", boton.dataset.a === clave);
+  });
+}
+
+function esLampara(obj) {
+  for (let nodo = obj; nodo; nodo = nodo.parent) {
+    if (/lampara|luces/i.test(nodo.name)) return true;
+  }
+  return false;
+}
+
+function prepararModelo(raiz) {
+  raiz.updateMatrixWorld(true);
+  const piezas = [];
+  raiz.traverse((obj) => {
+    if (!obj.isMesh) return;
+    obj.castShadow = true;
+    obj.receiveShadow = true;
+    if (obj.material && obj.material.isMeshStandardMaterial) {
+      obj.material.roughness = Math.max(obj.material.roughness, 0.6);
+    }
+    const caja = new THREE.Box3().setFromObject(obj);
+    piezas.push({ obj, caja, centro: caja.getCenter(new THREE.Vector3()) });
+  });
+
+  const mediana = (valores) => valores.slice().sort((a, b) => a - b)[valores.length >> 1];
+  const medianaX = mediana(piezas.map((p) => p.centro.x));
+  const medianaZ = mediana(piezas.map((p) => p.centro.z));
+  const total = new THREE.Box3();
+  piezas.forEach((p) => {
+    if (Math.hypot(p.centro.x - medianaX, p.centro.z - medianaZ) < 400) total.union(p.caja);
+  });
+
+  const tamano = total.getSize(new THREE.Vector3());
+  const centro = total.getCenter(new THREE.Vector3());
+  const radio = Math.max(tamano.x, tamano.z) * 0.75;
+  sol.position.set(centro.x + radio * 0.5, centro.y + radio, centro.z + radio * 0.4);
+  sol.target.position.copy(centro);
+  sol.shadow.camera.left = -radio;
+  sol.shadow.camera.right = radio;
+  sol.shadow.camera.top = radio;
+  sol.shadow.camera.bottom = -radio;
+  sol.shadow.camera.near = 1;
+  sol.shadow.camera.far = radio * 4;
+  sol.shadow.camera.updateProjectionMatrix();
+
+  piezas.forEach((p) => {
+    if (!esLampara(p.obj)) return;
+    p.obj.material = p.obj.material.clone();
+    p.obj.material.emissive = new THREE.Color(0xfff1d6);
+    materialesLampara.push(p.obj.material);
+    const cerca = lamparas.some((luz) => luz.position.distanceTo(p.centro) < 3);
+    if (cerca || lamparas.length >= 12) return;
+    const luz = new THREE.PointLight(0xfff1d6, 0, 0, 2);
+    luz.position.copy(p.centro);
+    escena.add(luz);
+    lamparas.push(luz);
+  });
+
+  aplicarAmbiente(CONFIG.ambienteInicial);
+}
 
 let yaw = Math.atan2(-(CONFIG.mirarHacia.x - CONFIG.inicio.x), -(CONFIG.mirarHacia.z - CONFIG.inicio.z));
 let pitch = 0;
@@ -134,7 +240,7 @@ new GLTFLoader().load(
         if (obj.material && obj.material.map) obj.material.map.anisotropy = 8;
       }
     });
-    gltf.scene.updateMatrixWorld(true);
+    prepararModelo(gltf.scene);
     listo = true;
     pantallaCarga.classList.add("oculto");
     pantallaInicio.classList.remove("oculto");
@@ -255,8 +361,15 @@ document.addEventListener("mousemove", (e) => {
   if (document.pointerLockElement === renderer.domElement) girar(e.movementX, e.movementY, CONFIG.sensibilidadMouse);
 });
 
+const atajosAmbiente = { Digit1: "dia", Digit2: "galeria", Digit3: "noche" };
+
 window.addEventListener("keydown", (e) => {
+  if (atajosAmbiente[e.code]) aplicarAmbiente(atajosAmbiente[e.code]);
   if (activo) teclas.add(e.code);
+});
+
+document.querySelectorAll("#ambientes button").forEach((boton) => {
+  boton.addEventListener("click", () => aplicarAmbiente(boton.dataset.a));
 });
 window.addEventListener("keyup", (e) => teclas.delete(e.code));
 window.addEventListener("blur", () => teclas.clear());
@@ -300,7 +413,7 @@ joystick.addEventListener("touchstart", (e) => {
 window.addEventListener("touchstart", (e) => {
   if (!activo) return;
   for (const toque of e.changedTouches) {
-    if (joystick.contains(toque.target)) continue;
+    if (joystick.contains(toque.target) || toque.target.closest("#ambientes")) continue;
     if (idMirada === null) {
       idMirada = toque.identifier;
       ultimoToque = { x: toque.clientX, y: toque.clientY };
