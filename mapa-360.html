@@ -1,183 +1,337 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8">
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#7a122e">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" href="icono-192.png">
-<link rel="apple-touch-icon" href="icono-180.png">
-<meta name="description" content="Museo 3D del CETIS 69: recorre en 3D las salas del museo, una por década, y conoce la historia del plantel.">
-<meta property="og:title" content="Museo 3D · CETIS 69">
-<meta property="og:type" content="website">
-<title>Museo 3D · Museo Digital CETIS 69</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>
-<link rel="stylesheet" href="estilos.css">
-<link rel="stylesheet" href="paginas.css">
+<title>Recorrido Virtual | Museo Digital CETIS 69</title>
 <style>
-.skip{position:absolute;left:-999px;top:0;z-index:300;background:#fff;color:var(--guinda);padding:.7rem 1.1rem;font-size:.75rem;letter-spacing:.12em;font-weight:600}
-.skip:focus{left:1rem;top:1rem}
-.v3d{position:relative;height:min(78vh,680px);min-height:420px;background:radial-gradient(ellipse at 50% 30%,#3a1520,#14090d 75%);border:1px solid var(--linea);color:#f0c9d2}
-.v3d.isfs{height:100vh;height:100dvh;min-height:0;border:0}
-.v3d.fsx{position:fixed;inset:0;z-index:300;height:auto}
-.visor3d{position:absolute;inset:0;display:grid;place-items:center;align-content:center;gap:1rem;text-align:center;font-size:.75rem;letter-spacing:.2em;text-transform:uppercase}
-.visor3d>i{font-size:3rem;opacity:.6}
-.v3d-msg{max-width:36ch}
-.v3fs{position:absolute;top:.8rem;right:.8rem;z-index:6;width:42px;height:42px;display:grid;place-items:center;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);color:#fff;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);transition:.3s}
-.v3fs:hover{background:#fff;color:var(--guinda)}
-.v3fs:focus-visible,.wip .btn:focus-visible{outline:2px solid #fff;outline-offset:3px}
-.v3h ul{list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin-top:1rem}
-.v3h li{display:flex;gap:1rem;align-items:flex-start;padding:1.1rem 1.3rem;border:1px solid var(--linea);background:#fff;color:var(--gris);font-size:.86rem}
-.v3h li i{color:var(--guinda);font-size:1.3rem;margin-top:.15rem}
-.v3h li b{display:block;color:var(--negro,#141214);font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;margin-bottom:.3rem}
-/* ===== Bloqueo: sección en actualización ===== */
-.wip-on{position:relative;overflow:clip}
-.wip-on .v3d{position:absolute;inset:0;height:auto;filter:blur(7px) saturate(.7);pointer-events:none;user-select:none}
-.wip{position:relative;z-index:5;display:flex;justify-content:center;align-items:flex-start;padding:2rem var(--pad,1.25rem);min-height:min(720px,100vh)}
-.wip[hidden]{display:none}
-.wip-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 25%,rgba(122,18,46,.6),rgba(24,4,11,.93) 72%),repeating-linear-gradient(0deg,rgba(255,255,255,.055) 0 1px,transparent 1px 44px),repeating-linear-gradient(90deg,rgba(255,255,255,.055) 0 1px,transparent 1px 44px);animation:wipGrid 16s linear infinite}
-@keyframes wipGrid{to{background-position:0 0,0 44px,44px 0}}
-.wip-card{position:sticky;top:calc(var(--nav,68px) + 1.5rem);width:100%;max-width:720px;padding:clamp(1.6rem,4vw,3rem);text-align:center;color:#fff;background:linear-gradient(160deg,rgba(255,255,255,.13),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.2);-webkit-backdrop-filter:blur(18px) saturate(1.2);backdrop-filter:blur(18px) saturate(1.2);box-shadow:0 40px 90px -30px rgba(0,0,0,.75),inset 0 1px 0 rgba(255,255,255,.25);overflow:hidden}
-.wip-card::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,transparent,#e8a5b4,transparent)}
-.wip-card::after{content:"";position:absolute;top:0;bottom:0;left:-60%;width:40%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.1),transparent);transform:skewX(-18deg);animation:wipSheen 7s ease-in-out infinite;pointer-events:none}
-@keyframes wipSheen{0%,55%{left:-60%}100%{left:130%}}
-.wip-gfx{position:relative;width:230px;height:124px;margin:.4rem auto 1.8rem;filter:drop-shadow(0 0 14px rgba(232,165,180,.45))}
-.wip-gfx svg{position:absolute;inset:0}
-.gA,.gB{will-change:transform}
-.gA{transform-origin:82px 70px;animation:wipA 24s linear infinite}
-.gB{transform-origin:148px 54px;animation:wipB 16.5s linear infinite}
-@keyframes wipA{from{transform:rotate(2.8deg)}to{transform:rotate(362.8deg)}}
-@keyframes wipB{from{transform:rotate(10.3deg)}to{transform:rotate(-349.7deg)}}
-.wip-radar{position:absolute;left:50%;top:50%;width:0;height:0}
-.wip-radar i{position:absolute;left:-120px;top:-120px;width:240px;height:240px;border-radius:50%;background:conic-gradient(from 0deg,transparent 0 68%,rgba(232,165,180,.42) 100%);-webkit-mask:radial-gradient(circle,transparent 0 32%,#000 33%);mask:radial-gradient(circle,transparent 0 32%,#000 33%);animation:wipSpin 5s linear infinite}
-@keyframes wipSpin{to{transform:rotate(360deg)}}
-.ping{position:absolute;left:50%;top:50%;width:150px;height:150px;margin:-75px 0 0 -75px;border:1px solid rgba(240,201,210,.55);border-radius:50%;animation:wipPing 3.2s ease-out infinite}
-.ping.p2{animation-delay:1.6s}
-@keyframes wipPing{from{transform:scale(.5);opacity:.9}to{transform:scale(1.9);opacity:0}}
-.wip-tag{display:inline-flex;align-items:center;gap:.7rem;font-size:.66rem;letter-spacing:.3em;text-transform:uppercase;font-weight:600;color:#f0c9d2}
-.wip-tag i{width:8px;height:8px;border-radius:50%;background:#ff6b8b;box-shadow:0 0 0 0 rgba(255,107,139,.7);animation:wipBlink 1.6s infinite}
-@keyframes wipBlink{70%{box-shadow:0 0 0 10px rgba(255,107,139,0)}100%{box-shadow:0 0 0 0 rgba(255,107,139,0)}}
-.wip h2{font-size:clamp(1.5rem,4.2vw,2.7rem);font-weight:200;letter-spacing:.06em;text-transform:uppercase;line-height:1.15;margin:.9rem 0 1rem}
-.wip h2 b{display:block;font-weight:800;color:#f0c9d2}
-.wip p{color:#e6cfd5;max-width:56ch;margin:0 auto}
-.wip-list{list-style:none;display:grid;gap:.6rem;margin:1.6rem auto;max-width:520px;text-align:left}
-.wip-list li{display:flex;align-items:center;gap:.8rem;padding:.75rem 1rem;background:rgba(0,0,0,.24);border:1px solid rgba(255,255,255,.1);font-size:.84rem}
-.wip-list .dot{flex:none;width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.25);border-top-color:#f0c9d2;animation:wipSpin 1s linear infinite}
-.wip-list li:nth-child(2) .dot{animation-duration:1.4s}.wip-list li:nth-child(3) .dot{animation-duration:1.9s}
-.wip-list em{margin-left:auto;font-style:normal;font-size:.56rem;letter-spacing:.2em;text-transform:uppercase;color:#f0c9d2;white-space:nowrap}
-.wip-bar{height:4px;max-width:520px;margin:0 auto;background:rgba(255,255,255,.14);overflow:hidden}
-.wip-bar i{display:block;height:100%;width:38%;background:linear-gradient(90deg,transparent,#fff,transparent);animation:wipInd 2.2s ease-in-out infinite}
-@keyframes wipInd{from{transform:translateX(-100%)}to{transform:translateX(280%)}}
-.wip-bar.det i{animation:none;background:linear-gradient(90deg,#e8a5b4,#fff)}
-.wip-meta{margin-top:1rem!important;font-size:.7rem;letter-spacing:.22em;text-transform:uppercase}
-.wip-meta b{color:#fff;font-weight:700}.wip-meta span{margin-left:.6rem;color:#f0c9d2}
-.wip-acts{display:flex;flex-wrap:wrap;gap:.7rem;justify-content:center;margin-top:1.8rem}
-.wip .btn{background:#fff;color:var(--guinda,#7a122e);border-color:#fff}
-.wip .btn:hover{background:var(--guinda,#7a122e);color:#fff}
-.wip .btn.ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.55)}
-.wip .btn.ghost:hover{background:#fff;color:var(--guinda,#7a122e)}
-.wip-eq{position:fixed;left:50%;bottom:1rem;transform:translateX(-50%);z-index:150;display:flex;gap:.8rem;align-items:center;max-width:calc(100vw - 2rem);padding:.7rem 1.1rem;background:#14090d;color:#fff;font-size:.72rem;box-shadow:0 12px 30px rgba(0,0,0,.35)}
-.wip-eq a{color:#f0c9d2;text-decoration:underline;white-space:nowrap}
-@media (max-height:800px){.wip-card{position:relative;top:auto}}
-@media (max-width:560px){.wip .btn{width:100%}.wip-list em{display:none}}
-@media (prefers-reduced-motion:reduce){.wip *,.wip::before,.wip-card::after{animation:none!important}}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#0b0f14;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#fff;touch-action:none;-webkit-user-select:none;user-select:none}
+#escena{position:fixed;inset:0;width:100%;height:100dvh}
+#escena canvas{display:block;width:100%;height:100%}
+.pantalla{position:fixed;inset:0;height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.1rem;padding:1.5rem;text-align:center;background:rgba(11,15,20,.88);backdrop-filter:blur(6px);z-index:10}
+.pantalla h1{font-size:clamp(1.4rem,4vw,2.2rem)}
+.pantalla p{max-width:34rem;line-height:1.5;color:#c8d1dc;font-size:clamp(.9rem,2.4vw,1.05rem)}
+.oculto{display:none!important}
+button{background:#1f8f5f;color:#fff;border:0;border-radius:.7rem;padding:.85rem 1.8rem;font-size:1.05rem;font-weight:600;cursor:pointer}
+button:hover{background:#26a870}
+#barra{width:min(22rem,80vw);height:.5rem;background:#26303c;border-radius:1rem;overflow:hidden}
+#progreso{width:0;height:100%;background:#1f8f5f;transition:width .2s}
+#volver{position:fixed;top:max(.8rem,env(safe-area-inset-top));left:max(.8rem,env(safe-area-inset-left));z-index:20;color:#fff;text-decoration:none;background:rgba(11,15,20,.65);padding:.5rem .9rem;border-radius:.6rem;font-size:.9rem}
+#mira{position:fixed;top:50%;left:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:rgba(255,255,255,.7);z-index:5;pointer-events:none}
+#joystick{position:fixed;left:max(1.5rem,env(safe-area-inset-left));bottom:max(1.5rem,env(safe-area-inset-bottom));width:8rem;height:8rem;border-radius:50%;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.3);z-index:15;display:none}
+#perilla{position:absolute;top:50%;left:50%;width:3.2rem;height:3.2rem;margin:-1.6rem 0 0 -1.6rem;border-radius:50%;background:rgba(255,255,255,.5)}
+.tactil #joystick{display:block}
+.tactil #mira{display:none}
+.teclas{display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center;color:#c8d1dc;font-size:.9rem}
+.tactil .teclas{display:none}
+kbd{background:#26303c;border-radius:.35rem;padding:.15rem .5rem;border:1px solid #3a4756}
 </style>
 </head>
 <body>
-<a href="#visor3d" class="skip">Saltar al museo 3D</a>
-<div id="loader"><div class="ld"><h2>CETIS 69</h2><p>MUSEO DIGITAL</p><div class="bar"><i></i></div></div></div>
-<nav id="nav" class="solid"></nav>
-<header class="phead"><div class="rv"><div class="eyebrow">Recorrido virtual</div><h1 class="title">Museo <b>3D</b></h1><p>Camina por las salas del museo, una por década, y toca los cuadros para conocer la historia del CETIS 69.</p></div></header>
-<section class="wip-on" id="s3d">
-<div class="v3d" id="v3d" inert aria-hidden="true"><div class="visor3d" id="visor3d"><i class="fa-solid fa-cube" aria-hidden="true"></i><p>Aquí aparecerá el museo 3D</p></div><button type="button" class="v3fs" id="bFs3" aria-label="Ver el museo 3D en pantalla completa" title="Pantalla completa"><i class="fa-solid fa-expand"></i></button></div>
-<div class="wip" id="wip" role="region" aria-labelledby="wipT">
-<div class="wip-bg" aria-hidden="true"></div>
-<div class="wip-card">
-<div class="wip-gfx" aria-hidden="true"><div class="wip-radar"><i></i></div><span class="ping"></span><span class="ping p2"></span>
-<svg viewBox="0 0 230 124" width="230" height="124" fill="none" stroke-linecap="butt">
-<g class="gA"><circle cx="82" cy="70" r="40" stroke="#f0c9d2" stroke-width="12" stroke-dasharray="8.5 7.2"/><circle cx="82" cy="70" r="33" stroke="#fff" stroke-width="2.5"/><circle cx="82" cy="70" r="22" stroke="#e8a5b4" stroke-width="1.5" stroke-dasharray="3 5"/><circle cx="82" cy="70" r="9" fill="#fff" stroke="none"/></g>
-<g class="gB"><circle cx="148" cy="54" r="28" stroke="#e8a5b4" stroke-width="12" stroke-dasharray="8.6 7.4"/><circle cx="148" cy="54" r="21" stroke="#fff" stroke-width="2.5"/><circle cx="148" cy="54" r="7" fill="#fff" stroke="none"/></g>
-</svg></div>
-<div class="wip-tag"><i></i><span id="wipE">Actualización en curso</span></div>
-<h2 id="wipT">Estamos construyendo el <b>museo 3D</b></h2>
-<p id="wipP">Un recorrido por salas virtuales, una por década, para caminar por la historia del CETIS 69 y ver la información de cada época. Muy pronto podrás entrar.</p>
-<ul class="wip-list" id="wipL"><li><span class="dot"></span>Una sala por década, de los 80 a los 2020<em>En proceso</em></li><li><span class="dot"></span>Fotos y textos de cada época<em>En proceso</em></li><li><span class="dot"></span>Minimapa y controles táctiles<em>En proceso</em></li></ul>
-<div class="wip-bar" id="wipBar" aria-hidden="true"><i></i></div>
-<p class="wip-meta">Disponible: <b id="wipF">Próximamente</b><span id="wipPct"></span></p>
-<div class="wip-acts"><a class="btn" id="wipHome" href="index.html">Volver al inicio <i class="fa-solid fa-house"></i></a><a class="btn ghost" href="archivo-fotografico.html">Ver el archivo fotográfico <i class="fa-regular fa-images"></i></a></div>
-</div></div></section>
-<section class="v3h"><div class="eyebrow">Cómo recorrerlo</div><ul>
-<li><i class="fa-solid fa-keyboard" aria-hidden="true"></i><div><b>Computadora</b>Muévete con W, A, S, D o las flechas y mira alrededor con el mouse.</div></li>
-<li><i class="fa-solid fa-mobile-screen" aria-hidden="true"></i><div><b>Celular</b>Usa el joystick en pantalla y arrastra el dedo para mirar. Gira el teléfono para verlo más grande.</div></li>
-<li><i class="fa-solid fa-hand-pointer" aria-hidden="true"></i><div><b>Información</b>Acércate a un cuadro y tócalo para leer su historia.</div></li>
-</ul></section>
-<footer></footer>
-<script src="comun.js"></script>
-<script>
-(function(){
-const K='c69_equipo',par=new URLSearchParams(location.search).get('acceso');
-let eq=false;
-try{if(par==='1')sessionStorage.setItem(K,'1');if(par==='0')sessionStorage.removeItem(K);eq=sessionStorage.getItem(K)==='1'}catch(e){eq=par==='1'}
-const sec=$('#s3d'),wip=$('#wip'),cont=$('#v3d'),vis=$('#visor3d'),skip=document.querySelector('.skip');
-if(skip)skip.hidden=true;
-const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+<div id="escena"></div>
+<a id="volver" href="museo-cetis69.html">&larr; Volver al museo</a>
+<div id="mira"></div>
+<div id="joystick"><div id="perilla"></div></div>
 
-/* Visor 3D. Contrato: museo3d/visor.js define window.Museo3D={iniciar(contenedor,datos){}} */
-let DD={},cargado=false;
-function cargar(){
- if(cargado)return;cargado=true;
- const s=document.createElement('script'),aviso='<p class="v3d-msg">El visor 3D todavía no está instalado.</p>';
- s.src=(DD.ajustes&&DD.ajustes.museo3d&&DD.ajustes.museo3d.visor)||'museo3d/visor.js';
- s.onload=()=>{if(window.Museo3D&&Museo3D.iniciar){vis.innerHTML='';Museo3D.iniciar(vis,DD)}else vis.innerHTML=aviso};
- s.onerror=()=>{vis.innerHTML=aviso};
- document.head.append(s);
+<div id="carga" class="pantalla">
+  <h1>Cargando el museo…</h1>
+  <div id="barra"><div id="progreso"></div></div>
+  <p id="estado">Preparando el recorrido</p>
+</div>
+
+<div id="inicio" class="pantalla oculto">
+  <h1>Recorrido Virtual</h1>
+  <p>Explora el Museo Digital CETIS 69 en primera persona.</p>
+  <div class="teclas">
+    <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> o flechas para caminar</span>
+    <span><kbd>Mouse</kbd> para mirar</span>
+    <span><kbd>Shift</kbd> para correr</span>
+    <span><kbd>Esc</kbd> para pausar</span>
+  </div>
+  <p class="solo-tactil">Usa el joystick para caminar y arrastra con el otro dedo para mirar.</p>
+  <button id="entrar">Entrar al museo</button>
+</div>
+
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+const CONFIG = {
+  modelo: "museo.glb",
+  alturaOjos: 4.5,
+  velocidad: 14,
+  multiplicadorCarrera: 2,
+  radioColision: 1.4,
+  inicio: { x: 1.6, y: 4.7, z: 11.3 },
+  mirarHacia: { x: 1.6, z: 0 },
+  sensibilidadMouse: 0.0022,
+  sensibilidadTactil: 0.005
+};
+
+const contenedor = document.getElementById("escena");
+const pantallaCarga = document.getElementById("carga");
+const pantallaInicio = document.getElementById("inicio");
+const barra = document.getElementById("progreso");
+const estado = document.getElementById("estado");
+const botonEntrar = document.getElementById("entrar");
+const joystick = document.getElementById("joystick");
+const perilla = document.getElementById("perilla");
+
+const esTactil = window.matchMedia("(pointer: coarse)").matches;
+if (esTactil) {
+  document.body.classList.add("tactil");
+} else {
+  document.querySelector(".solo-tactil").classList.add("oculto");
 }
 
-/* Bloqueo por actualización (datos.json → ajustes.bloqueos["museo-3d"]). Con ?acceso=1 el equipo lo salta. */
-function abrir(chip){
- sec.classList.remove('wip-on');cont.inert=false;cont.removeAttribute('aria-hidden');wip.hidden=true;if(skip)skip.hidden=false;
- if(chip){const c=document.createElement('div');c.className='wip-eq';c.innerHTML='<i class="fa-solid fa-lock-open" aria-hidden="true"></i><span>Modo equipo: el público ve esta sección bloqueada</span><a href="?acceso=0">Ver como visitante</a>';document.body.append(c)}
- cargar();dispatchEvent(new Event('resize'));
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+contenedor.appendChild(renderer.domElement);
+
+const escena = new THREE.Scene();
+escena.background = new THREE.Color(0x0b0f14);
+
+const camara = new THREE.PerspectiveCamera(70, 1, 0.1, 2000);
+camara.rotation.order = "YXZ";
+camara.position.set(CONFIG.inicio.x, CONFIG.inicio.y, CONFIG.inicio.z);
+
+escena.add(new THREE.HemisphereLight(0xffffff, 0x666666, 1.6));
+const sol = new THREE.DirectionalLight(0xffffff, 1.2);
+sol.position.set(30, 80, 40);
+escena.add(sol);
+
+let yaw = Math.atan2(-(CONFIG.mirarHacia.x - CONFIG.inicio.x), -(CONFIG.mirarHacia.z - CONFIG.inicio.z));
+let pitch = 0;
+const mallas = [];
+const teclas = new Set();
+const joy = { x: 0, y: 0 };
+let activo = false;
+let listo = false;
+
+function ajustarTamano() {
+  const ancho = contenedor.clientWidth;
+  const alto = contenedor.clientHeight;
+  renderer.setSize(ancho, alto);
+  camara.aspect = ancho / alto;
+  camara.updateProjectionMatrix();
 }
-DATOS.catch(()=>({})).then(D=>{
- DD=D;
- const C=(D.ajustes&&D.ajustes.bloqueos&&D.ajustes.bloqueos['museo-3d'])||{};
- if(C.activo===false){abrir(false);return}
- if(C.etiqueta)$('#wipE').textContent=C.etiqueta;
- if(C.titulo){const t=$('#wipT');t.textContent=C.titulo+' ';if(C.destacado){const b=document.createElement('b');b.textContent=C.destacado;t.append(b)}}
- if(C.mensaje)$('#wipP').textContent=C.mensaje;
- if(Array.isArray(C.items)&&C.items.length)$('#wipL').innerHTML=C.items.map(x=>'<li><span class="dot"></span>'+esc(x)+'<em>En proceso</em></li>').join('');
- if(C.fecha)$('#wipF').textContent=C.fecha;
- const av=Math.min(100,+C.avance||0);
- if(av>0){const b=$('#wipBar');b.classList.add('det');b.firstElementChild.style.width=av+'%';$('#wipPct').textContent=Math.round(av)+'% de avance'}
- if(D.sitio&&D.sitio.inicio)$('#wipHome').href=D.sitio.inicio;
- if(eq)abrir(true);
+window.addEventListener("resize", ajustarTamano);
+ajustarTamano();
+
+new GLTFLoader().load(
+  CONFIG.modelo,
+  (gltf) => {
+    escena.add(gltf.scene);
+    gltf.scene.traverse((obj) => {
+      if (obj.isMesh) {
+        mallas.push(obj);
+        if (obj.material && obj.material.map) obj.material.map.anisotropy = 8;
+      }
+    });
+    gltf.scene.updateMatrixWorld(true);
+    listo = true;
+    pantallaCarga.classList.add("oculto");
+    pantallaInicio.classList.remove("oculto");
+  },
+  (evento) => {
+    if (evento.lengthComputable) {
+      const porcentaje = Math.round((evento.loaded / evento.total) * 100);
+      barra.style.width = porcentaje + "%";
+      estado.textContent = porcentaje + "%";
+    }
+  },
+  () => {
+    pantallaCarga.querySelector("h1").textContent = "No se pudo cargar el modelo";
+    estado.textContent = "Verifica que " + CONFIG.modelo + " esté en la misma carpeta que esta página.";
+    barra.parentElement.classList.add("oculto");
+  }
+);
+
+const rayo = new THREE.Raycaster();
+const abajo = new THREE.Vector3(0, -1, 0);
+const origen = new THREE.Vector3();
+const direccion = new THREE.Vector3();
+
+function chocaEn(x, y, z, dx, dz, distancia) {
+  origen.set(x, y, z);
+  direccion.set(dx, 0, dz).normalize();
+  rayo.set(origen, direccion);
+  rayo.far = distancia;
+  return rayo.intersectObjects(mallas, false).length > 0;
+}
+
+function alturaSuelo(x, y, z) {
+  origen.set(x, y, z);
+  rayo.set(origen, abajo);
+  rayo.far = CONFIG.alturaOjos * 3;
+  const impactos = rayo.intersectObjects(mallas, false);
+  return impactos.length ? impactos[0].point.y : null;
+}
+
+function mover(dt) {
+  let avance = 0;
+  let lateral = 0;
+  if (teclas.has("KeyW") || teclas.has("ArrowUp")) avance += 1;
+  if (teclas.has("KeyS") || teclas.has("ArrowDown")) avance -= 1;
+  if (teclas.has("KeyD") || teclas.has("ArrowRight")) lateral += 1;
+  if (teclas.has("KeyA") || teclas.has("ArrowLeft")) lateral -= 1;
+  avance += -joy.y;
+  lateral += joy.x;
+
+  const magnitud = Math.hypot(avance, lateral);
+  if (magnitud > 1) {
+    avance /= magnitud;
+    lateral /= magnitud;
+  }
+
+  const correr = teclas.has("ShiftLeft") || teclas.has("ShiftRight") ? CONFIG.multiplicadorCarrera : 1;
+  const paso = CONFIG.velocidad * correr * dt;
+  const seno = Math.sin(yaw);
+  const coseno = Math.cos(yaw);
+  let dx = (-seno * avance + coseno * lateral) * paso;
+  let dz = (-coseno * avance - seno * lateral) * paso;
+
+  const p = camara.position;
+  const yPies = p.y - CONFIG.alturaOjos * 0.45;
+
+  if (dx !== 0 && chocaEn(p.x, yPies, p.z, Math.sign(dx), 0, CONFIG.radioColision + Math.abs(dx))) dx = 0;
+  if (dz !== 0 && chocaEn(p.x, yPies, p.z, 0, Math.sign(dz), CONFIG.radioColision + Math.abs(dz))) dz = 0;
+
+  p.x += dx;
+  p.z += dz;
+
+  const suelo = alturaSuelo(p.x, p.y, p.z);
+  if (suelo !== null) {
+    const objetivo = suelo + CONFIG.alturaOjos;
+    p.y += (objetivo - p.y) * Math.min(1, dt * 12);
+  }
+}
+
+let anterior = performance.now();
+function animar(ahora) {
+  const dt = Math.min((ahora - anterior) / 1000, 0.05);
+  anterior = ahora;
+  if (activo && listo) mover(dt);
+  camara.rotation.set(pitch, yaw, 0);
+  renderer.render(escena, camara);
+  requestAnimationFrame(animar);
+}
+requestAnimationFrame(animar);
+
+function girar(dx, dy, sensibilidad) {
+  yaw -= dx * sensibilidad;
+  pitch -= dy * sensibilidad;
+  pitch = Math.max(-1.3, Math.min(1.3, pitch));
+}
+
+botonEntrar.addEventListener("click", () => {
+  pantallaInicio.classList.add("oculto");
+  activo = true;
+  if (!esTactil) renderer.domElement.requestPointerLock();
 });
 
-/* Pantalla completa (en Android bloquea la pantalla en horizontal) */
-const fsEl=()=>document.fullscreenElement||document.webkitFullscreenElement,bf=$('#bFs3');
-const enFs=()=>fsEl()===cont||cont.classList.contains('fsx');
-function estado(){
- const f=enFs();cont.classList.toggle('isfs',f);
- bf.innerHTML=f?'<i class="fa-solid fa-compress"></i>':'<i class="fa-solid fa-expand"></i>';
- bf.setAttribute('aria-label',f?'Salir de pantalla completa':'Ver el museo 3D en pantalla completa');bf.title=f?'Salir':'Pantalla completa';
- if(!f)document.documentElement.style.overflow='';
- try{if(f&&fsEl()===cont)screen.orientation.lock('landscape').catch(()=>{});else if(!f)screen.orientation.unlock()}catch(_){}
- setTimeout(()=>dispatchEvent(new Event('resize')),150);
+document.addEventListener("pointerlockchange", () => {
+  if (esTactil) return;
+  if (document.pointerLockElement === renderer.domElement) {
+    activo = true;
+    pantallaInicio.classList.add("oculto");
+  } else {
+    activo = false;
+    teclas.clear();
+    if (listo) {
+      botonEntrar.textContent = "Continuar";
+      pantallaInicio.classList.remove("oculto");
+    }
+  }
+});
+
+document.addEventListener("mousemove", (e) => {
+  if (document.pointerLockElement === renderer.domElement) girar(e.movementX, e.movementY, CONFIG.sensibilidadMouse);
+});
+
+window.addEventListener("keydown", (e) => {
+  if (activo) teclas.add(e.code);
+});
+window.addEventListener("keyup", (e) => teclas.delete(e.code));
+window.addEventListener("blur", () => teclas.clear());
+
+let idJoystick = null;
+let idMirada = null;
+let ultimoToque = null;
+const radioJoystick = () => joystick.clientWidth / 2;
+
+function actualizarJoystick(toque) {
+  const caja = joystick.getBoundingClientRect();
+  const cx = caja.left + caja.width / 2;
+  const cy = caja.top + caja.height / 2;
+  let dx = toque.clientX - cx;
+  let dy = toque.clientY - cy;
+  const maximo = radioJoystick();
+  const distancia = Math.hypot(dx, dy);
+  if (distancia > maximo) {
+    dx = (dx / distancia) * maximo;
+    dy = (dy / distancia) * maximo;
+  }
+  perilla.style.transform = "translate(" + dx + "px," + dy + "px)";
+  joy.x = dx / maximo;
+  joy.y = dy / maximo;
 }
-function respaldo(){cont.classList.add('fsx');document.documentElement.style.overflow='hidden';estado()}
-bf.onclick=()=>{
- if(enFs()){if(cont.classList.contains('fsx')){cont.classList.remove('fsx');estado()}else(document.exitFullscreen||document.webkitExitFullscreen).call(document);return}
- const rq=cont.requestFullscreen||cont.webkitRequestFullscreen;
- if(!rq){respaldo();return}
- try{const p=rq.call(cont);if(p&&p.catch)p.catch(respaldo)}catch(e){respaldo()}
-};
-document.addEventListener('fullscreenchange',estado);document.addEventListener('webkitfullscreenchange',estado);
-addEventListener('keydown',e=>{if(e.key==='Escape'&&cont.classList.contains('fsx')){cont.classList.remove('fsx');estado()}});
-})();
+
+function soltarJoystick() {
+  idJoystick = null;
+  joy.x = 0;
+  joy.y = 0;
+  perilla.style.transform = "translate(0,0)";
+}
+
+joystick.addEventListener("touchstart", (e) => {
+  e.preventDefault();
+  const toque = e.changedTouches[0];
+  idJoystick = toque.identifier;
+  actualizarJoystick(toque);
+}, { passive: false });
+
+window.addEventListener("touchstart", (e) => {
+  if (!activo) return;
+  for (const toque of e.changedTouches) {
+    if (joystick.contains(toque.target)) continue;
+    if (idMirada === null) {
+      idMirada = toque.identifier;
+      ultimoToque = { x: toque.clientX, y: toque.clientY };
+    }
+  }
+}, { passive: false });
+
+window.addEventListener("touchmove", (e) => {
+  if (!activo) return;
+  e.preventDefault();
+  for (const toque of e.changedTouches) {
+    if (toque.identifier === idJoystick) {
+      actualizarJoystick(toque);
+    } else if (toque.identifier === idMirada && ultimoToque) {
+      girar(toque.clientX - ultimoToque.x, toque.clientY - ultimoToque.y, CONFIG.sensibilidadTactil);
+      ultimoToque = { x: toque.clientX, y: toque.clientY };
+    }
+  }
+}, { passive: false });
+
+function terminarToque(e) {
+  for (const toque of e.changedTouches) {
+    if (toque.identifier === idJoystick) soltarJoystick();
+    if (toque.identifier === idMirada) {
+      idMirada = null;
+      ultimoToque = null;
+    }
+  }
+}
+window.addEventListener("touchend", terminarToque);
+window.addEventListener("touchcancel", terminarToque);
 </script>
 </body>
 </html>
