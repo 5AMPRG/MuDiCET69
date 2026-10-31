@@ -160,10 +160,40 @@ const CONFIG = {
 };
 
 const AMBIENTES = {
-  dia: { exposicion: 1.0, hemisferio: 0.8, entorno: 0.6, sol: 2.6, lamparas: 0, brillo: 0.1, fondo: 0xbcd9f0, niebla: 0xbcd9f0 },
-  galeria: { exposicion: 1.05, hemisferio: 0.35, entorno: 0.35, sol: 0.7, lamparas: 1, brillo: 1.6, fondo: 0x151b22, niebla: null },
-  noche: { exposicion: 1.15, hemisferio: 0.1, entorno: 0.12, sol: 0, lamparas: 1.5, brillo: 2.2, fondo: 0x04060a, niebla: null }
+  dia: { exposicion: 1.0, hemisferio: 0.55, entorno: 0.4, sol: 2.2, lamparas: 0, brillo: 0.1, cielo: [0x4f8fd6, 0xcfe4f5], niebla: 0xcfe4f5 },
+  galeria: { exposicion: 1.0, hemisferio: 0.3, entorno: 0.3, sol: 0.6, lamparas: 1, brillo: 1.6, cielo: [0x1c2530, 0x3a4655], niebla: null },
+  noche: { exposicion: 1.1, hemisferio: 0.1, entorno: 0.1, sol: 0, lamparas: 1.5, brillo: 2.2, cielo: [0x02040a, 0x0b1220], niebla: null }
 };
+
+const MATERIALES = {
+  building_marble: { color: 0xd9c3b3, rugosidad: 0.85 },
+  Glass: { color: 0x26323d, rugosidad: 0.15, metal: 0.2, opacidad: 0.65 },
+  Glass_roof: { color: 0x3f7f76, rugosidad: 0.3, metal: 0.1, opacidad: 0.9 },
+  Railing: { color: 0x2a2a2d, rugosidad: 0.4, metal: 0.6 },
+  Cement: { color: 0x9aa0a8, rugosidad: 0.9 },
+  "Cement.001": { color: 0x8d8c90, rugosidad: 0.9 },
+  "leaves.001": { color: 0x58a05a, rugosidad: 0.9 },
+  "tree_bark.001": { color: 0x6b4a32, rugosidad: 0.95 },
+  water: { color: 0x6fa8c8, rugosidad: 0.08, opacidad: 0.75 },
+  "Material.002": { color: 0xb9b6b0, rugosidad: 0.9 },
+  "Material.003": { color: 0x8a8782, rugosidad: 0.9 },
+  bench_wood: { color: 0x8a5a3a, rugosidad: 0.8 },
+  bench_metal: { color: 0x2e2e30, rugosidad: 0.5, metal: 0.7 }
+};
+
+const OBJETOS = [
+  [/leaves/i, "leaves.001"],
+  [/^tree/i, "tree_bark.001"],
+  [/^water/i, "water"],
+  [/^fountain/i, "Material.002"],
+  [/^railings/i, "Railing"],
+  [/^sostenedor/i, "Railing"],
+  [/bench/i, "bench_wood"],
+  [/^roof/i, "Glass_roof"],
+  [/^(facade|side facade|columns|blocks|podium)/i, "building_marble"],
+  [/^stairs/i, "Cement"],
+  [/^(exibidor|cube)/i, "Cement.001"]
+];
 
 const visor = document.getElementById("visor");
 const contenedor = document.getElementById("escena");
@@ -213,6 +243,49 @@ escena.add(sol.target);
 const lamparas = [];
 const materialesLampara = [];
 
+const fondos = {};
+
+function crearFondo(arriba, abajo) {
+  const lienzo = document.createElement("canvas");
+  lienzo.width = 2;
+  lienzo.height = 256;
+  const contexto = lienzo.getContext("2d");
+  const degradado = contexto.createLinearGradient(0, 0, 0, 256);
+  degradado.addColorStop(0, "#" + arriba.toString(16).padStart(6, "0"));
+  degradado.addColorStop(1, "#" + abajo.toString(16).padStart(6, "0"));
+  contexto.fillStyle = degradado;
+  contexto.fillRect(0, 0, 2, 256);
+  const textura = new THREE.CanvasTexture(lienzo);
+  textura.colorSpace = THREE.SRGBColorSpace;
+  return textura;
+}
+
+function claveMaterial(obj) {
+  const propio = MATERIALES[obj.material.name] ? obj.material.name : null;
+  if (propio && !(propio === "bench_wood" && !nombreCoincide(obj, /bench/i))) return propio;
+  const regla = OBJETOS.find(([patron]) => nombreCoincide(obj, patron));
+  return regla ? regla[1] : null;
+}
+
+function pintar(obj) {
+  const material = obj.material.clone();
+  const clave = claveMaterial(obj);
+  material.metalness = 0;
+  material.roughness = Math.max(material.roughness, 0.8);
+  if (clave && !material.map) {
+    const datos = MATERIALES[clave];
+    material.color.setHex(datos.color);
+    material.roughness = datos.rugosidad;
+    material.metalness = datos.metal || 0;
+    if (datos.opacidad) {
+      material.transparent = true;
+      material.opacity = datos.opacidad;
+      material.depthWrite = false;
+    }
+  }
+  obj.material = material;
+}
+
 function aplicarAmbiente(clave) {
   const a = AMBIENTES[clave];
   renderer.toneMappingExposure = a.exposicion;
@@ -222,7 +295,8 @@ function aplicarAmbiente(clave) {
   escena.environmentIntensity = a.entorno * (sinLamparas ? 2.2 : 1);
   lamparas.forEach((luz) => { luz.intensity = CONFIG.intensidadLamparas * a.lamparas; });
   materialesLampara.forEach((material) => { material.emissiveIntensity = a.brillo; });
-  escena.background.setHex(a.fondo);
+  if (!fondos[clave]) fondos[clave] = crearFondo(a.cielo[0], a.cielo[1]);
+  escena.background = fondos[clave];
   escena.fog = a.niebla ? new THREE.Fog(a.niebla, 150, 700) : null;
   document.querySelectorAll("#ambientes button").forEach((boton) => {
     boton.classList.toggle("activo", boton.dataset.a === clave);
@@ -241,11 +315,9 @@ function prepararModelo(raiz) {
   const piezas = [];
   raiz.traverse((obj) => {
     if (!obj.isMesh || !obj.visible) return;
-    obj.castShadow = !(obj.material && obj.material.transparent);
+    pintar(obj);
+    obj.castShadow = !obj.material.transparent;
     obj.receiveShadow = true;
-    if (obj.material && obj.material.isMeshStandardMaterial) {
-      obj.material.roughness = Math.max(obj.material.roughness, 0.6);
-    }
     const caja = new THREE.Box3().setFromObject(obj);
     piezas.push({ obj, caja, centro: caja.getCenter(new THREE.Vector3()) });
   });
