@@ -142,6 +142,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
+import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 
 const CONFIG = {
   modelo: "museo.glb",
@@ -305,8 +306,12 @@ function ajustarTamano() {
 new ResizeObserver(ajustarTamano).observe(visor);
 ajustarTamano();
 
+const decodificadorDraco = new DRACOLoader();
+decodificadorDraco.setDecoderPath("https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/libs/draco/gltf/");
+
 const cargador = new GLTFLoader();
 cargador.setMeshoptDecoder(MeshoptDecoder);
+cargador.setDRACOLoader(decodificadorDraco);
 cargador.load(
   CONFIG.modelo,
   (gltf) => {
