@@ -141,15 +141,17 @@ html.sin-scroll,html.sin-scroll body{overflow:hidden}
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 
 const CONFIG = {
   modelo: "museo.glb",
-  alturaOjos: 4.5,
-  velocidad: 14,
+  alturaOjos: 1.7,
+  alturaRayoColision: 0.6,
+  velocidad: 6,
   multiplicadorCarrera: 2,
-  radioColision: 1.4,
-  inicio: { x: 1.6, y: 4.7, z: 11.3 },
-  mirarHacia: { x: 1.6, z: 0 },
+  radioColision: 0.5,
+  inicio: { x: 0, y: -1.7, z: 30 },
+  mirarHacia: { x: 0, z: 0 },
   sensibilidadMouse: 0.0022,
   sensibilidadTactil: 0.005,
   intensidadLamparas: 650,
@@ -213,9 +215,10 @@ const materialesLampara = [];
 function aplicarAmbiente(clave) {
   const a = AMBIENTES[clave];
   renderer.toneMappingExposure = a.exposicion;
-  hemisferio.intensity = a.hemisferio;
-  escena.environmentIntensity = a.entorno;
   sol.intensity = a.sol;
+  const sinLamparas = a.lamparas > 0 && lamparas.length === 0;
+  hemisferio.intensity = a.hemisferio * (sinLamparas ? 2.2 : 1);
+  escena.environmentIntensity = a.entorno * (sinLamparas ? 2.2 : 1);
   lamparas.forEach((luz) => { luz.intensity = CONFIG.intensidadLamparas * a.lamparas; });
   materialesLampara.forEach((material) => { material.emissiveIntensity = a.brillo; });
   escena.background.setHex(a.fondo);
@@ -225,9 +228,9 @@ function aplicarAmbiente(clave) {
   });
 }
 
-function esLampara(obj) {
+function nombreCoincide(obj, patron) {
   for (let nodo = obj; nodo; nodo = nodo.parent) {
-    if (/lampara|luces/i.test(nodo.name)) return true;
+    if (patron.test(nodo.name)) return true;
   }
   return false;
 }
@@ -236,8 +239,8 @@ function prepararModelo(raiz) {
   raiz.updateMatrixWorld(true);
   const piezas = [];
   raiz.traverse((obj) => {
-    if (!obj.isMesh) return;
-    obj.castShadow = true;
+    if (!obj.isMesh || !obj.visible) return;
+    obj.castShadow = !(obj.material && obj.material.transparent);
     obj.receiveShadow = true;
     if (obj.material && obj.material.isMeshStandardMaterial) {
       obj.material.roughness = Math.max(obj.material.roughness, 0.6);
@@ -268,7 +271,7 @@ function prepararModelo(raiz) {
   sol.shadow.camera.updateProjectionMatrix();
 
   piezas.forEach((p) => {
-    if (!esLampara(p.obj)) return;
+    if (!nombreCoincide(p.obj, /lampara|luces/i)) return;
     p.obj.material = p.obj.material.clone();
     p.obj.material.emissive = new THREE.Color(0xfff1d6);
     materialesLampara.push(p.obj.material);
@@ -302,15 +305,20 @@ function ajustarTamano() {
 new ResizeObserver(ajustarTamano).observe(visor);
 ajustarTamano();
 
-new GLTFLoader().load(
+const cargador = new GLTFLoader();
+cargador.setMeshoptDecoder(MeshoptDecoder);
+cargador.load(
   CONFIG.modelo,
   (gltf) => {
     escena.add(gltf.scene);
     gltf.scene.traverse((obj) => {
-      if (obj.isMesh) {
-        mallas.push(obj);
-        if (obj.material && obj.material.map) obj.material.map.anisotropy = 8;
+      if (!obj.isMesh) return;
+      if (nombreCoincide(obj, /^sky/i)) {
+        obj.visible = false;
+        return;
       }
+      if (obj.material && obj.material.map) obj.material.map.anisotropy = 8;
+      if (!nombreCoincide(obj, /leaves/i)) mallas.push(obj);
     });
     prepararModelo(gltf.scene);
     listo = true;
@@ -375,7 +383,7 @@ function mover(dt) {
   let dz = (-coseno * avance - seno * lateral) * paso;
 
   const p = camara.position;
-  const yPies = p.y - CONFIG.alturaOjos * 0.45;
+  const yPies = p.y - CONFIG.alturaOjos * CONFIG.alturaRayoColision;
 
   if (dx !== 0 && chocaEn(p.x, yPies, p.z, Math.sign(dx), 0, CONFIG.radioColision + Math.abs(dx))) dx = 0;
   if (dz !== 0 && chocaEn(p.x, yPies, p.z, 0, Math.sign(dz), CONFIG.radioColision + Math.abs(dz))) dz = 0;
