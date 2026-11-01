@@ -156,7 +156,14 @@ const CONFIG = {
   mirarHacia: { x: 1.6, z: 0 },
   sensibilidadMouse: 0.0022,
   sensibilidadTactil: 0.005,
-  intensidadLamparas: 650,
+  intensidadLamparas: 1000,
+  alcanceLamparas: 75,
+  alturaLamparas: 14,
+  anguloFocoMural: 0.6,
+  lamparas: [
+    { patron: /^luces/i, modo: "centro" },
+    { patron: /^lampara/i, modo: "abajo" }
+  ],
   intensidadReflectores: 1800,
   intensidadPostes: 2200,
   maxLamparas: esTactilInicial() ? 6 : 12,
@@ -164,12 +171,12 @@ const CONFIG = {
   pasto: {
     activo: true,
     archivo: "pasto.glb",
-    celda: 1,
+    celda: 0.5,
     elevacion: 0.04,
     alturaMinima: 0.15,
-    holgura: 2,
+    holgura: 0,
     escalaTextura: 1,
-    margenes: [[/^reflector/i, 3], [/^poste/i, 3], [/^exibidor/i, 3]]
+    margenes: []
   },
   pantera: {
     activo: true,
@@ -177,7 +184,7 @@ const CONFIG = {
     alto: 7,
     giroPorDefecto: -Math.PI / 2,
     radioReflectores: 60,
-    anguloFoco: 0.5,
+    anguloFoco: 0.38,
     color: 0x4a4a52,
     rugosidad: 0.4,
     metal: 0.35
@@ -190,8 +197,8 @@ function esTactilInicial() {
 
 const AMBIENTES = {
   dia: { exposicion: 1.0, hemisferio: 0.55, entorno: 0.4, sol: 2.2, lamparas: 0, brillo: 0.1, cielo: [0x4f8fd6, 0xcfe4f5], niebla: 0xcfe4f5 },
-  galeria: { exposicion: 1.0, hemisferio: 0.3, entorno: 0.3, sol: 0.6, lamparas: 1, brillo: 1.6, cielo: [0x1c2530, 0x3a4655], niebla: null },
-  noche: { exposicion: 1.1, hemisferio: 0.1, entorno: 0.1, sol: 0, lamparas: 1.5, brillo: 2.2, cielo: [0x02040a, 0x0b1220], niebla: null }
+  galeria: { exposicion: 1.0, hemisferio: 0.42, entorno: 0.4, sol: 0.6, lamparas: 1, brillo: 1.6, cielo: [0x1c2530, 0x3a4655], niebla: null },
+  noche: { exposicion: 1.1, hemisferio: 0.2, entorno: 0.2, sol: 0, lamparas: 1.5, brillo: 2.2, cielo: [0x02040a, 0x0b1220], niebla: null }
 };
 
 const MATERIALES = {
@@ -301,6 +308,7 @@ function claveMaterial(obj) {
 
 function pintar(obj) {
   const material = obj.material.clone();
+  material.side = THREE.DoubleSide;
   if (material.metalness === 1 && material.roughness === 1) {
     material.metalness = 0;
     material.roughness = 0.8;
@@ -329,7 +337,11 @@ function aplicarAmbiente(clave) {
   escena.environmentIntensity = a.entorno * (sinLamparas ? 2.2 : 1);
   lamparas.forEach((luz) => { luz.intensity = CONFIG.intensidadLamparas * a.lamparas; });
   materialesLampara.forEach((material) => { material.emissiveIntensity = a.brillo; });
-  reflectoresLuz.forEach((luz) => { luz.intensity = CONFIG.intensidadReflectores * a.lamparas; });
+  reflectoresLuz.forEach(({ luz, haz, destello, escala }) => {
+    luz.intensity = CONFIG.intensidadReflectores * escala * a.lamparas;
+    haz.visible = a.lamparas > 0;
+    destello.visible = a.lamparas > 0;
+  });
   postesLuz.forEach(({ luz, bulbo }) => {
     luz.intensity = CONFIG.intensidadPostes * a.lamparas;
     bulbo.visible = a.lamparas > 0;
@@ -383,16 +395,31 @@ function prepararModelo(raiz) {
   sol.shadow.camera.far = radio * 4;
   sol.shadow.camera.updateProjectionMatrix();
 
-  piezas.forEach((p) => {
-    if (!nombreCoincide(p.obj, /lampara|luces/i)) return;
+  const reglaDe = (obj) => CONFIG.lamparas.findIndex((regla) => nombreCoincide(obj, regla.patron));
+  const piezasLampara = piezas
+    .filter((p) => nombreCoincide(p.obj, /lampara|luces/i))
+    .sort((a, b) => reglaDe(a.obj) - reglaDe(b.obj));
+
+  piezasLampara.forEach((p) => {
     p.obj.material = p.obj.material.clone();
     p.obj.material.emissive = new THREE.Color(0xfff1d6);
     materialesLampara.push(p.obj.material);
+  });
+
+  piezasLampara.forEach((p) => {
     const cerca = lamparas.some((luz) => luz.position.distanceTo(p.centro) < 3);
     if (cerca || lamparas.length >= CONFIG.maxLamparas) return;
-    const luz = new THREE.PointLight(0xfff1d6, 0, 0, 2);
+    const regla = CONFIG.lamparas[reglaDe(p.obj)];
+    const objetivo = new THREE.Vector3(p.centro.x, p.centro.y - CONFIG.alturaLamparas, p.centro.z);
+    if (regla && regla.modo === "centro") {
+      const grupo = piezasLampara.filter((q) => nombreCoincide(q.obj, regla.patron));
+      const promedioX = grupo.reduce((suma, q) => suma + q.centro.x, 0) / grupo.length;
+      if (Math.abs(promedioX - p.centro.x) > 4) objetivo.x = promedioX;
+    }
+    const luz = new THREE.SpotLight(0xfff1d6, 0, CONFIG.alcanceLamparas, 0.95, 0.6, 2);
     luz.position.copy(p.centro);
-    escena.add(luz);
+    luz.target.position.copy(objetivo);
+    escena.add(luz, luz.target);
     lamparas.push(luz);
   });
 
@@ -484,6 +511,10 @@ function construirPasto(raiz, malla) {
   const alto = Math.ceil((cajaSuelo.max.z - z0) / celda);
   const ocupado = new Uint8Array(ancho * alto);
 
+  const marcarCelda = (i, j) => {
+    if (i >= 0 && i < ancho && j >= 0 && j < alto) ocupado[j * ancho + i] = 1;
+  };
+
   const marcar = (minX, minZ, maxX, maxZ) => {
     const i0 = Math.max(Math.floor((minX - x0) / celda), 0);
     const i1 = Math.min(Math.floor((maxX - x0) / celda), ancho - 1);
@@ -494,14 +525,40 @@ function construirPasto(raiz, malla) {
     }
   };
 
+  const marcarSegmento = (ax, az, bx, bz) => {
+    const pasos = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / (celda * 0.5)));
+    for (let k = 0; k <= pasos; k++) {
+      const t = k / pasos;
+      marcarCelda(Math.floor((ax + (bx - ax) * t - x0) / celda), Math.floor((az + (bz - az) * t - z0) / celda));
+    }
+  };
+
+  const marcarTriangulo = (a, b, c) => {
+    marcarSegmento(a.x, a.z, b.x, b.z);
+    marcarSegmento(b.x, b.z, c.x, c.z);
+    marcarSegmento(c.x, c.z, a.x, a.z);
+    const denominador = (b.z - c.z) * (a.x - c.x) + (c.x - b.x) * (a.z - c.z);
+    if (Math.abs(denominador) < 1e-9) return;
+    const i0 = Math.max(Math.floor((Math.min(a.x, b.x, c.x) - x0) / celda), 0);
+    const i1 = Math.min(Math.floor((Math.max(a.x, b.x, c.x) - x0) / celda), ancho - 1);
+    const j0 = Math.max(Math.floor((Math.min(a.z, b.z, c.z) - z0) / celda), 0);
+    const j1 = Math.min(Math.floor((Math.max(a.z, b.z, c.z) - z0) / celda), alto - 1);
+    for (let j = j0; j <= j1; j++) {
+      const pz = z0 + (j + 0.5) * celda;
+      for (let i = i0; i <= i1; i++) {
+        const px = x0 + (i + 0.5) * celda;
+        const l1 = ((b.z - c.z) * (px - c.x) + (c.x - b.x) * (pz - c.z)) / denominador;
+        const l2 = ((c.z - a.z) * (px - c.x) + (a.x - c.x) * (pz - c.z)) / denominador;
+        if (l1 >= 0 && l2 >= 0 && 1 - l1 - l2 >= 0) ocupado[j * ancho + i] = 1;
+      }
+    }
+  };
+
   raiz.traverse((obj) => {
     if (!obj.isMesh || !obj.visible || nombreCoincide(obj, /^superficie$/i)) return;
     recorrerTriangulos(obj, (a, b, c) => {
       if (Math.max(a.y, b.y, c.y) <= nivel + CONFIG.pasto.alturaMinima) return;
-      marcar(
-        Math.min(a.x, b.x, c.x), Math.min(a.z, b.z, c.z),
-        Math.max(a.x, b.x, c.x), Math.max(a.z, b.z, c.z)
-      );
+      marcarTriangulo(a, b, c);
     });
   });
 
@@ -659,27 +716,125 @@ function colocarPantera(raiz, malla) {
   escena.add(pivote);
   mallas.push(figura);
   pivote.updateMatrixWorld(true);
+}
 
-  const torso = new THREE.Vector3(pivote.position.x, pivote.position.y + CONFIG.pantera.alto * 0.55, pivote.position.z);
-  reflectores.forEach((cajaReflector) => {
-    const centro = cajaReflector.getCenter(new THREE.Vector3());
-    const haciaPantera = torso.clone().sub(centro).setY(0).normalize();
-    const luz = new THREE.SpotLight(0xfff3dc, 0, 0, CONFIG.pantera.anguloFoco, 0.55, 2);
-    luz.position.copy(centro).addScaledVector(haciaPantera, 0.8);
-    luz.position.y += 0.3;
-    luz.target.position.copy(torso);
-    luz.castShadow = true;
-    luz.shadow.mapSize.set(1024, 1024);
-    luz.shadow.bias = -0.0004;
-    luz.shadow.camera.near = 1;
-    luz.shadow.camera.far = 90;
-    escena.add(luz, luz.target);
-    reflectoresLuz.push(luz);
+function caraFrontal(obj, haciaObjetivo) {
+  const grupos = new Map();
+  const e1 = new THREE.Vector3();
+  const e2 = new THREE.Vector3();
+  const n = new THREE.Vector3();
+  obj.traverse((malla) => {
+    if (!malla.isMesh) return;
+    recorrerTriangulos(malla, (a, b, c) => {
+      n.crossVectors(e1.subVectors(b, a), e2.subVectors(c, a));
+      const area = n.length() / 2;
+      if (area < 1e-9) return;
+      n.normalize();
+      const clave = [n.x, n.y, n.z].map((v) => Math.round(v * 5)).join(",");
+      const grupo = grupos.get(clave) || { area: 0, normal: new THREE.Vector3(), centro: new THREE.Vector3() };
+      grupo.area += area;
+      grupo.normal.addScaledVector(n, area);
+      grupo.centro.x += ((a.x + b.x + c.x) / 3) * area;
+      grupo.centro.y += ((a.y + b.y + c.y) / 3) * area;
+      grupo.centro.z += ((a.z + b.z + c.z) / 3) * area;
+      grupos.set(clave, grupo);
+    });
+  });
+  let mejor = null;
+  let mejorPuntaje = 0.5;
+  grupos.forEach((grupo) => {
+    if (grupo.area < 0.2) return;
+    const normal = grupo.normal.clone().normalize();
+    const puntaje = normal.dot(haciaObjetivo);
+    if (puntaje > mejorPuntaje) {
+      mejorPuntaje = puntaje;
+      mejor = { normal, centro: grupo.centro.clone().divideScalar(grupo.area) };
+    }
+  });
+  return mejor;
+}
+
+function crearHaz(origen, destino, angulo, opacidad) {
+  const largo = origen.distanceTo(destino);
+  const geometria = new THREE.ConeGeometry(Math.tan(angulo) * largo, largo, 32, 1, true);
+  geometria.translate(0, -largo / 2, 0);
+  const haz = new THREE.Mesh(
+    geometria,
+    new THREE.MeshBasicMaterial({
+      color: 0xfff1d0,
+      transparent: true,
+      opacity: opacidad,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      side: THREE.FrontSide,
+      toneMapped: false
+    })
+  );
+  haz.position.copy(origen);
+  haz.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), destino.clone().sub(origen).normalize());
+  return haz;
+}
+
+function crearLucesReflectores(raiz) {
+  const pedestal = buscarObjetos(raiz, /^exibidor/i)[0];
+  const mural = buscarObjetos(raiz, /^mural$/i)[0];
+  const objetivos = [];
+  if (pedestal && CONFIG.pantera.activo) {
+    const caja = new THREE.Box3().setFromObject(pedestal);
+    objetivos.push({
+      tipo: "pantera",
+      punto: new THREE.Vector3(
+        (caja.min.x + caja.max.x) / 2,
+        caja.max.y + CONFIG.pantera.alto * 0.55,
+        (caja.min.z + caja.max.z) / 2
+      )
+    });
+  }
+  if (mural) {
+    objetivos.push({ tipo: "mural", punto: new THREE.Box3().setFromObject(mural).getCenter(new THREE.Vector3()) });
+  }
+  if (!objetivos.length) return;
+
+  buscarObjetos(raiz, /^reflector/i).forEach((reflector) => {
+    const centroCaja = new THREE.Box3().setFromObject(reflector).getCenter(new THREE.Vector3());
+    const objetivo = objetivos.reduce((mejor, o) =>
+      centroCaja.distanceTo(o.punto) < centroCaja.distanceTo(mejor.punto) ? o : mejor
+    );
+    const hacia = objetivo.punto.clone().sub(centroCaja).normalize();
+    const cara = caraFrontal(reflector, hacia);
+    const normal = cara ? cara.normal : hacia;
+    const posicion = (cara ? cara.centro : centroCaja).clone().addScaledVector(normal, 0.25);
+    const esPantera = objetivo.tipo === "pantera";
+    const punto = objetivo.punto.clone();
+    if (!esPantera) punto.x += (centroCaja.x - punto.x) * 0.5;
+    const distancia = posicion.distanceTo(punto);
+    const angulo = esPantera ? CONFIG.pantera.anguloFoco : CONFIG.anguloFocoMural;
+
+    const luz = new THREE.SpotLight(0xfff3dc, 0, 0, angulo, 0.55, 2);
+    luz.position.copy(posicion);
+    luz.target.position.copy(punto);
+    if (esPantera) {
+      luz.castShadow = true;
+      luz.shadow.mapSize.set(1024, 1024);
+      luz.shadow.bias = -0.0004;
+      luz.shadow.camera.near = 1;
+      luz.shadow.camera.far = 90;
+    }
+
+    const haz = crearHaz(posicion, punto, angulo, esPantera ? 0.035 : 0.012);
+    const destello = new THREE.Mesh(
+      new THREE.SphereGeometry(0.28, 12, 8),
+      new THREE.MeshBasicMaterial({ color: 0xfff3dc, toneMapped: false })
+    );
+    destello.position.copy(posicion).addScaledVector(normal, 0.1);
+    escena.add(luz, luz.target, haz, destello);
+    reflectoresLuz.push({ luz, haz, destello, escala: (distancia / 16) ** 2 * (esPantera ? 1 : 0.55) });
   });
 }
 
 function prepararExtras(raiz) {
   crearLucesPostes(raiz);
+  crearLucesReflectores(raiz);
   aplicarAmbiente(ambienteActual);
 
   if (CONFIG.pasto.activo) {
