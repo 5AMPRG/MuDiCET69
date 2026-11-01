@@ -145,19 +145,48 @@ import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 
 const CONFIG = {
-  modelo: "museo.glb",
-  alturaOjos: 1.7,
-  alturaRayoColision: 0.6,
-  velocidad: 6,
+  modelo: "museo3_1.glb",
+  colorear: false,
+  alturaOjos: 4.5,
+  alturaRayoColision: 0.45,
+  velocidad: 14,
   multiplicadorCarrera: 2,
-  radioColision: 0.5,
-  inicio: { x: 0, y: -1.7, z: 30 },
-  mirarHacia: { x: 0, z: 0 },
+  radioColision: 1.4,
+  inicio: { x: 1.6, y: 4.7, z: 11.3 },
+  mirarHacia: { x: 1.6, z: 0 },
   sensibilidadMouse: 0.0022,
   sensibilidadTactil: 0.005,
   intensidadLamparas: 650,
-  ambienteInicial: "galeria"
+  intensidadReflectores: 1800,
+  intensidadPostes: 2200,
+  maxLamparas: esTactilInicial() ? 6 : 12,
+  ambienteInicial: "galeria",
+  pasto: {
+    activo: true,
+    archivo: "pasto.glb",
+    celda: 1,
+    elevacion: 0.04,
+    alturaMinima: 0.15,
+    holgura: 2,
+    escalaTextura: 1,
+    margenes: [[/^reflector/i, 3], [/^poste/i, 3], [/^exibidor/i, 3]]
+  },
+  pantera: {
+    activo: true,
+    archivo: "pantera.glb",
+    alto: 7,
+    giroPorDefecto: -Math.PI / 2,
+    radioReflectores: 60,
+    anguloFoco: 0.5,
+    color: 0x4a4a52,
+    rugosidad: 0.4,
+    metal: 0.35
+  }
 };
+
+function esTactilInicial() {
+  return window.matchMedia("(pointer: coarse)").matches;
+}
 
 const AMBIENTES = {
   dia: { exposicion: 1.0, hemisferio: 0.55, entorno: 0.4, sol: 2.2, lamparas: 0, brillo: 0.1, cielo: [0x4f8fd6, 0xcfe4f5], niebla: 0xcfe4f5 },
@@ -222,7 +251,7 @@ contenedor.appendChild(renderer.domElement);
 const escena = new THREE.Scene();
 escena.background = new THREE.Color(0x0b0f14);
 
-const camara = new THREE.PerspectiveCamera(70, 1, 0.1, 2000);
+const camara = new THREE.PerspectiveCamera(70, 1, 0.3, 2000);
 camara.rotation.order = "YXZ";
 camara.position.set(CONFIG.inicio.x, CONFIG.inicio.y, CONFIG.inicio.z);
 
@@ -242,6 +271,9 @@ escena.add(sol.target);
 
 const lamparas = [];
 const materialesLampara = [];
+const reflectoresLuz = [];
+const postesLuz = [];
+let ambienteActual = CONFIG.ambienteInicial;
 
 const fondos = {};
 
@@ -269,9 +301,11 @@ function claveMaterial(obj) {
 
 function pintar(obj) {
   const material = obj.material.clone();
-  const clave = claveMaterial(obj);
-  material.metalness = 0;
-  material.roughness = Math.max(material.roughness, 0.8);
+  if (material.metalness === 1 && material.roughness === 1) {
+    material.metalness = 0;
+    material.roughness = 0.8;
+  }
+  const clave = CONFIG.colorear ? claveMaterial(obj) : null;
   if (clave && !material.map) {
     const datos = MATERIALES[clave];
     material.color.setHex(datos.color);
@@ -295,6 +329,12 @@ function aplicarAmbiente(clave) {
   escena.environmentIntensity = a.entorno * (sinLamparas ? 2.2 : 1);
   lamparas.forEach((luz) => { luz.intensity = CONFIG.intensidadLamparas * a.lamparas; });
   materialesLampara.forEach((material) => { material.emissiveIntensity = a.brillo; });
+  reflectoresLuz.forEach((luz) => { luz.intensity = CONFIG.intensidadReflectores * a.lamparas; });
+  postesLuz.forEach(({ luz, bulbo }) => {
+    luz.intensity = CONFIG.intensidadPostes * a.lamparas;
+    bulbo.visible = a.lamparas > 0;
+  });
+  ambienteActual = clave;
   if (!fondos[clave]) fondos[clave] = crearFondo(a.cielo[0], a.cielo[1]);
   escena.background = fondos[clave];
   escena.fog = a.niebla ? new THREE.Fog(a.niebla, 150, 700) : null;
@@ -349,7 +389,7 @@ function prepararModelo(raiz) {
     p.obj.material.emissive = new THREE.Color(0xfff1d6);
     materialesLampara.push(p.obj.material);
     const cerca = lamparas.some((luz) => luz.position.distanceTo(p.centro) < 3);
-    if (cerca || lamparas.length >= 12) return;
+    if (cerca || lamparas.length >= CONFIG.maxLamparas) return;
     const luz = new THREE.PointLight(0xfff1d6, 0, 0, 2);
     luz.position.copy(p.centro);
     escena.add(luz);
@@ -357,6 +397,317 @@ function prepararModelo(raiz) {
   });
 
   aplicarAmbiente(CONFIG.ambienteInicial);
+}
+
+function buscarObjetos(raiz, patron) {
+  const resultado = [];
+  raiz.traverse((obj) => {
+    if (patron.test(obj.name)) resultado.push(obj);
+  });
+  return resultado;
+}
+
+function primeraMalla(raiz) {
+  let encontrada = null;
+  raiz.traverse((obj) => {
+    if (!encontrada && obj.isMesh) encontrada = obj;
+  });
+  return encontrada;
+}
+
+function recorrerTriangulos(malla, alVisitar) {
+  const posicion = malla.geometry.attributes.position;
+  const indice = malla.geometry.index;
+  const total = indice ? indice.count : posicion.count;
+  const a = new THREE.Vector3();
+  const b = new THREE.Vector3();
+  const c = new THREE.Vector3();
+  for (let i = 0; i < total; i += 3) {
+    a.fromBufferAttribute(posicion, indice ? indice.getX(i) : i).applyMatrix4(malla.matrixWorld);
+    b.fromBufferAttribute(posicion, indice ? indice.getX(i + 1) : i + 1).applyMatrix4(malla.matrixWorld);
+    c.fromBufferAttribute(posicion, indice ? indice.getX(i + 2) : i + 2).applyMatrix4(malla.matrixWorld);
+    alVisitar(a, b, c);
+  }
+}
+
+function puntoSuperior(obj) {
+  let alto = -Infinity;
+  const vertice = new THREE.Vector3();
+  const posiciones = [];
+  obj.traverse((malla) => {
+    if (!malla.isMesh) return;
+    const atributo = malla.geometry.attributes.position;
+    for (let i = 0; i < atributo.count; i++) {
+      vertice.fromBufferAttribute(atributo, i).applyMatrix4(malla.matrixWorld);
+      posiciones.push(vertice.x, vertice.y, vertice.z);
+      if (vertice.y > alto) alto = vertice.y;
+    }
+  });
+  const suma = new THREE.Vector3();
+  let cuenta = 0;
+  for (let i = 0; i < posiciones.length; i += 3) {
+    if (posiciones[i + 1] > alto - 1.2) {
+      suma.x += posiciones[i];
+      suma.z += posiciones[i + 2];
+      cuenta++;
+    }
+  }
+  return new THREE.Vector3(suma.x / cuenta, alto, suma.z / cuenta);
+}
+
+function crearLucesPostes(raiz) {
+  buscarObjetos(raiz, /^poste/i).forEach((poste) => {
+    const cima = puntoSuperior(poste);
+    const luz = new THREE.SpotLight(0xffe7b8, 0, 0, 0.95, 0.8, 2);
+    luz.position.set(cima.x, cima.y - 0.4, cima.z);
+    luz.target.position.set(cima.x, cima.y - 40, cima.z);
+    const bulbo = new THREE.Mesh(
+      new THREE.SphereGeometry(0.6, 12, 8),
+      new THREE.MeshBasicMaterial({ color: 0xfff0c8, toneMapped: false })
+    );
+    bulbo.position.copy(luz.position);
+    escena.add(luz, luz.target, bulbo);
+    postesLuz.push({ luz, bulbo });
+  });
+}
+
+function construirPasto(raiz, malla) {
+  const suelo = buscarObjetos(raiz, /^superficie$/i)[0];
+  if (!suelo || !malla.material.map) return;
+
+  const cajaSuelo = new THREE.Box3().setFromObject(suelo);
+  const nivel = cajaSuelo.max.y;
+  const celda = CONFIG.pasto.celda;
+  const x0 = cajaSuelo.min.x;
+  const z0 = cajaSuelo.min.z;
+  const ancho = Math.ceil((cajaSuelo.max.x - x0) / celda);
+  const alto = Math.ceil((cajaSuelo.max.z - z0) / celda);
+  const ocupado = new Uint8Array(ancho * alto);
+
+  const marcar = (minX, minZ, maxX, maxZ) => {
+    const i0 = Math.max(Math.floor((minX - x0) / celda), 0);
+    const i1 = Math.min(Math.floor((maxX - x0) / celda), ancho - 1);
+    const j0 = Math.max(Math.floor((minZ - z0) / celda), 0);
+    const j1 = Math.min(Math.floor((maxZ - z0) / celda), alto - 1);
+    for (let j = j0; j <= j1; j++) {
+      for (let i = i0; i <= i1; i++) ocupado[j * ancho + i] = 1;
+    }
+  };
+
+  raiz.traverse((obj) => {
+    if (!obj.isMesh || !obj.visible || nombreCoincide(obj, /^superficie$/i)) return;
+    recorrerTriangulos(obj, (a, b, c) => {
+      if (Math.max(a.y, b.y, c.y) <= nivel + CONFIG.pasto.alturaMinima) return;
+      marcar(
+        Math.min(a.x, b.x, c.x), Math.min(a.z, b.z, c.z),
+        Math.max(a.x, b.x, c.x), Math.max(a.z, b.z, c.z)
+      );
+    });
+  });
+
+  CONFIG.pasto.margenes.forEach(([patron, margen]) => {
+    buscarObjetos(raiz, patron).forEach((obj) => {
+      const caja = new THREE.Box3().setFromObject(obj);
+      marcar(caja.min.x - margen, caja.min.z - margen, caja.max.x + margen, caja.max.z + margen);
+    });
+  });
+
+  const holgura = CONFIG.pasto.holgura;
+  const bloqueado = new Uint8Array(ocupado);
+  for (let j = 0; j < alto; j++) {
+    for (let i = 0; i < ancho; i++) {
+      if (!ocupado[j * ancho + i]) continue;
+      for (let dj = -holgura; dj <= holgura; dj++) {
+        for (let di = -holgura; di <= holgura; di++) {
+          const ii = i + di;
+          const jj = j + dj;
+          if (ii >= 0 && ii < ancho && jj >= 0 && jj < alto) bloqueado[jj * ancho + ii] = 1;
+        }
+      }
+    }
+  }
+
+  const tamanoTextura = new THREE.Box3().setFromObject(malla).getSize(new THREE.Vector3());
+  const anchoTextura = tamanoTextura.x * CONFIG.pasto.escalaTextura;
+  const altoTextura = tamanoTextura.z * CONFIG.pasto.escalaTextura;
+  const y = nivel + CONFIG.pasto.elevacion;
+  const usado = new Uint8Array(ancho * alto);
+  const posiciones = [];
+  const coordenadas = [];
+  const indices = [];
+  let vertice = 0;
+
+  for (let j = 0; j < alto; j++) {
+    for (let i = 0; i < ancho; i++) {
+      const k = j * ancho + i;
+      if (bloqueado[k] || usado[k]) continue;
+      let w = 1;
+      while (i + w < ancho && !bloqueado[k + w] && !usado[k + w]) w++;
+      let h = 1;
+      let crece = true;
+      while (j + h < alto && crece) {
+        for (let d = 0; d < w; d++) {
+          const m = (j + h) * ancho + i + d;
+          if (bloqueado[m] || usado[m]) {
+            crece = false;
+            break;
+          }
+        }
+        if (crece) h++;
+      }
+      for (let dj = 0; dj < h; dj++) {
+        for (let di = 0; di < w; di++) usado[(j + dj) * ancho + i + di] = 1;
+      }
+      const xa = x0 + i * celda;
+      const xb = x0 + (i + w) * celda;
+      const za = z0 + j * celda;
+      const zb = z0 + (j + h) * celda;
+      posiciones.push(xa, y, za, xa, y, zb, xb, y, zb, xb, y, za);
+      coordenadas.push(
+        xa / anchoTextura, za / altoTextura, xa / anchoTextura, zb / altoTextura,
+        xb / anchoTextura, zb / altoTextura, xb / anchoTextura, za / altoTextura
+      );
+      indices.push(vertice, vertice + 1, vertice + 2, vertice, vertice + 2, vertice + 3);
+      vertice += 4;
+    }
+  }
+
+  const normales = new Float32Array(posiciones.length);
+  for (let i = 1; i < normales.length; i += 3) normales[i] = 1;
+
+  const geometria = new THREE.BufferGeometry();
+  geometria.setAttribute("position", new THREE.Float32BufferAttribute(posiciones, 3));
+  geometria.setAttribute("normal", new THREE.BufferAttribute(normales, 3));
+  geometria.setAttribute("uv", new THREE.Float32BufferAttribute(coordenadas, 2));
+  geometria.setIndex(indices);
+
+  const textura = malla.material.map;
+  textura.wrapS = THREE.MirroredRepeatWrapping;
+  textura.wrapT = THREE.MirroredRepeatWrapping;
+  textura.anisotropy = 8;
+  textura.needsUpdate = true;
+
+  const cesped = new THREE.Mesh(
+    geometria,
+    new THREE.MeshStandardMaterial({
+      map: textura,
+      roughness: 0.95,
+      metalness: 0,
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+      polygonOffsetUnits: -2
+    })
+  );
+  cesped.receiveShadow = true;
+  escena.add(cesped);
+}
+
+function colocarPantera(raiz, malla) {
+  const pedestal = buscarObjetos(raiz, /^exibidor/i)[0];
+  if (!pedestal) return;
+
+  const geometria = malla.geometry;
+  geometria.computeVertexNormals();
+  geometria.computeBoundingBox();
+  const caja = geometria.boundingBox;
+  const escala = CONFIG.pantera.alto / (caja.max.y - caja.min.y);
+
+  const figura = new THREE.Mesh(
+    geometria,
+    new THREE.MeshStandardMaterial({
+      color: CONFIG.pantera.color,
+      roughness: CONFIG.pantera.rugosidad,
+      metalness: CONFIG.pantera.metal
+    })
+  );
+  figura.castShadow = true;
+  figura.receiveShadow = true;
+  figura.scale.setScalar(escala);
+  figura.position.set(
+    -((caja.min.x + caja.max.x) / 2) * escala,
+    -caja.min.y * escala,
+    -((caja.min.z + caja.max.z) / 2) * escala
+  );
+
+  const cajaPedestal = new THREE.Box3().setFromObject(pedestal);
+  const pivote = new THREE.Group();
+  pivote.position.set(
+    (cajaPedestal.min.x + cajaPedestal.max.x) / 2,
+    cajaPedestal.max.y,
+    (cajaPedestal.min.z + cajaPedestal.max.z) / 2
+  );
+  pivote.add(figura);
+
+  const reflectores = buscarObjetos(raiz, /^reflector/i)
+    .map((obj) => new THREE.Box3().setFromObject(obj))
+    .filter((cajaReflector) => {
+      const centro = cajaReflector.getCenter(new THREE.Vector3());
+      return Math.hypot(centro.x - pivote.position.x, centro.z - pivote.position.z) < CONFIG.pantera.radioReflectores;
+    });
+
+  let giro = CONFIG.pantera.giroPorDefecto;
+  if (reflectores.length) {
+    const promedio = new THREE.Vector3();
+    reflectores.forEach((cajaReflector) => promedio.add(cajaReflector.getCenter(new THREE.Vector3())));
+    promedio.divideScalar(reflectores.length);
+    const ux = promedio.x - pivote.position.x;
+    const uz = promedio.z - pivote.position.z;
+    const largo = Math.hypot(ux, uz);
+    giro = Math.atan2(uz / largo, -ux / largo);
+  }
+  pivote.rotation.y = giro;
+  escena.add(pivote);
+  mallas.push(figura);
+  pivote.updateMatrixWorld(true);
+
+  const torso = new THREE.Vector3(pivote.position.x, pivote.position.y + CONFIG.pantera.alto * 0.55, pivote.position.z);
+  reflectores.forEach((cajaReflector) => {
+    const centro = cajaReflector.getCenter(new THREE.Vector3());
+    const haciaPantera = torso.clone().sub(centro).setY(0).normalize();
+    const luz = new THREE.SpotLight(0xfff3dc, 0, 0, CONFIG.pantera.anguloFoco, 0.55, 2);
+    luz.position.copy(centro).addScaledVector(haciaPantera, 0.8);
+    luz.position.y += 0.3;
+    luz.target.position.copy(torso);
+    luz.castShadow = true;
+    luz.shadow.mapSize.set(1024, 1024);
+    luz.shadow.bias = -0.0004;
+    luz.shadow.camera.near = 1;
+    luz.shadow.camera.far = 90;
+    escena.add(luz, luz.target);
+    reflectoresLuz.push(luz);
+  });
+}
+
+function prepararExtras(raiz) {
+  crearLucesPostes(raiz);
+  aplicarAmbiente(ambienteActual);
+
+  if (CONFIG.pasto.activo) {
+    cargador.load(
+      CONFIG.pasto.archivo,
+      (gltf) => {
+        const malla = primeraMalla(gltf.scene);
+        if (malla) construirPasto(raiz, malla);
+      },
+      undefined,
+      () => console.warn("No se encontró " + CONFIG.pasto.archivo)
+    );
+  }
+
+  if (CONFIG.pantera.activo) {
+    cargador.load(
+      CONFIG.pantera.archivo,
+      (gltf) => {
+        const malla = primeraMalla(gltf.scene);
+        if (malla) {
+          colocarPantera(raiz, malla);
+          aplicarAmbiente(ambienteActual);
+        }
+      },
+      undefined,
+      () => console.warn("No se encontró " + CONFIG.pantera.archivo)
+    );
+  }
 }
 
 let yaw = Math.atan2(-(CONFIG.mirarHacia.x - CONFIG.inicio.x), -(CONFIG.mirarHacia.z - CONFIG.inicio.z));
@@ -398,6 +749,7 @@ cargador.load(
       if (!nombreCoincide(obj, /leaves/i)) mallas.push(obj);
     });
     prepararModelo(gltf.scene);
+    prepararExtras(gltf.scene);
     listo = true;
     pantallaCarga.classList.add("oculto");
     cubierta.classList.remove("oculto");
