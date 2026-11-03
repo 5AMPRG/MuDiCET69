@@ -145,10 +145,12 @@ import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 
 const CONFIG = {
-  modelo: "museo3_1.glb",
+  modelo: "museo3_2.glb",
   colorear: false,
   alturaOjos: 4.5,
   alturaRayoColision: 0.45,
+  alturaRayoBajo: 0.85,
+  solidos: [/^maceta/i, /^exibidor/i, /^cetis69$/i, /^reflector/i],
   velocidad: 14,
   multiplicadorCarrera: 2,
   radioColision: 1.4,
@@ -165,9 +167,36 @@ const CONFIG = {
     { patron: /^lampara/i, modo: "abajo" }
   ],
   intensidadReflectores: 1800,
+  factorFoco: { pantera: 0.55, letras: 0.55, mural: 0.55 },
   intensidadPostes: 2200,
   maxLamparas: esTactilInicial() ? 6 : 12,
   ambienteInicial: "galeria",
+  arboles: {
+    activo: true,
+    archivo: "arbol.glb",
+    archivoMovil: "arbol-ligero.glb",
+    patron: /^maceta/i,
+    escala: 1.3,
+    variacion: 0.15,
+    hundimiento: 0.3
+  },
+  fuentes: {
+    activo: true,
+    archivo: "fuente.glb",
+    escala: 1,
+    lugares: [{ x: 85, z: -112 }, { x: -85, z: -112 }]
+  },
+  letras: {
+    activo: true,
+    archivo: "cetis69.glb",
+    base: /^cetis69$/i,
+    ocupacion: 0.9,
+    retranqueo: 1.6,
+    alturaFoco: 3,
+    anguloFoco: 0.6,
+    radioAtipicos: 300,
+    color: 0xf4f1e8
+  },
   pasto: {
     activo: true,
     archivo: "pasto.glb",
@@ -180,14 +209,15 @@ const CONFIG = {
   },
   pantera: {
     activo: true,
-    archivo: "pantera.glb",
-    alto: 7,
+    archivo: "pantera_1.glb",
+    alto: 12,
     giroPorDefecto: -Math.PI / 2,
     radioReflectores: 60,
-    anguloFoco: 0.38,
-    color: 0x4a4a52,
-    rugosidad: 0.4,
-    metal: 0.35
+    anguloFoco: 0.42,
+    alturaFoco: 0.6,
+    color: 0x3a3a40,
+    rugosidad: 0.45,
+    metal: 0.25
   }
 };
 
@@ -714,7 +744,7 @@ function colocarPantera(raiz, malla) {
   }
   pivote.rotation.y = giro;
   escena.add(pivote);
-  mallas.push(figura);
+  solidos.push(figura);
   pivote.updateMatrixWorld(true);
 }
 
@@ -775,6 +805,26 @@ function crearHaz(origen, destino, angulo, opacidad) {
   return haz;
 }
 
+function cajaSinAtipicos(obj) {
+  const vertice = new THREE.Vector3();
+  const puntos = [];
+  obj.traverse((malla) => {
+    if (!malla.isMesh) return;
+    const atributo = malla.geometry.attributes.position;
+    for (let i = 0; i < atributo.count; i++) {
+      puntos.push(vertice.fromBufferAttribute(atributo, i).applyMatrix4(malla.matrixWorld).clone());
+    }
+  });
+  const mediana = (valores) => valores.slice().sort((a, b) => a - b)[valores.length >> 1];
+  const medianaX = mediana(puntos.map((punto) => punto.x));
+  const medianaZ = mediana(puntos.map((punto) => punto.z));
+  const caja = new THREE.Box3();
+  puntos.forEach((punto) => {
+    if (Math.hypot(punto.x - medianaX, punto.z - medianaZ) < CONFIG.letras.radioAtipicos) caja.expandByPoint(punto);
+  });
+  return caja;
+}
+
 function crearLucesReflectores(raiz) {
   const pedestal = buscarObjetos(raiz, /^exibidor/i)[0];
   const mural = buscarObjetos(raiz, /^mural$/i)[0];
@@ -785,13 +835,25 @@ function crearLucesReflectores(raiz) {
       tipo: "pantera",
       punto: new THREE.Vector3(
         (caja.min.x + caja.max.x) / 2,
-        caja.max.y + CONFIG.pantera.alto * 0.55,
+        caja.max.y + CONFIG.pantera.alto * CONFIG.pantera.alturaFoco,
         (caja.min.z + caja.max.z) / 2
       )
     });
   }
   if (mural) {
     objetivos.push({ tipo: "mural", punto: new THREE.Box3().setFromObject(mural).getCenter(new THREE.Vector3()) });
+  }
+  const baseLetras = CONFIG.letras.activo ? buscarObjetos(raiz, CONFIG.letras.base)[0] : null;
+  if (baseLetras) {
+    const cajaBase = cajaSinAtipicos(baseLetras);
+    objetivos.push({
+      tipo: "letras",
+      punto: new THREE.Vector3(
+        (cajaBase.min.x + cajaBase.max.x) / 2,
+        cajaBase.max.y + CONFIG.letras.alturaFoco,
+        cajaBase.min.z + CONFIG.letras.retranqueo
+      )
+    });
   }
   if (!objetivos.length) return;
 
@@ -806,9 +868,9 @@ function crearLucesReflectores(raiz) {
     const posicion = (cara ? cara.centro : centroCaja).clone().addScaledVector(normal, 0.25);
     const esPantera = objetivo.tipo === "pantera";
     const punto = objetivo.punto.clone();
-    if (!esPantera) punto.x += (centroCaja.x - punto.x) * 0.5;
+    if (objetivo.tipo === "mural") punto.x += (centroCaja.x - punto.x) * 0.5;
     const distancia = posicion.distanceTo(punto);
-    const angulo = esPantera ? CONFIG.pantera.anguloFoco : CONFIG.anguloFocoMural;
+    const angulo = { pantera: CONFIG.pantera.anguloFoco, letras: CONFIG.letras.anguloFoco, mural: CONFIG.anguloFocoMural }[objetivo.tipo];
 
     const luz = new THREE.SpotLight(0xfff3dc, 0, 0, angulo, 0.55, 2);
     luz.position.copy(posicion);
@@ -821,15 +883,110 @@ function crearLucesReflectores(raiz) {
       luz.shadow.camera.far = 90;
     }
 
-    const haz = crearHaz(posicion, punto, angulo, esPantera ? 0.035 : 0.012);
+    const haz = crearHaz(posicion, punto, angulo, esPantera ? 0.02 : 0.012);
     const destello = new THREE.Mesh(
       new THREE.SphereGeometry(0.28, 12, 8),
       new THREE.MeshBasicMaterial({ color: 0xfff3dc, toneMapped: false })
     );
     destello.position.copy(posicion).addScaledVector(normal, 0.1);
     escena.add(luz, luz.target, haz, destello);
-    reflectoresLuz.push({ luz, haz, destello, escala: (distancia / 16) ** 2 * (esPantera ? 1 : 0.55) });
+    reflectoresLuz.push({ luz, haz, destello, escala: (distancia / 16) ** 2 * CONFIG.factorFoco[objetivo.tipo] });
   });
+}
+
+function colocarArboles(raiz, gltf) {
+  const macetas = buscarObjetos(raiz, CONFIG.arboles.patron).filter((obj) => obj.isMesh);
+  if (!macetas.length) return;
+  gltf.scene.updateMatrixWorld(true);
+  const piezas = [];
+  gltf.scene.traverse((malla) => {
+    if (malla.isMesh) piezas.push(malla);
+  });
+
+  const instancias = piezas.map((malla) => {
+    const instanciada = new THREE.InstancedMesh(malla.geometry, malla.material, macetas.length);
+    instanciada.castShadow = true;
+    instanciada.receiveShadow = true;
+    return instanciada;
+  });
+
+  const matriz = new THREE.Matrix4();
+  const posicion = new THREE.Vector3();
+  const rotacion = new THREE.Quaternion();
+  const tamano = new THREE.Vector3();
+  const giro = new THREE.Vector3(0, 1, 0);
+
+  macetas.forEach((maceta, indice) => {
+    const caja = new THREE.Box3().setFromObject(maceta);
+    const azar = Math.sin(indice * 12.9898 + 78.233) * 43758.5453;
+    const fraccion = azar - Math.floor(azar);
+    const factor = CONFIG.arboles.escala * (1 + (fraccion - 0.5) * 2 * CONFIG.arboles.variacion);
+    posicion.set((caja.min.x + caja.max.x) / 2, caja.max.y - CONFIG.arboles.hundimiento, (caja.min.z + caja.max.z) / 2);
+    rotacion.setFromAxisAngle(giro, fraccion * Math.PI * 2);
+    tamano.setScalar(factor);
+    matriz.compose(posicion, rotacion, tamano);
+    piezas.forEach((malla, parte) => {
+      instancias[parte].setMatrixAt(indice, matriz.clone().multiply(malla.matrixWorld));
+    });
+  });
+
+  instancias.forEach((instanciada) => {
+    instanciada.instanceMatrix.needsUpdate = true;
+    instanciada.computeBoundingSphere();
+    escena.add(instanciada);
+  });
+}
+
+function colocarFuentes(raiz, gltf) {
+  const suelo = buscarObjetos(raiz, /^superficie$/i)[0];
+  const nivel = suelo ? new THREE.Box3().setFromObject(suelo).max.y : 0;
+  CONFIG.fuentes.lugares.forEach((lugar) => {
+    const fuente = gltf.scene.clone(true);
+    fuente.position.set(lugar.x, nivel, lugar.z);
+    fuente.scale.setScalar(lugar.escala || CONFIG.fuentes.escala);
+    fuente.traverse((malla) => {
+      if (!malla.isMesh) return;
+      malla.receiveShadow = true;
+      malla.castShadow = !malla.material.transparent;
+      solidos.push(malla);
+    });
+    escena.add(fuente);
+    fuente.updateMatrixWorld(true);
+  });
+}
+
+function colocarLetras(raiz, malla) {
+  const base = buscarObjetos(raiz, CONFIG.letras.base)[0];
+  if (!base) return;
+  const cajaBase = cajaSinAtipicos(base);
+  const geometria = malla.geometry;
+  geometria.computeBoundingBox();
+  const caja = geometria.boundingBox;
+  const escala = ((cajaBase.max.x - cajaBase.min.x) * CONFIG.letras.ocupacion) / (caja.max.x - caja.min.x);
+
+  const figura = new THREE.Mesh(
+    geometria,
+    new THREE.MeshStandardMaterial({
+      color: CONFIG.letras.color,
+      roughness: 0.45,
+      metalness: 0.15,
+      flatShading: true
+    })
+  );
+  figura.castShadow = true;
+  figura.receiveShadow = true;
+  figura.scale.setScalar(escala);
+  figura.position.set(
+    -((caja.min.x + caja.max.x) / 2) * escala,
+    -caja.min.y * escala,
+    -((caja.min.z + caja.max.z) / 2) * escala
+  );
+
+  const pivote = new THREE.Group();
+  pivote.add(figura);
+  pivote.position.set((cajaBase.min.x + cajaBase.max.x) / 2, cajaBase.max.y, cajaBase.min.z + CONFIG.letras.retranqueo);
+  pivote.rotation.y = Math.PI;
+  escena.add(pivote);
 }
 
 function prepararExtras(raiz) {
@@ -846,6 +1003,36 @@ function prepararExtras(raiz) {
       },
       undefined,
       () => console.warn("No se encontró " + CONFIG.pasto.archivo)
+    );
+  }
+
+  if (CONFIG.arboles.activo) {
+    cargador.load(
+      esTactil ? CONFIG.arboles.archivoMovil : CONFIG.arboles.archivo,
+      (gltf) => colocarArboles(raiz, gltf),
+      undefined,
+      () => console.warn("No se encontró " + CONFIG.arboles.archivo)
+    );
+  }
+
+  if (CONFIG.fuentes.activo) {
+    cargador.load(
+      CONFIG.fuentes.archivo,
+      (gltf) => colocarFuentes(raiz, gltf),
+      undefined,
+      () => console.warn("No se encontró " + CONFIG.fuentes.archivo)
+    );
+  }
+
+  if (CONFIG.letras.activo) {
+    cargador.load(
+      CONFIG.letras.archivo,
+      (gltf) => {
+        const malla = primeraMalla(gltf.scene);
+        if (malla) colocarLetras(raiz, malla);
+      },
+      undefined,
+      () => console.warn("No se encontró " + CONFIG.letras.archivo)
     );
   }
 
@@ -868,6 +1055,7 @@ function prepararExtras(raiz) {
 let yaw = Math.atan2(-(CONFIG.mirarHacia.x - CONFIG.inicio.x), -(CONFIG.mirarHacia.z - CONFIG.inicio.z));
 let pitch = 0;
 const mallas = [];
+const solidos = [];
 const teclas = new Set();
 const joy = { x: 0, y: 0 };
 let activo = false;
@@ -901,7 +1089,8 @@ cargador.load(
         return;
       }
       if (obj.material && obj.material.map) obj.material.map.anisotropy = 8;
-      if (!nombreCoincide(obj, /leaves/i)) mallas.push(obj);
+      if (CONFIG.solidos.some((patron) => nombreCoincide(obj, patron))) solidos.push(obj);
+      else if (!nombreCoincide(obj, /leaves/i)) mallas.push(obj);
     });
     prepararModelo(gltf.scene);
     prepararExtras(gltf.scene);
@@ -927,12 +1116,12 @@ const abajo = new THREE.Vector3(0, -1, 0);
 const origen = new THREE.Vector3();
 const direccion = new THREE.Vector3();
 
-function chocaEn(x, y, z, dx, dz, distancia) {
+function chocaEn(lista, x, y, z, dx, dz, distancia) {
   origen.set(x, y, z);
   direccion.set(dx, 0, dz).normalize();
   rayo.set(origen, direccion);
   rayo.far = distancia;
-  return rayo.intersectObjects(mallas, false).length > 0;
+  return rayo.intersectObjects(lista, false).length > 0;
 }
 
 function alturaSuelo(x, y, z) {
@@ -969,8 +1158,11 @@ function mover(dt) {
   const p = camara.position;
   const yPies = p.y - CONFIG.alturaOjos * CONFIG.alturaRayoColision;
 
-  if (dx !== 0 && chocaEn(p.x, yPies, p.z, Math.sign(dx), 0, CONFIG.radioColision + Math.abs(dx))) dx = 0;
-  if (dz !== 0 && chocaEn(p.x, yPies, p.z, 0, Math.sign(dz), CONFIG.radioColision + Math.abs(dz))) dz = 0;
+  const yBajo = p.y - CONFIG.alturaOjos * CONFIG.alturaRayoBajo;
+  const chocaX = (largo) => chocaEn(mallas, p.x, yPies, p.z, Math.sign(dx), 0, largo) || chocaEn(solidos, p.x, yBajo, p.z, Math.sign(dx), 0, largo);
+  const chocaZ = (largo) => chocaEn(mallas, p.x, yPies, p.z, 0, Math.sign(dz), largo) || chocaEn(solidos, p.x, yBajo, p.z, 0, Math.sign(dz), largo);
+  if (dx !== 0 && chocaX(CONFIG.radioColision + Math.abs(dx))) dx = 0;
+  if (dz !== 0 && chocaZ(CONFIG.radioColision + Math.abs(dz))) dz = 0;
 
   p.x += dx;
   p.z += dz;
