@@ -173,7 +173,7 @@ const esTactil = esTactilInicial();
    CONFIGURACIÓN
    ============================================================ */
 const CONFIG = {
-  modelo: "museo3_2.glb",
+  modelo: "museo3_1.glb",
   alturaOjos: 4.5,
   alturaRayoColision: 0.45,
   alturaRayoBajo: 0.85,
@@ -1378,7 +1378,7 @@ function colocarArboles(raiz, gltf) {
     const material = malla.material;
     const esHoja = /hoja|leaf|leaves/i.test(material.name);
     if (esHoja) material.side = THREE.DoubleSide;
-    if (CONFIG.arboles.viento && !esHoja ? false : CONFIG.arboles.viento) agregarViento(material);
+    if (CONFIG.arboles.viento) agregarViento(material);
     const instanciada = new THREE.InstancedMesh(malla.geometry, material, macetas.length);
     instanciada.castShadow = true;
     instanciada.receiveShadow = true;
