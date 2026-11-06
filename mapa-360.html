@@ -112,30 +112,30 @@ html.sin-scroll,html.sin-scroll body{overflow:hidden}
 @media (prefers-reduced-motion:reduce){.orbe .a1,.orbe .a2,.orbe .a3,.orbe::before,.cargando h3,.motas span{animation:none}}
 
 /* ---- Paneles (información, mapa grande, guía) ---- */
-.modal{position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:max(1rem,env(safe-area-inset-top)) 1rem max(1rem,env(safe-area-inset-bottom));background:rgba(13,7,9,.74);backdrop-filter:blur(4px)}
-.tarjeta{position:relative;width:min(34rem,100%);max-height:100%;overflow-y:auto;touch-action:pan-y;-webkit-user-select:text;user-select:text;background:rgba(26,6,13,.95);border:1px solid rgba(255,255,255,.22);padding:1.6rem 1.6rem 1.4rem;text-align:left}
-.tarjeta small{display:block;font-size:.6rem;letter-spacing:.3em;text-transform:uppercase;color:#f0c9d2}
-.tarjeta h3{font-size:1.4rem;font-weight:300;letter-spacing:.06em;margin:.35rem 0 .9rem;padding-right:2rem}
-.tarjeta p{font-size:.86rem;line-height:1.65;color:rgba(255,255,255,.86);margin:0 0 .8rem}
-.tarjeta img,.tarjeta video{width:100%;display:block;margin:.4rem 0 .8rem;border:1px solid rgba(255,255,255,.18)}
-.cerrar{position:absolute;top:.55rem;right:.55rem;width:2.2rem;height:2.2rem;border:1px solid rgba(255,255,255,.3);background:transparent;color:#fff;font-size:1rem;cursor:pointer;font-family:inherit}
-.cerrar:hover{background:var(--guinda,#7a122e)}
-.mapa-caja{display:flex;gap:1rem;width:min(72rem,100%);max-height:100%}
+.mv-modal{position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:max(1rem,env(safe-area-inset-top)) 1rem max(1rem,env(safe-area-inset-bottom));background:rgba(13,7,9,.74);backdrop-filter:blur(4px)}
+.mv-tarjeta{position:relative;width:min(34rem,100%);max-height:100%;overflow-y:auto;touch-action:pan-y;-webkit-user-select:text;user-select:text;background:rgba(26,6,13,.95);border:1px solid rgba(255,255,255,.22);padding:1.6rem 1.6rem 1.4rem;text-align:left}
+.mv-tarjeta small{display:block;font-size:.6rem;letter-spacing:.3em;text-transform:uppercase;color:#f0c9d2}
+.mv-tarjeta h3{font-size:1.4rem;font-weight:300;letter-spacing:.06em;margin:.35rem 0 .9rem;padding-right:2rem}
+.mv-tarjeta p{font-size:.86rem;line-height:1.65;color:rgba(255,255,255,.86);margin:0 0 .8rem}
+.mv-tarjeta img,.mv-tarjeta video{width:100%;display:block;margin:.4rem 0 .8rem;border:1px solid rgba(255,255,255,.18)}
+.mv-cerrar{position:absolute;top:.55rem;right:.55rem;width:2.2rem;height:2.2rem;border:1px solid rgba(255,255,255,.3);background:transparent;color:#fff;font-size:1rem;cursor:pointer;font-family:inherit}
+.mv-cerrar:hover{background:var(--guinda,#7a122e)}
+.mv-mapa-caja{display:flex;gap:1rem;width:min(72rem,100%);max-height:100%}
 #mapaCanvas{width:min(80dvh,58vw);aspect-ratio:1;background:#0d0709;border:1px solid rgba(255,255,255,.25);cursor:pointer;flex:none;touch-action:none}
-.lateral{flex:1;min-width:11rem;width:auto}
-.lateral .paradas-bloque{align-items:stretch;max-width:none}
-.lateral .paradas{flex-direction:column;flex-wrap:nowrap;justify-content:flex-start}
-.lateral .paradas button{text-align:left}
-.lateral .nota{font-size:.72rem;color:rgba(255,255,255,.6);margin-top:.8rem}
-.guia-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(13rem,1fr));gap:.7rem}
-.guia-card{border:1px solid rgba(255,255,255,.2);padding:.8rem .9rem;display:flex;flex-direction:column;gap:.3rem}
-.guia-card i{color:#e8a5b4;font-size:1.1rem}
-.guia-card b{font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;font-weight:600}
-.guia-card span{font-size:.78rem;line-height:1.5;color:rgba(255,255,255,.8)}
+.mv-lateral{flex:1;min-width:11rem;width:auto}
+.mv-lateral .paradas-bloque{align-items:stretch;max-width:none}
+.mv-lateral .paradas{flex-direction:column;flex-wrap:nowrap;justify-content:flex-start}
+.mv-lateral .paradas button{text-align:left}
+.mv-lateral .nota{font-size:.72rem;color:rgba(255,255,255,.6);margin-top:.8rem}
+.mv-guia-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(13rem,1fr));gap:.7rem}
+.mv-guia-card{border:1px solid rgba(255,255,255,.2);padding:.8rem .9rem;display:flex;flex-direction:column;gap:.3rem}
+.mv-guia-card i{color:#e8a5b4;font-size:1.1rem}
+.mv-guia-card b{font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;font-weight:600}
+.mv-guia-card span{font-size:.78rem;line-height:1.5;color:rgba(255,255,255,.8)}
 #sugerencia{position:absolute;z-index:6;left:50%;top:calc(50% + 1.8rem);transform:translateX(-50%);padding:.45rem .8rem;background:rgba(26,6,13,.74);border:1px solid rgba(255,255,255,.3);font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;pointer-events:none;white-space:nowrap}
 .mira.activa{width:16px;height:16px;margin:-8px 0 0 -8px;background:transparent;border:2px solid #e8a5b4}
 #botonSentar{position:absolute;z-index:16;left:50%;bottom:max(1.4rem,env(safe-area-inset-bottom));transform:translateX(-50%)}
-@media (max-width:760px){.mapa-caja{flex-direction:column;overflow-y:auto}#mapaCanvas{width:100%;max-width:70dvh;align-self:center}}
+@media (max-width:760px){.mv-mapa-caja{flex-direction:column;overflow-y:auto}#mapaCanvas{width:100%;max-width:70dvh;align-self:center}}
 </style>
 </head>
 <body data-menu="recorrido" data-carga="900" data-reveal="inmediato" data-umbral=".12">
@@ -161,8 +161,8 @@ html.sin-scroll,html.sin-scroll body{overflow:hidden}
   <div class="hud">
    <button type="button" class="pausa" id="pausar"><i class="fa-solid fa-pause"></i> Pausa</button>
    <div class="derecha">
-    <button type="button" id="botonMapa"><i class="fa-solid fa-map"></i> Mapa</button>
-    <button type="button" id="botonGuia" aria-label="Guía rápida">?</button>
+    <button type="button" id="botonMapa"><i class="fa-solid fa-map"></i> Mapa<span class="solo-pc"> · Tab</span></button>
+    <button type="button" id="botonGuia" aria-label="Guía rápida">?<span class="solo-pc"> · H</span></button>
     <button type="button" id="sonido">Sonido</button>
     <div class="ambientes" id="ambientes" role="group" aria-label="Iluminación">
      <button type="button" data-a="dia">Día</button>
@@ -202,20 +202,20 @@ html.sin-scroll,html.sin-scroll body{overflow:hidden}
   <div id="sugerencia" class="oculto"></div>
   <button type="button" class="btn sec oculto" id="botonSentar"></button>
 
-  <div class="modal oculto" id="panelInfo" role="dialog" aria-modal="true" aria-labelledby="infoTitulo">
-   <div class="tarjeta">
-    <button type="button" class="cerrar" id="cerrarInfo" aria-label="Cerrar">&#10005;</button>
+  <div class="mv-modal oculto" id="panelInfo" role="dialog" aria-modal="true" aria-labelledby="infoTitulo">
+   <div class="mv-tarjeta">
+    <button type="button" class="mv-cerrar" id="cerrarInfo" aria-label="Cerrar">&#10005;</button>
     <small id="infoEtiqueta"></small>
     <h3 id="infoTitulo"></h3>
     <div id="infoCuerpo"></div>
    </div>
   </div>
 
-  <div class="modal oculto" id="mapaGrande" role="dialog" aria-modal="true" aria-label="Mapa del museo">
-   <div class="mapa-caja">
+  <div class="mv-modal oculto" id="mapaGrande" role="dialog" aria-modal="true" aria-label="Mapa del museo">
+   <div class="mv-mapa-caja">
     <canvas id="mapaCanvas" width="900" height="900"></canvas>
-    <div class="tarjeta lateral">
-     <button type="button" class="cerrar" id="cerrarMapa" aria-label="Cerrar">&#10005;</button>
+    <div class="mv-tarjeta mv-lateral">
+     <button type="button" class="mv-cerrar" id="cerrarMapa" aria-label="Cerrar">&#10005;</button>
      <small>Mapa del museo</small>
      <h3>¿A dónde quieres ir?</h3>
      <div class="paradas-bloque oculto" id="paradasBloque">
@@ -226,12 +226,12 @@ html.sin-scroll,html.sin-scroll body{overflow:hidden}
    </div>
   </div>
 
-  <div class="modal oculto" id="guia" role="dialog" aria-modal="true" aria-labelledby="guiaTitulo">
-   <div class="tarjeta">
-    <button type="button" class="cerrar" id="cerrarGuia" aria-label="Cerrar">&#10005;</button>
+  <div class="mv-modal oculto" id="guia" role="dialog" aria-modal="true" aria-labelledby="guiaTitulo">
+   <div class="mv-tarjeta">
+    <button type="button" class="mv-cerrar" id="cerrarGuia" aria-label="Cerrar">&#10005;</button>
     <small>Guía rápida</small>
     <h3 id="guiaTitulo">Cómo recorrer el museo</h3>
-    <div class="guia-grid" id="guiaGrid"></div>
+    <div class="mv-guia-grid" id="guiaGrid"></div>
     <button type="button" class="btn" id="guiaOk" style="margin-top:1.1rem">Entendido</button>
    </div>
   </div>
@@ -2866,7 +2866,7 @@ function construirGuia() {
   const tipo = esTactil ? "tactil" : "pc";
   (DATOS.GUIA || []).filter((i) => i.para === "todos" || i.para === tipo).forEach((i) => {
     const tarjeta = document.createElement("div");
-    tarjeta.className = "guia-card";
+    tarjeta.className = "mv-guia-card";
     tarjeta.innerHTML = '<i class="fa-solid ' + i.icono + '"></i><b></b><span></span>';
     tarjeta.querySelector("b").textContent = i.titulo;
     tarjeta.querySelector("span").textContent = i.texto;
@@ -3738,6 +3738,11 @@ window.addEventListener("keydown", (e) => {
     return;
   }
   if (e.code === "KeyH" && activo && !ui.modal) abrirGuia();
+  if ((e.code === "Enter" || e.code === "Space") && !guia.classList.contains("oculto")) {
+    e.preventDefault();
+    document.getElementById("guiaOk").click();
+    return;
+  }
   if (e.code === "Escape" && ui.modal) {
     cerrarTodosModales();
     return;
@@ -3784,7 +3789,7 @@ joystick.addEventListener("touchstart", (e) => {
 visor.addEventListener("touchstart", (e) => {
   if (!activo || ui.modal) return;
   for (const toque of e.changedTouches) {
-    if (toque.target.closest(".joystick, .hud, .cubierta, .modal, #botonSentar")) continue;
+    if (toque.target.closest(".joystick, .hud, .cubierta, .mv-modal, #botonSentar")) continue;
     if (idMirada === null) {
       idMirada = toque.identifier;
       ultimoToque = { x: toque.clientX, y: toque.clientY };
