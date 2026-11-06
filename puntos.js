@@ -211,7 +211,7 @@ export const ASIENTOS = {
   paso: 4.5,
   filas: 13,
   desplazamiento: 2.2,     
-  alturaOjos: 3.1,        
+  alturaOjos: 4.5,        
   distanciaMaxima: 3.6    
 };
 
