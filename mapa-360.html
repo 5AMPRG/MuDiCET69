@@ -224,9 +224,9 @@ const CONFIG = {
      Con varios archivos se reproducen en orden y vuelven a empezar. */
   pantallaVideo: {
     activo: true,
-    archivos: ["cetis69.mp4"],
+    archivos: ["cetis69.mp4", "video2.mp4", "video3.mp4"],   /* cambia estos nombres por tus videos; los que no existan se saltan */
     objeto: /^pantalla$/i,
-    ajuste: "contener",   /* "contener" (barras), "cubrir" (recorta) o "estirar" (deforma) */
+    ajuste: "estirar",   /* "contener" (barras), "cubrir" (recorta) o "estirar" (deforma) */
     distancia: 120,       /* se carga y reproduce solo dentro de esta distancia o dentro del auditorio */
     volumen: 1,
     ahorro: true          /* dentro del auditorio congela las sombras del sol para que el video corra fluido */
@@ -2270,8 +2270,18 @@ function crearPantallaVideo(raiz) {
     video.src = lista[pantallaVideo.indice];
     reproducirVideo();
   });
+  let fallos = 0;
+  video.addEventListener("loadeddata", () => { fallos = 0; });
   video.addEventListener("error", () => {
     console.warn("No se pudo cargar el video: " + lista[pantallaVideo.indice]);
+    fallos++;
+    /* Si hay más videos, se salta el que falló; si fallan todos, se quita la pantalla */
+    if (lista.length > 1 && fallos < lista.length) {
+      pantallaVideo.indice = (pantallaVideo.indice + 1) % lista.length;
+      video.src = lista[pantallaVideo.indice];
+      reproducirVideo();
+      return;
+    }
     escena.remove(plano);
     pantallaVideo.video = null;
   });
