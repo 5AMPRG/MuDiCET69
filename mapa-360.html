@@ -228,7 +228,8 @@ const CONFIG = {
     objeto: /^pantalla$/i,
     ajuste: "contener",   /* "contener" (barras), "cubrir" (recorta) o "estirar" (deforma) */
     distancia: 120,       /* se carga y reproduce solo dentro de esta distancia o dentro del auditorio */
-    volumen: 1
+    volumen: 1,
+    ahorro: true          /* dentro del auditorio congela las sombras del sol para que el video corra fluido */
   },
 
   /* Luz extra para TODAS las luminarias: resplandor (halo) en cada lámpara, LED, reflector y poste,
@@ -2308,6 +2309,8 @@ function actualizarPantallaVideo() {
   const cerca = activo && (dentro || d < CONFIG.pantallaVideo.distancia);
   if (!cerca) {
     if (!v.paused) v.pause();
+    renderer.shadowMap.autoUpdate = true;
+    ajustarResolucion(false);
     return;
   }
   if (!v.getAttribute("src")) v.src = pv.lista[pv.indice];
@@ -2315,8 +2318,25 @@ function actualizarPantallaVideo() {
   pv.plano.visible = v.readyState >= 2 && pv.plano.scale.x > 1;
   const alcance = CONFIG.pantallaVideo.distancia;
   const volumen = dentro ? 1 - 0.5 * Math.min(1, d / 90) : 0.12 * Math.max(0, 1 - d / alcance);
-  v.volume = THREE.MathUtils.clamp(volumen * CONFIG.pantallaVideo.volumen, 0, 1);
-  v.muted = !sonido.encendido || pv.sinSonido || v.volume <= 0;
+  /* Solo se toca el elemento de video cuando el valor cambia (hacerlo en cada cuadro lo traba) */
+  const vol = Math.round(THREE.MathUtils.clamp(volumen * CONFIG.pantallaVideo.volumen, 0, 1) * 50) / 50;
+  if (Math.abs(v.volume - vol) > 0.001) v.volume = vol;
+  const mudo = !sonido.encendido || pv.sinSonido || vol <= 0;
+  if (v.muted !== mudo) v.muted = mudo;
+  /* Ahorro: dentro del auditorio (techado) se congelan las sombras del sol para liberar la GPU */
+  if (CONFIG.pantallaVideo.ahorro) {
+    renderer.shadowMap.autoUpdate = !dentro;
+    ajustarResolucion(dentro);
+  }
+}
+
+/* Dentro del auditorio se dibuja a resolución 1:1 (mucho más ligero en pantallas retina) */
+function ajustarResolucion(ligera) {
+  const normal = Math.min(window.devicePixelRatio, esTactil ? 1.5 : 2);
+  const objetivo = ligera ? 1 : normal;
+  if (renderer.getPixelRatio() === objetivo) return;
+  renderer.setPixelRatio(objetivo);
+  ajustarTamano();
 }
 
 /* Un toque o clic en la pantalla pausa y reanuda; cualquier gesto activa el sonido si el navegador lo había frenado */
