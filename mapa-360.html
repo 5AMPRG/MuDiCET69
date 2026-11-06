@@ -220,6 +220,30 @@ const CONFIG = {
     opacidadProyector: 0.035
   },
 
+  /* Video en la pantalla del auditorio. Los archivos van junto a la página, como los .glb.
+     Con varios archivos se reproducen en orden y vuelven a empezar. */
+  pantallaVideo: {
+    activo: true,
+    archivos: ["cetis69.mp4"],
+    objeto: /^pantalla$/i,
+    ajuste: "contener",   /* "contener" (barras), "cubrir" (recorta) o "estirar" (deforma) */
+    distancia: 120,       /* se carga y reproduce solo dentro de esta distancia o dentro del auditorio */
+    volumen: 1
+  },
+
+  /* Luz extra para TODAS las luminarias: resplandor (halo) en cada lámpara, LED, reflector y poste,
+     más luces reales adicionales en las lámparas que no tenían (por el límite de maxLamparas). */
+  lucesExtra: {
+    activo: true,
+    halos: true,
+    tamanoHalo: 4,
+    maxHalos: 160,
+    maxReales: esTactil ? 0 : 8,   /* luces reales extra; en celular 0 para cuidar el rendimiento */
+    intensidad: 250,
+    alcance: 28,
+    color: 0xfff1d6
+  },
+
   /* Sombras del sol: ventana que sigue al visitante (más nítidas) */
   sombras: {
     radio: esTactil ? 110 : 150,
@@ -1743,6 +1767,8 @@ function prepararExtras(raiz) {
   crearHorizonte(raiz);
   crearLucesPostes(raiz);
   crearLucesReflectores(raiz);
+  crearPantallaVideo(raiz);
+  crearLucesExtra(raiz);
   aplicarAmbiente(ambienteActual);
 
   if (CONFIG.pasto.activo) {
@@ -2169,6 +2195,243 @@ function alternarSonido() {
 }
 
 /* ============================================================
+   VIDEO EN LA PANTALLA DEL AUDITORIO
+   ============================================================ */
+const pantallaVideo = { video: null, plano: null, auditorio: null, lista: [], indice: 0, pausado: false, sinSonido: false };
+
+function crearPantallaVideo(raiz) {
+  const cfg = CONFIG.pantallaVideo;
+  const lista = [].concat(cfg.archivos || []);
+  if (!cfg.activo || !lista.length) return;
+  const pantalla = buscarObjetos(raiz, cfg.objeto).find((obj) => obj.isMesh);
+  if (!pantalla) {
+    console.warn("No se encontró la pantalla del auditorio");
+    return;
+  }
+
+  /* La losa trae UV de un cubo desplegado y no tiene cara hacia el público,
+     así que el video va en un plano propio, pegado delante de ella. */
+  const caja = new THREE.Box3().setFromObject(pantalla);
+  const c = caja.getCenter(new THREE.Vector3());
+  const t = caja.getSize(new THREE.Vector3());
+  const eje = t.x < t.z ? "x" : "z";
+  const butacas = buscarObjetos(raiz, /^aud_butacas$/i)[0];
+  const publico = butacas ? new THREE.Box3().setFromObject(butacas).getCenter(new THREE.Vector3()) : centroEscena;
+  const lado = Math.sign(publico[eje] - c[eje]) || 1;
+  const ancho = (eje === "z" ? t.x : t.z) * 0.98;
+  const alto = t.y * 0.96;
+
+  const video = document.createElement("video");
+  video.muted = true;
+  video.loop = lista.length === 1;
+  video.playsInline = true;
+  video.setAttribute("playsinline", "");
+  video.preload = "none";
+  video.crossOrigin = "anonymous";
+
+  const textura = new THREE.VideoTexture(video);
+  textura.colorSpace = THREE.SRGBColorSpace;
+  textura.minFilter = THREE.LinearFilter;
+  textura.generateMipmaps = false;
+
+  const plano = new THREE.Mesh(
+    new THREE.PlaneGeometry(1, 1),
+    new THREE.MeshBasicMaterial({ map: textura, toneMapped: false, fog: false })
+  );
+  plano.position.copy(c);
+  plano.position[eje] += lado * (t[eje] / 2 + 0.08);
+  plano.rotation.y = eje === "z" ? (lado > 0 ? 0 : Math.PI) : (lado > 0 ? Math.PI / 2 : -Math.PI / 2);
+  plano.visible = false;
+  plano.renderOrder = 1;
+  escena.add(plano);
+
+  const ajustar = () => {
+    const a = video.videoWidth / video.videoHeight || 16 / 9;
+    const pa = ancho / alto;
+    let w = ancho;
+    let h = alto;
+    textura.repeat.set(1, 1);
+    textura.offset.set(0, 0);
+    if (cfg.ajuste === "contener") {
+      if (a < pa) w = alto * a;
+      else h = ancho / a;
+    } else if (cfg.ajuste === "cubrir") {
+      if (a < pa) textura.repeat.y = a / pa;
+      else textura.repeat.x = pa / a;
+      textura.offset.set((1 - textura.repeat.x) / 2, (1 - textura.repeat.y) / 2);
+    }
+    plano.scale.set(w, h, 1);
+  };
+  video.addEventListener("loadedmetadata", ajustar);
+  video.addEventListener("ended", () => {
+    if (lista.length < 2) return;
+    pantallaVideo.indice = (pantallaVideo.indice + 1) % lista.length;
+    video.src = lista[pantallaVideo.indice];
+    reproducirVideo();
+  });
+  video.addEventListener("error", () => {
+    console.warn("No se pudo cargar el video: " + lista[pantallaVideo.indice]);
+    escena.remove(plano);
+    pantallaVideo.video = null;
+  });
+
+  const cajaAuditorio = buscarObjetos(raiz, /^auditorio$/i)[0];
+  Object.assign(pantallaVideo, {
+    video, plano, lista,
+    auditorio: cajaAuditorio ? new THREE.Box3().setFromObject(cajaAuditorio) : null
+  });
+}
+
+function reproducirVideo() {
+  const v = pantallaVideo.video;
+  if (!v) return;
+  v.muted = !sonido.encendido;
+  const promesa = v.play();
+  if (promesa) {
+    promesa.catch(() => {
+      /* Algunos navegadores no dejan iniciar con sonido: arranca mudo y se activa con el siguiente toque */
+      if (!v.muted) {
+        pantallaVideo.sinSonido = true;
+        v.muted = true;
+        v.play().catch(() => {});
+      }
+    });
+  }
+}
+
+function actualizarPantallaVideo() {
+  const pv = pantallaVideo;
+  const v = pv.video;
+  if (!v) return;
+  const d = camara.position.distanceTo(pv.plano.position);
+  const dentro = pv.auditorio ? pv.auditorio.containsPoint(camara.position) : false;
+  const cerca = activo && (dentro || d < CONFIG.pantallaVideo.distancia);
+  if (!cerca) {
+    if (!v.paused) v.pause();
+    return;
+  }
+  if (!v.getAttribute("src")) v.src = pv.lista[pv.indice];
+  if (v.paused && !pv.pausado) reproducirVideo();
+  pv.plano.visible = v.readyState >= 2 && pv.plano.scale.x > 1;
+  const alcance = CONFIG.pantallaVideo.distancia;
+  const volumen = dentro ? 1 - 0.5 * Math.min(1, d / 90) : 0.12 * Math.max(0, 1 - d / alcance);
+  v.volume = THREE.MathUtils.clamp(volumen * CONFIG.pantallaVideo.volumen, 0, 1);
+  v.muted = !sonido.encendido || pv.sinSonido || v.volume <= 0;
+}
+
+/* Un toque o clic en la pantalla pausa y reanuda; cualquier gesto activa el sonido si el navegador lo había frenado */
+renderer.domElement.addEventListener("click", (e) => {
+  const pv = pantallaVideo;
+  if (!pv.video || !activo || !pv.plano.visible) return;
+  const bloqueado = document.pointerLockElement === renderer.domElement;
+  const r = renderer.domElement.getBoundingClientRect();
+  const punto = bloqueado
+    ? new THREE.Vector2(0, 0)
+    : new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  rayo.setFromCamera(punto, camara);
+  rayo.far = 400;
+  if (!rayo.intersectObject(pv.plano, false).length) return;
+  pv.pausado = !pv.pausado;
+  if (pv.pausado) pv.video.pause();
+  else reproducirVideo();
+});
+["pointerdown", "keydown", "touchend"].forEach((evento) => {
+  window.addEventListener(evento, () => {
+    const pv = pantallaVideo;
+    if (pv.video && pv.sinSonido && sonido.encendido) {
+      pv.sinSonido = false;
+      pv.video.muted = false;
+    }
+  }, { passive: true });
+});
+
+/* ============================================================
+   LUZ EXTRA PARA TODAS LAS LUMINARIAS (halos + luces reales adicionales)
+   ============================================================ */
+const lucesExtra = { halos: [], reales: [], textura: null };
+
+function texturaHalo() {
+  if (lucesExtra.textura) return lucesExtra.textura;
+  const lienzo = document.createElement("canvas");
+  lienzo.width = lienzo.height = 128;
+  const g = lienzo.getContext("2d");
+  const grad = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  grad.addColorStop(0, "rgba(255,244,214,1)");
+  grad.addColorStop(0.25, "rgba(255,226,170,0.55)");
+  grad.addColorStop(0.6, "rgba(255,200,130,0.14)");
+  grad.addColorStop(1, "rgba(255,200,130,0)");
+  g.fillStyle = grad;
+  g.fillRect(0, 0, 128, 128);
+  const textura = new THREE.CanvasTexture(lienzo);
+  textura.colorSpace = THREE.SRGBColorSpace;
+  lucesExtra.textura = textura;
+  return textura;
+}
+
+function agregarHalo(posicion, tamano, base) {
+  const cfg = CONFIG.lucesExtra;
+  if (!cfg.halos || lucesExtra.halos.length >= cfg.maxHalos) return;
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: texturaHalo(),
+    color: cfg.color,
+    transparent: true,
+    opacity: 0,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    toneMapped: false,
+    fog: false
+  }));
+  sprite.position.copy(posicion);
+  sprite.scale.setScalar(tamano);
+  sprite.renderOrder = 4;
+  sprite.visible = false;
+  escena.add(sprite);
+  lucesExtra.halos.push({ sprite, base });
+}
+
+function crearLucesExtra(raiz) {
+  const cfg = CONFIG.lucesExtra;
+  if (!cfg.activo) return;
+
+  /* Lámparas y tiras LED del museo: un halo por luminaria y, mientras haya cupo,
+     una luz real en las que quedaron sin luz por el límite de maxLamparas */
+  piezasModelo
+    .filter((p) => /^(lampara|luces)\d*$/i.test(p.obj.name) || /^luz-led/i.test(p.obj.name))
+    .forEach((p) => {
+      const esLed = /^luz-led/i.test(p.obj.name);
+      centrosDeLuminarias(p.obj).forEach((l) => {
+        const pos = new THREE.Vector3(l.centro.x, l.minY - 0.2, l.centro.z);
+        agregarHalo(pos, cfg.tamanoHalo * (esLed ? 0.6 : 1), esLed ? 0.55 : 0.9);
+        if (esLed || lucesExtra.reales.length >= cfg.maxReales) return;
+        const yaTieneLuz = lamparas.some((luz) => luz.position.distanceTo(pos) < 6) ||
+          lucesExtra.reales.some((luz) => luz.position.distanceTo(pos) < 8);
+        if (yaTieneLuz) return;
+        const luz = new THREE.PointLight(cfg.color, 0, cfg.alcance, 2);
+        luz.position.copy(pos);
+        escena.add(luz);
+        lucesExtra.reales.push(luz);
+      });
+    });
+
+  /* Reflectores: halo en cada destello */
+  reflectoresLuz.forEach(({ destello }) => agregarHalo(destello.position, cfg.tamanoHalo * 0.8, 0.9));
+
+  /* Postes: halo en cada bulbo */
+  postesLuz.forEach(({ bulbo }) => agregarHalo(bulbo.position, cfg.tamanoHalo * 1.4, 0.9));
+}
+
+function actualizarLucesExtra() {
+  if (!lucesExtra.halos.length && !lucesExtra.reales.length) return;
+  const a = AMBIENTES[ambienteActual];
+  const k = Math.min(1.5, a.lamparas);
+  lucesExtra.halos.forEach(({ sprite, base }) => {
+    sprite.visible = k > 0;
+    sprite.material.opacity = base * k;
+  });
+  lucesExtra.reales.forEach((luz) => { luz.intensity = CONFIG.lucesExtra.intensidad * a.lamparas; });
+}
+
+/* ============================================================
    BUCLE PRINCIPAL
    ============================================================ */
 let anterior = performance.now();
@@ -2196,6 +2459,8 @@ function animar(ahora) {
   renderer.render(escena, camara);
   if (visor.classList.contains("inmersivo")) dibujarMapa();
   actualizarAudio();
+  actualizarPantallaVideo();
+  actualizarLucesExtra();
   requestAnimationFrame(animar);
 }
 requestAnimationFrame(animar);
