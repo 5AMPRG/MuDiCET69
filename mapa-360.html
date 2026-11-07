@@ -87,29 +87,135 @@ html.sin-scroll,html.sin-scroll body{overflow:hidden}
   .mapa{width:7.5rem;height:7.5rem}
 }
 
-/* ---- Pantalla de carga animada ---- */
-.cargando{background:radial-gradient(circle at 20% 25%,rgba(122,18,46,.55),transparent 55%),radial-gradient(circle at 80% 85%,rgba(232,165,180,.2),transparent 50%),#0d0709;overflow:hidden}
-.orbe{position:relative;width:min(13rem,48vw);aspect-ratio:1;display:grid;place-items:center;z-index:1}
-.orbe svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-.orbe circle{transform-box:fill-box;transform-origin:50% 50%}
-.orbe .a1{animation:giro 6s linear infinite}
-.orbe .a2{animation:giro 9s linear infinite reverse}
-.orbe .a3{animation:giro 14s linear infinite}
-.orbe::before{content:"";position:absolute;inset:18%;border-radius:50%;background:radial-gradient(circle,rgba(232,165,180,.45),rgba(122,18,46,.15) 60%,transparent 70%);animation:latido 2.4s ease-in-out infinite}
-.orbe b{position:relative;font-size:clamp(1.5rem,6vw,2.2rem);font-weight:200;letter-spacing:.06em}
-.cargando h3,.cargando p,.cargando .barra,.cargando small{position:relative;z-index:1}
-.cargando h3{background:linear-gradient(90deg,#fff 20%,#e8a5b4 50%,#fff 80%);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:brillo 3s linear infinite}
-.cargando small{min-height:1.4em;max-width:22rem;font-size:.7rem;letter-spacing:.14em;color:rgba(255,255,255,.72);transition:opacity .35s}
-.cargando small.fuera{opacity:0}
-.barra.indeterminada i{width:40%!important;animation:desliza 1.2s ease-in-out infinite}
-.motas{position:absolute;inset:0;pointer-events:none}
-.motas span{position:absolute;bottom:-10px;width:4px;height:4px;border-radius:50%;background:rgba(232,165,180,.6);animation:sube linear infinite}
-@keyframes giro{to{transform:rotate(360deg)}}
-@keyframes latido{50%{transform:scale(1.18);opacity:.6}}
-@keyframes brillo{to{background-position:-200% 0}}
-@keyframes desliza{0%{margin-left:-40%}100%{margin-left:100%}}
-@keyframes sube{to{transform:translateY(-110vh);opacity:0}}
-@media (prefers-reduced-motion:reduce){.orbe .a1,.orbe .a2,.orbe .a3,.orbe::before,.cargando h3,.motas span{animation:none}}
+/* ---- Pantalla de carga animada (Moderna / Glassmorphism) ---- */
+.cargando {
+  background: radial-gradient(circle at 20% 25%, rgba(122, 18, 46, 0.45), transparent 60%),
+              radial-gradient(circle at 80% 85%, rgba(232, 165, 180, 0.15), transparent 50%),
+              #080406;
+  overflow: hidden;
+}
+.tarjeta-carga {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  background: rgba(20, 6, 11, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: clamp(2rem, 5vw, 3rem) clamp(2.5rem, 6vw, 4rem);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  max-width: min(32rem, 90vw);
+  width: 100%;
+}
+.orbe {
+  position: relative;
+  width: min(10rem, 36vw);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  z-index: 1;
+  filter: drop-shadow(0 0 12px rgba(232, 165, 180, 0.35));
+}
+.orbe svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.orbe circle { transform-box: fill-box; transform-origin: 50% 50%; }
+.orbe .a1 { animation: giro 7s linear infinite; }
+.orbe .a2 { animation: giro 11s linear infinite reverse; }
+.orbe .a3 { animation: giro 5s linear infinite; }
+.orbe::before {
+  content: "";
+  position: absolute;
+  inset: 20%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(232, 165, 180, 0.35), rgba(122, 18, 46, 0.1) 60%, transparent 75%);
+  animation: latido 2.6s ease-in-out infinite;
+}
+.orbe b {
+  position: relative;
+  font-size: clamp(1.4rem, 4vw, 1.9rem);
+  font-weight: 300;
+  letter-spacing: .08em;
+  color: #fff;
+}
+.info-carga {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+}
+.cargando h3 {
+  font-size: clamp(1.2rem, 3vw, 1.6rem);
+  font-weight: 300;
+  letter-spacing: .35em;
+  text-transform: uppercase;
+  background: linear-gradient(90deg, #fff 20%, #e8a5b4 50%, #fff 80%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: brillo 3s linear infinite;
+  margin: 0;
+}
+.cargando p {
+  font-size: .65rem;
+  letter-spacing: .25em;
+  text-transform: uppercase;
+  color: #f0c9d2;
+  margin: 0;
+}
+.barra {
+  width: 100%;
+  max-width: 16rem;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+.barra i {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: linear-gradient(90deg, var(--guinda, #7a122e), #e8a5b4);
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(232, 165, 180, 0.6);
+  transition: width .2s ease;
+}
+.cargando small {
+  min-height: 1.4em;
+  max-width: 20rem;
+  font-size: .65rem;
+  letter-spacing: .12em;
+  color: rgba(255, 255, 255, 0.65);
+  transition: opacity .35s;
+  text-align: center;
+  margin-top: 0.4rem;
+}
+.cargando small.fuera { opacity: 0; }
+.barra.indeterminada i { width: 35% !important; animation: desliza 1.4s ease-in-out infinite; }
+.motas { position: absolute; inset: 0; pointer-events: none; }
+.motas span {
+  position: absolute;
+  bottom: -10px;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(232, 165, 180, 0.5);
+  box-shadow: 0 0 6px rgba(232, 165, 180, 0.8);
+  animation: sube linear infinite;
+}
+@keyframes giro { to { transform: rotate(360deg); } }
+@keyframes latido { 50% { transform: scale(1.12); opacity: 0.7; } }
+@keyframes brillo { to { background-position: -200% 0; } }
+@keyframes desliza { 0% { margin-left: -35%; } 100% { margin-left: 100%; } }
+@keyframes sube { to { transform: translateY(-110vh); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .orbe .a1, .orbe .a2, .orbe .a3, .orbe::before, .cargando h3, .motas span { animation: none; }
+}
 
 /* ---- Paneles (información, mapa grande, guía) ---- */
 .mv-modal{position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:max(1rem,env(safe-area-inset-top)) 1rem max(1rem,env(safe-area-inset-bottom));background:rgba(13,7,9,.74);backdrop-filter:blur(4px)}
@@ -174,18 +280,22 @@ html.sin-scroll,html.sin-scroll body{overflow:hidden}
 
   <div class="cargando" id="cargando">
    <div class="motas" id="motas"></div>
-   <div class="orbe">
-    <svg viewBox="0 0 200 200" aria-hidden="true">
-     <circle class="a1" cx="100" cy="100" r="94" fill="none" stroke="#e8a5b4" stroke-width="2" stroke-dasharray="60 40 8 40" stroke-linecap="round"/>
-     <circle class="a2" cx="100" cy="100" r="78" fill="none" stroke="#ffffff" stroke-opacity=".55" stroke-width="1.5" stroke-dasharray="3 9"/>
-     <circle class="a3" cx="100" cy="100" r="62" fill="none" stroke="#c0304f" stroke-width="4" stroke-dasharray="90 300" stroke-linecap="round"/>
-    </svg>
-    <b id="porcentaje">0%</b>
+   <div class="tarjeta-carga">
+     <div class="orbe">
+      <svg viewBox="0 0 200 200" aria-hidden="true">
+       <circle class="a1" cx="100" cy="100" r="94" fill="none" stroke="#e8a5b4" stroke-width="2.5" stroke-dasharray="60 40 8 40" stroke-linecap="round"/>
+       <circle class="a2" cx="100" cy="100" r="78" fill="none" stroke="#ffffff" stroke-opacity=".6" stroke-width="1.5" stroke-dasharray="3 9"/>
+       <circle class="a3" cx="100" cy="100" r="62" fill="none" stroke="#c0304f" stroke-width="4" stroke-dasharray="90 300" stroke-linecap="round"/>
+      </svg>
+      <b id="porcentaje">0%</b>
+     </div>
+     <div class="info-carga">
+       <h3>CETIS 69</h3>
+       <p id="estado">Cargando el museo</p>
+       <div class="barra"><i id="progreso"></i></div>
+       <small id="consejo"></small>
+     </div>
    </div>
-   <h3>CETIS 69</h3>
-   <p id="estado">Cargando el museo</p>
-   <div class="barra"><i id="progreso"></i></div>
-   <small id="consejo"></small>
   </div>
 
   <div class="cubierta oculto" id="cubierta">
