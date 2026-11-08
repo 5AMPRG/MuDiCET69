@@ -4436,6 +4436,9 @@ function terminarToque(e) {
 }
 visor.addEventListener("touchend", terminarToque);
 visor.addEventListener("touchcancel", terminarToque);
+  window.addEventListener("keydown", (e) => {
+  console.log(e.code, { ADMIN_ACTIVO, activo, modal: ui.modal, inmersivo: visor.classList.contains("inmersivo") });
+});
 </script>
 </body>
 </html>
