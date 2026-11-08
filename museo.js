@@ -22,6 +22,10 @@ try {
   console.warn("No se pudo cargar three-mesh-bvh; las colisiones usarán el método normal", error);
 }
 
+function hayPanelAbierto() {
+  return ui.modal || admin.abierto || herramientasAbiertas || !document.getElementById("panelPro").classList.contains("oculto");
+}
+
 function esTactilInicial() {
   return window.matchMedia("(pointer: coarse)").matches;
 }
@@ -2403,7 +2407,7 @@ function cerrarModal(el) {
   if (el === panelInfo) document.getElementById("infoCuerpo").textContent = "";
   if ([panelInfo, mapaGrande, guia].some((m) => !m.classList.contains("oculto"))) return;
   ui.modal = false;
-  if (activo && !esTactil) {
+  if (activo && !esTactil && !hayPanelAbierto()) {
     try {
       renderer.domElement.requestPointerLock();
     } catch (error) { /* se reanuda con Continuar */ }
@@ -3265,7 +3269,7 @@ function apagarVuelo() {
 }
 
 function alternarVuelo() {
-  if (!activo || ui.modal) return;
+  if (!activo || ui.modal || !puedeVolar) return;
   if (!vuelo.activo) {
     sentado = null;
     vuelo.aterrizaY = null;
@@ -3414,7 +3418,7 @@ function iniciarAdmin() {
       <div class="adm-fila oculto" id="admSelBotones"><button type="button" id="admCopiarNombre">Copiar nombre</button><button type="button" id="admCopiarGolpe">Copiar punto</button></div>
       <div class="adm-txt" style="opacity:.55">Three.js quita puntos y espacios de los nombres: "estructura.003" se ve como "estructura003".</div>
     </details>
-        <details><summary>Iluminación en vivo</summary>
+    <details><summary>Iluminación en vivo</summary>
       <div class="adm-txt" id="admAmb" style="color:#e8a5b4"></div>
       <div id="admLuz"></div>
       <label class="adm-ctl"><span>Color de la niebla</span><input type="color" id="admNiebla" style="height:1.6rem;padding:0;border:0;background:none"></label>
@@ -3710,7 +3714,7 @@ function iniciarAdmin() {
     admin.abierto = false;
     panel.classList.add("oculto");
     limpiarSeleccion();
-    if (activo && !esTactil) {
+    if (activo && !esTactil && !hayPanelAbierto()) {
       try {
         renderer.domElement.requestPointerLock();
       } catch (error) { /* se reanuda con Continuar */ }
@@ -3768,7 +3772,7 @@ function entrar() {
     abrirGuia();
     return;
   }
-  if (!esTactil) renderer.domElement.requestPointerLock();
+  if (!esTactil && !hayPanelAbierto()) renderer.domElement.requestPointerLock();
 }
 
 function pausar() {
@@ -3804,7 +3808,7 @@ botonPausar.addEventListener("click", pausar);
 botonSonido.addEventListener("click", alternarSonido);
 
 document.addEventListener("pointerlockchange", () => {
-  if (!esTactil && !ui.modal && !admin.abierto && document.pointerLockElement !== renderer.domElement) pausar();
+  if (!esTactil && activo && !hayPanelAbierto() && document.pointerLockElement !== renderer.domElement) pausar();
 });
 document.addEventListener("pointerlockerror", () => {});
 
@@ -3877,7 +3881,7 @@ joystick.addEventListener("touchstart", (e) => {
 visor.addEventListener("touchstart", (e) => {
   if (!activo || ui.modal) return;
   for (const toque of e.changedTouches) {
-    if (toque.target.closest(".joystick, .hud, .cubierta, .mv-modal, #botonSentar, #controlesVuelo")) continue;
+    if (toque.target.closest(".joystick, .hud, .cubierta, .mv-modal, #botonSentar, #controlesVuelo, #panelPro, #panelAdmin")) continue;
     if (idMirada === null) {
       idMirada = toque.identifier;
       ultimoToque = { x: toque.clientX, y: toque.clientY };
@@ -4088,7 +4092,7 @@ function mezclar(a, b, t) {
 }
 function horaAmbiente(h) {
   const f = THREE.MathUtils.clamp(Math.sin(Math.PI * (h - 5) / 14), 0, 1);
-  const w = THREE.MathUtils.clamp(Math.max(Math.exp(-Math.pow((h-19)/1.6,2)),Math.exp(-Math.pow((h-6)/1.4,2)))*0.8,0,1);
+  const w = THREE.MathUtils.clamp(Math.max(Math.exp(-Math.pow((h - 19) / 1.6, 2)), Math.exp(-Math.pow((h - 6) / 1.4, 2))) * 0.8, 0, 1);
   const r = mezclar(mezclar(AMBIENTES.noche, AMBIENTES.dia, f), AMBIENTES.galeria, w);
   const sE = 65 * Math.sin(Math.PI * (h - 6) / 12), sA = 90 + (h - 6) * 15, lE = 50 * Math.sin(Math.PI * (h - 18) / 12), lA = sA + 180;
   Object.assign(r.cielo.sol, { elevacion: sE, azimut: sA, brillo: sE > 0 ? 1 : 0 });
@@ -4213,7 +4217,7 @@ function herrCursor(on) {
     teclas.clear(); soltarJoystick();
     if (document.pointerLockElement) document.exitPointerLock();
     sugerencia.classList.add("oculto"); botonSentar.classList.add("oculto");
-  } else if (activo && !esTactil) {
+  } else if (activo && !esTactil && !hayPanelAbierto()) {
     try { renderer.domElement.requestPointerLock(); } catch (e) {}
   }
 }
