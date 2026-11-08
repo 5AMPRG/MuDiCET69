@@ -242,6 +242,14 @@ html.sin-scroll,html.sin-scroll body{overflow:hidden}
 .mira.activa{width:16px;height:16px;margin:-8px 0 0 -8px;background:transparent;border:2px solid #e8a5b4}
 #botonSentar{position:absolute;z-index:16;left:50%;bottom:max(1.4rem,env(safe-area-inset-bottom));transform:translateX(-50%)}
 @media (max-width:760px){.mv-mapa-caja{flex-direction:column;overflow-y:auto}#mapaCanvas{width:100%;max-width:70dvh;align-self:center}}
+
+/* ---- Modo cámara libre ---- */
+#badgeVuelo{position:absolute;z-index:18;top:max(4.6rem,calc(env(safe-area-inset-top) + 3.6rem));left:50%;transform:translateX(-50%);padding:.5rem 1rem;background:rgba(26,6,13,.78);border:1px solid #e8a5b4;color:#fff;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;pointer-events:none;white-space:nowrap}
+#controlesVuelo{position:absolute;z-index:16;right:max(.9rem,env(safe-area-inset-right));bottom:calc(max(1rem,env(safe-area-inset-bottom)) + 10.5rem);display:none;flex-direction:column;gap:.5rem}
+.visor.vuelo.tactil #controlesVuelo{display:flex}
+#controlesVuelo button{width:3.4rem;height:3.4rem;border-radius:50%;border:1px solid rgba(255,255,255,.5);background:rgba(26,6,13,.7);color:#fff;font-size:1.1rem;cursor:pointer;touch-action:none}
+#controlesVuelo button:active{background:var(--guinda,#7a122e)}
+@media (max-width:640px){#controlesVuelo{bottom:calc(max(1rem,env(safe-area-inset-bottom)) + 8.5rem)}}
 </style>
 </head>
 <body data-menu="recorrido" data-carga="900" data-reveal="inmediato" data-umbral=".12">
@@ -269,6 +277,7 @@ html.sin-scroll,html.sin-scroll body{overflow:hidden}
    <div class="derecha">
     <button type="button" id="botonMapa"><i class="fa-solid fa-map"></i> Mapa<span class="solo-pc"> · Tab</span></button>
     <button type="button" id="botonGuia" aria-label="Guía rápida">?<span class="solo-pc"> · H</span></button>
+    <button type="button" id="botonVuelo"><i class="fa-solid fa-dove"></i> Vuelo<span class="solo-pc"> · F</span></button>
     <button type="button" id="sonido">Sonido</button>
     <div class="ambientes" id="ambientes" role="group" aria-label="Iluminación">
      <button type="button" data-a="dia">Día</button>
@@ -309,6 +318,11 @@ html.sin-scroll,html.sin-scroll body{overflow:hidden}
    </div>
   </div>
 
+  <div id="badgeVuelo" class="oculto"></div>
+  <div id="controlesVuelo">
+   <button type="button" id="botonSubir" aria-label="Subir"><i class="fa-solid fa-arrow-up"></i></button>
+   <button type="button" id="botonBajar" aria-label="Bajar"><i class="fa-solid fa-arrow-down"></i></button>
+  </div>
   <div id="sugerencia" class="oculto"></div>
   <button type="button" class="btn sec oculto" id="botonSentar"></button>
 
@@ -461,6 +475,15 @@ const CONFIG = {
     intensidad: 250,
     alcance: 28,
     color: 0xfff1d6
+  },
+
+  /* Modo cámara libre (tecla F): vuela sin colisiones */
+  vuelo: {
+    velocidad: 24,      /* unidades por segundo */
+    turbo: 3.5,         /* multiplicador con Shift */
+    suavidad: 7,        /* más alto = frena y arranca más rápido */
+    alturaMin: 0.6,
+    alturaMax: 700
   },
 
   /* Sombras del sol: ventana que sigue al visitante (más nítidas) */
@@ -2950,11 +2973,12 @@ function actualizarInteraccion(ahora) {
   mira.classList.toggle("activa", !!a);
   let texto = "";
   if (a) texto = "Clic · " + (a.info.titulo || "Ver información");
+  else if (vuelo.activo) texto = "";
   else if (sentado) texto = "E · Levantarse";
   else if (asiento.cercano) texto = "E · Sentarse (fila " + asiento.cercano.fila + " · butaca " + asiento.cercano.butaca + ")";
   sugerencia.textContent = texto;
   sugerencia.classList.toggle("oculto", !texto || esTactil);
-  const verBoton = esTactil && (sentado || asiento.cercano);
+  const verBoton = esTactil && !vuelo.activo && (sentado || asiento.cercano);
   botonSentar.classList.toggle("oculto", !verBoton);
   if (verBoton) botonSentar.textContent = sentado ? "Levantarse" : "Sentarse";
 }
@@ -3720,6 +3744,108 @@ function crearExtrasMuseo(raiz) {
 }
 
 /* ============================================================
+   MODO CÁMARA LIBRE (tecla F)
+   W A S D vuelan hacia donde miras · Espacio/E suben · C/Q bajan
+   Shift acelera · la rueda del mouse cambia la velocidad
+   ============================================================ */
+const vuelo = { activo: false, vel: new THREE.Vector3(), escala: 1, subir: false, bajar: false, aterrizaY: null };
+const vueloDir = new THREE.Vector3();
+const vueloObjetivo = new THREE.Vector3();
+const badgeVuelo = document.getElementById("badgeVuelo");
+const botonVuelo = document.getElementById("botonVuelo");
+
+function textoVuelo() {
+  badgeVuelo.textContent = "Cámara libre · velocidad ×" + vuelo.escala.toFixed(1) + (esTactil ? "" : " · F para salir");
+}
+
+function marcarVueloUI() {
+  visor.classList.toggle("vuelo", vuelo.activo);
+  botonVuelo.classList.toggle("activo", vuelo.activo);
+  badgeVuelo.classList.toggle("oculto", !vuelo.activo);
+  if (vuelo.activo) textoVuelo();
+}
+
+function apagarVuelo() {
+  vuelo.activo = false;
+  vuelo.subir = false;
+  vuelo.bajar = false;
+  vuelo.aterrizaY = null;
+  marcarVueloUI();
+}
+
+function alternarVuelo() {
+  if (!activo || ui.modal) return;
+  if (!vuelo.activo) {
+    sentado = null;
+    vuelo.aterrizaY = null;
+    vuelo.vel.set(0, 0, 0);
+    vuelo.activo = true;
+    marcarVueloUI();
+    return;
+  }
+  /* Al salir, desciende suavemente hasta el piso que tiene debajo */
+  vuelo.activo = false;
+  vuelo.subir = false;
+  vuelo.bajar = false;
+  const p = camara.position;
+  const suelo = alturaSuelo(p.x, p.y, p.z, 3000);
+  vuelo.aterrizaY = (suelo !== null ? suelo : CONFIG.inicio.y) + CONFIG.alturaOjos;
+  marcarVueloUI();
+}
+
+function actualizarVuelo(dt) {
+  const c = CONFIG.vuelo;
+  let f = 0;
+  let l = 0;
+  let u = 0;
+  if (teclas.has("KeyW") || teclas.has("ArrowUp")) f += 1;
+  if (teclas.has("KeyS") || teclas.has("ArrowDown")) f -= 1;
+  if (teclas.has("KeyD") || teclas.has("ArrowRight")) l += 1;
+  if (teclas.has("KeyA") || teclas.has("ArrowLeft")) l -= 1;
+  f += -joy.y;
+  l += joy.x;
+  if (teclas.has("Space") || teclas.has("KeyE") || vuelo.subir) u += 1;
+  if (teclas.has("KeyC") || teclas.has("KeyQ") || vuelo.bajar) u -= 1;
+  const turbo = teclas.has("ShiftLeft") || teclas.has("ShiftRight") ? c.turbo : 1;
+  const cp = Math.cos(pitch);
+  vueloDir.set(
+    -Math.sin(yaw) * cp * f + Math.cos(yaw) * l,
+    Math.sin(pitch) * f + u,
+    -Math.cos(yaw) * cp * f - Math.sin(yaw) * l
+  );
+  if (vueloDir.lengthSq() > 1) vueloDir.normalize();
+  vueloObjetivo.copy(vueloDir).multiplyScalar(c.velocidad * vuelo.escala * turbo);
+  vuelo.vel.lerp(vueloObjetivo, 1 - Math.exp(-dt * c.suavidad));
+  camara.position.addScaledVector(vuelo.vel, dt);
+  camara.position.y = THREE.MathUtils.clamp(camara.position.y, c.alturaMin, c.alturaMax);
+}
+
+function actualizarAterrizaje(dt) {
+  const p = camara.position;
+  p.y += (vuelo.aterrizaY - p.y) * Math.min(1, dt * 5);
+  if (Math.abs(vuelo.aterrizaY - p.y) < 0.05) {
+    p.y = vuelo.aterrizaY;
+    vuelo.aterrizaY = null;
+  }
+}
+
+window.addEventListener("wheel", (e) => {
+  if (!vuelo.activo || !activo || ui.modal) return;
+  e.preventDefault();
+  vuelo.escala = THREE.MathUtils.clamp(vuelo.escala * (e.deltaY < 0 ? 1.15 : 1 / 1.15), 0.2, 8);
+  textoVuelo();
+}, { passive: false });
+
+botonVuelo.addEventListener("click", alternarVuelo);
+[["botonSubir", "subir"], ["botonBajar", "bajar"]].forEach(([id, clave]) => {
+  const b = document.getElementById(id);
+  const activar = (e) => { e.preventDefault(); vuelo[clave] = true; };
+  const soltar = () => { vuelo[clave] = false; };
+  b.addEventListener("pointerdown", activar);
+  ["pointerup", "pointercancel", "pointerleave"].forEach((ev) => b.addEventListener(ev, soltar));
+});
+
+/* ============================================================
    BUCLE PRINCIPAL
    ============================================================ */
 let anterior = performance.now();
@@ -3736,7 +3862,9 @@ function animar(ahora) {
   }
   const segundos = ahora / 1000;
   if (activo && listo && !ui.modal) {
-    if (sentado) actualizarSentado(dt);
+    if (vuelo.activo) actualizarVuelo(dt);
+    else if (vuelo.aterrizaY !== null) actualizarAterrizaje(dt);
+    else if (sentado) actualizarSentado(dt);
     else mover(dt);
   }
 
@@ -3809,6 +3937,7 @@ function pausar() {
 function salir() {
   activo = false;
   sentado = null;
+  apagarVuelo();
   [panelInfo, mapaGrande, guia].forEach((el) => el.classList.add("oculto"));
   ui.modal = false;
   teclas.clear();
@@ -3857,7 +3986,9 @@ window.addEventListener("keydown", (e) => {
     cerrarTodosModales();
     return;
   }
-  if (e.code === "KeyE" && activo && !ui.modal) alternarAsiento();
+  if (e.code === "KeyF" && activo && !ui.modal && !e.repeat) alternarVuelo();
+  if (e.code === "Space" && vuelo.activo) e.preventDefault();
+  if (e.code === "KeyE" && activo && !ui.modal && !vuelo.activo) alternarAsiento();
   if (e.code === "Escape" && esTactil) pausar();
   if (activo && !ui.modal) teclas.add(e.code);
 });
@@ -3899,7 +4030,7 @@ joystick.addEventListener("touchstart", (e) => {
 visor.addEventListener("touchstart", (e) => {
   if (!activo || ui.modal) return;
   for (const toque of e.changedTouches) {
-    if (toque.target.closest(".joystick, .hud, .cubierta, .mv-modal, #botonSentar")) continue;
+    if (toque.target.closest(".joystick, .hud, .cubierta, .mv-modal, #botonSentar, #controlesVuelo")) continue;
     if (idMirada === null) {
       idMirada = toque.identifier;
       ultimoToque = { x: toque.clientX, y: toque.clientY };
