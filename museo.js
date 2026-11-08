@@ -3403,6 +3403,7 @@ function iniciarAdmin() {
   panel.className = "oculto";
   panel.innerHTML = `
     <b style="letter-spacing:.2em">ADMIN</b> <span style="opacity:.6">· P cierra · arrastra para mirar</span>
+    <details open><summary>Rendimiento</summary><pre id="admStats">midiendo…</pre></details>
     <details open><summary>Posición</summary>
       <pre id="admPos"></pre>
       <div class="adm-fila"><button type="button" id="admCopiar">Copiar punto</button><button type="button" id="admGuardar">+ Guardar</button><button type="button" id="admLista">Copiar lista</button><span id="admN" style="align-self:center;opacity:.7">0 guardados</span></div>
@@ -3413,8 +3414,7 @@ function iniciarAdmin() {
       <div class="adm-fila oculto" id="admSelBotones"><button type="button" id="admCopiarNombre">Copiar nombre</button><button type="button" id="admCopiarGolpe">Copiar punto</button></div>
       <div class="adm-txt" style="opacity:.55">Three.js quita puntos y espacios de los nombres: "estructura.003" se ve como "estructura003".</div>
     </details>
-    <details open><summary>Rendimiento</summary><pre id="admStats">midiendo…</pre></details>
-    <details><summary>Iluminación en vivo</summary>
+        <details><summary>Iluminación en vivo</summary>
       <div class="adm-txt" id="admAmb" style="color:#e8a5b4"></div>
       <div id="admLuz"></div>
       <label class="adm-ctl"><span>Color de la niebla</span><input type="color" id="admNiebla" style="height:1.6rem;padding:0;border:0;background:none"></label>
@@ -3806,7 +3806,7 @@ botonSonido.addEventListener("click", alternarSonido);
 document.addEventListener("pointerlockchange", () => {
   if (!esTactil && !ui.modal && !admin.abierto && document.pointerLockElement !== renderer.domElement) pausar();
 });
-document.addEventListener("pointerlockerror", pausar);
+document.addEventListener("pointerlockerror", () => {});
 
 document.addEventListener("mousemove", (e) => {
   if (document.pointerLockElement === renderer.domElement) girar(e.movementX, e.movementY, CONFIG.sensibilidadMouse);
