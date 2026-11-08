@@ -1,0 +1,4326 @@
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
+import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
+
+let DATOS = {};
+try {
+  DATOS = await import("./puntos.js");
+} catch (error) {
+  console.warn("No se pudo cargar puntos.js", error);
+}
+
+let bvhActivo = false;
+try {
+  const bvh = await import("three-mesh-bvh");
+  THREE.BufferGeometry.prototype.computeBoundsTree = bvh.computeBoundsTree;
+  THREE.BufferGeometry.prototype.disposeBoundsTree = bvh.disposeBoundsTree;
+  THREE.Mesh.prototype.raycast = bvh.acceleratedRaycast;
+  bvhActivo = true;
+} catch (error) {
+  console.warn("No se pudo cargar three-mesh-bvh; las colisiones usarán el método normal", error);
+}
+
+function esTactilInicial() {
+  return window.matchMedia("(pointer: coarse)").matches;
+}
+const esTactil = esTactilInicial();
+
+const CONFIG = {
+  modelo: "museo3.1.glb",
+  alturaOjos: 4.5,
+  alturaRayoColision: 0.45,
+  alturaRayoBajo: 0.85,
+  solidos: [/^maceta/i, /^exibidor/i, /^cetis69$/i, /^reflector/i],
+  ignorarColision: [/^aud_butacas/i, /^aud_luces/i, /^luz-led/i, /^aud_cabina_ventana/i, /^aud_salidas/i],
+  velocidad: 14,
+  multiplicadorCarrera: 2,
+  radioColision: 1.4,
+
+  inicio: { x: 1.6, y: 0.44, z: -132.1 },
+  mirarHacia: { x: 1.6, z: -50 },
+  sensibilidadMouse: 0.0022,
+  sensibilidadTactil: 0.005,
+
+  intensidadLamparas: 1000,
+  alcanceLamparas: 75,
+  alturaLamparas: 14,
+  anguloFocoMural: 0.6,
+  lamparas: [
+    { patron: /^luces/i, modo: "centro" },
+    { patron: /^lampara/i, modo: "abajo" }
+  ],
+  maxLamparas: esTactil ? 6 : 12,
+
+  intensidadReflectores: 1800,
+  factorFoco: { pantera: 0.55, letras: 0.55, mural: 0.55 },
+  intensidadPostes: 2200,
+  ambienteInicial: "galeria",
+
+  auditorio: {
+    activo: true,
+    columnas: 2,
+    filas: esTactil ? 1 : 3,
+    intensidad: 2400,
+    alcance: 62,
+    angulo: 1.05,
+    penumbra: 0.9,
+    color: 0xffe2b8,
+    proyector: true,
+    opacidadProyector: 0.035
+  },
+
+  pantallaVideo: {
+    activo: true,
+    archivos: ["cetis69.mp4", "video2.mp4", "video3.mp4", "video4.mp4", "video1.mp4"],
+    objeto: /^pantalla$/i,
+    ajuste: "estirar",
+    distancia: 120,
+    volumen: 1,
+    ahorro: true
+  },
+
+  lucesExtra: {
+    activo: true,
+    halos: true,
+    tamanoHalo: 4,
+    maxHalos: 160,
+    distanciaHalo: 80,
+    maxReales: esTactil ? 0 : 8,
+    intensidad: 250,
+    alcance: 28,
+    color: 0xfff1d6
+  },
+
+  vuelo: {
+    velocidad: 24,
+    turbo: 3.5,
+    suavidad: 7,
+    alturaMin: 0.6,
+    alturaMax: 700
+  },
+
+  sombras: {
+    radio: esTactil ? 110 : 150,
+    distancia: 320
+  },
+
+  arboles: {
+    activo: true,
+    archivo: "arbol.glb",
+    archivoMovil: "arbol-ligero.glb",
+    patron: /^maceta/i,
+    escala: 2.4,
+    variacion: 0.2,
+    hundimiento: 0.3,
+    viento: true
+  },
+
+  fuentes: {
+    activo: true,
+    archivo: "fuente.glb",
+    ancla: /^fuente_\d+$/i,
+    piso: /^fuente-piso/i,
+    ajustePiso: 0.95,
+    escala: 1,
+    respaldo: [{ x: 125.4, z: -67.5 }, { x: -96.3, z: -104.8 }],
+    chorros: {
+      altura: 10,
+      gravedad: 14,
+      particulas: esTactil ? 700 : 1800
+    }
+  },
+
+  letras: {
+    activo: true,
+    archivo: "cetis69.glb",
+    base: /^cetis69$/i,
+    ocupacion: 0.9,
+    retranqueo: 1.6,
+    alturaFoco: 3,
+    anguloFoco: 0.6,
+    radioAtipicos: 300,
+    color: 0xf4f1e8
+  },
+
+  pasto: {
+    activo: true,
+    archivo: "pasto.glb",
+    celda: 0.5,
+    elevacion: 0.04,
+    alturaMinima: 0.15,
+    holgura: 0,
+    escalaTextura: 1,
+    margenes: []
+  },
+
+  pantera: {
+    activo: true,
+    archivo: "pantera.glb",
+    alto: 12,
+    giroPorDefecto: -Math.PI / 2,
+    radioReflectores: 60,
+    anguloFoco: 0.42,
+    alturaFoco: 0.6,
+    color: 0x3a3a40,
+    rugosidad: 0.45,
+    metal: 0.25
+  },
+
+  puntosInteres: [
+    [/^poi_letras$/i, "Letras CETIS 69"],
+    [/^poi_mural$/i, "Mural"],
+    [/^poi_museo$/i, "Museo"],
+    [/^poi_pantera$/i, "Pantera"]
+  ],
+  auditorioParada: { x: -113.7, z: 14, y: 10 }
+};
+
+const AMBIENTES = {
+  dia: {
+    exposicion: 1.0, hemisferio: 0.55, entorno: 0.4, sol: 2.2, lamparas: 0, brillo: 0.1,
+    auditorio: 0.8,
+    agua: { luz: 1, brillo: 0 },
+    luz: { color: 0xfff4e0, fuente: "sol" },
+    hemi: { cielo: 0xdfeaff, suelo: 0x8a8070 },
+    niebla: 0xcfe4f5,
+    cielo: {
+      cima: 0x2f6fd0, horizonte: 0xcfe4f5,
+      sol: { elevacion: 52, azimut: 205, color: 0xfff2c8, brillo: 1 },
+      luna: { elevacion: -30, azimut: 170, color: 0xdfe8ff, brillo: 0 },
+      estrellas: 0, nubes: 0.55, nubeColor: 0xffffff, nubeSombra: 0x9fb0c8
+    }
+  },
+  galeria: {
+    exposicion: 1.0, hemisferio: 0.42, entorno: 0.4, sol: 0.9, lamparas: 1, brillo: 1.6,
+    auditorio: 1,
+    agua: { luz: 0.75, brillo: 0.35 },
+    luz: { color: 0xffb070, fuente: "sol" },
+    hemi: { cielo: 0xffd9bd, suelo: 0x6a5a50 },
+    niebla: 0xf0a878,
+    cielo: {
+      cima: 0x24376e, horizonte: 0xf0a878,
+      sol: { elevacion: 7, azimut: 235, color: 0xffb070, brillo: 1 },
+      luna: { elevacion: -30, azimut: 170, color: 0xdfe8ff, brillo: 0 },
+      estrellas: 0.1, nubes: 0.5, nubeColor: 0xffc8a0, nubeSombra: 0x6a5878
+    }
+  },
+  noche: {
+    exposicion: 1.1, hemisferio: 0.2, entorno: 0.2, sol: 0.3, lamparas: 1.5, brillo: 2.2,
+    auditorio: 1.2,
+    agua: { luz: 0.3, brillo: 1 },
+    luz: { color: 0x8fa8ff, fuente: "luna" },
+    hemi: { cielo: 0x6f86c8, suelo: 0x20242c },
+    niebla: 0x0c1628,
+    cielo: {
+      cima: 0x01030a, horizonte: 0x0c1628,
+      sol: { elevacion: -30, azimut: 205, color: 0xfff2c8, brillo: 0 },
+      luna: { elevacion: 38, azimut: 170, color: 0xe6edff, brillo: 1 },
+      estrellas: 1, nubes: 0.35, nubeColor: 0x2c3856, nubeSombra: 0x0a101c
+    }
+  }
+};
+
+const EMISIVOS = [
+  { patron: /^(lampara|luces)\d*$/i, grupo: "museo", base: 1 },
+  { patron: /^luz-led/i, grupo: "museo", base: 1 },
+  { patron: /^aud_luces_techo$/i, grupo: "aud", base: 1.6 },
+  { patron: /^aud_luces_escalon$/i, grupo: "aud", base: 1.2 },
+  { patron: /^aud_salidas$/i, grupo: "aud", base: 1.8 },
+  { patron: /^aud_cabina_ventana$/i, grupo: "aud", base: 1.5 },
+  { patron: /^pantalla$/i, grupo: "aud", base: 0.55, color: 0xffffff }
+];
+
+const visor = document.getElementById("visor");
+const contenedor = document.getElementById("escena");
+const pantallaCarga = document.getElementById("cargando");
+const cubierta = document.getElementById("cubierta");
+const barra = document.getElementById("progreso");
+const estado = document.getElementById("estado");
+const botonEntrar = document.getElementById("entrar");
+const textoEntrar = document.getElementById("textoEntrar");
+const botonSalir = document.getElementById("salir");
+const botonPausar = document.getElementById("pausar");
+const botonSonido = document.getElementById("sonido");
+const joystick = document.getElementById("joystick");
+const perilla = document.getElementById("perilla");
+const lienzoMapa = document.getElementById("mapa");
+const contextoMapa = lienzoMapa.getContext("2d");
+const bloqueParadas = document.getElementById("paradasBloque");
+const listaParadas = document.getElementById("paradas");
+
+const ui = { modal: false };
+const mira = document.querySelector(".mira");
+const sugerencia = document.getElementById("sugerencia");
+const botonSentar = document.getElementById("botonSentar");
+const panelInfo = document.getElementById("panelInfo");
+const mapaGrande = document.getElementById("mapaGrande");
+const guia = document.getElementById("guia");
+const porcentajeEl = document.getElementById("porcentaje");
+const consejoEl = document.getElementById("consejo");
+
+(function animarCarga() {
+  const motas = document.getElementById("motas");
+  for (let i = 0; i < 14; i++) {
+    const m = document.createElement("span");
+    m.style.left = Math.round(Math.random() * 100) + "%";
+    m.style.animationDuration = 5 + Math.random() * 7 + "s";
+    m.style.animationDelay = -Math.random() * 8 + "s";
+    m.style.transform = "scale(" + (0.6 + Math.random() * 1.4) + ")";
+    motas.appendChild(m);
+  }
+})();
+const consejos = DATOS.CONSEJOS || [];
+let consejoIdx = 0;
+function mostrarConsejo() {
+  if (!consejos.length) return;
+  consejoEl.classList.add("fuera");
+  setTimeout(() => {
+    consejoEl.textContent = consejos[consejoIdx++ % consejos.length];
+    consejoEl.classList.remove("fuera");
+  }, 350);
+}
+mostrarConsejo();
+const consejoTimer = setInterval(mostrarConsejo, 3200);
+setTimeout(() => {
+  if (!barra.style.width || barra.style.width === "0%") barra.parentElement.classList.add("indeterminada");
+}, 1800);
+
+if (esTactil) visor.classList.add("tactil");
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, esTactil ? 1.5 : 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.NeutralToneMapping;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+contenedor.appendChild(renderer.domElement);
+
+const escena = new THREE.Scene();
+escena.background = new THREE.Color(0x0b0f14);
+
+const camara = new THREE.PerspectiveCamera(70, 1, 0.3, 2000);
+camara.rotation.order = "YXZ";
+camara.position.set(CONFIG.inicio.x, CONFIG.inicio.y + CONFIG.alturaOjos, CONFIG.inicio.z);
+
+const generadorEntorno = new THREE.PMREMGenerator(renderer);
+escena.environment = generadorEntorno.fromScene(new RoomEnvironment(), 0.04).texture;
+
+const hemisferio = new THREE.HemisphereLight(0xdfeaff, 0x8a8070, 0.5);
+escena.add(hemisferio);
+
+const sol = new THREE.DirectionalLight(0xfff4e0, 1);
+sol.castShadow = true;
+sol.shadow.mapSize.set(esTactil ? 2048 : 4096, esTactil ? 2048 : 4096);
+sol.shadow.bias = -0.0004;
+sol.shadow.normalBias = 0.3;
+sol.shadow.camera.left = -CONFIG.sombras.radio;
+sol.shadow.camera.right = CONFIG.sombras.radio;
+sol.shadow.camera.top = CONFIG.sombras.radio;
+sol.shadow.camera.bottom = -CONFIG.sombras.radio;
+sol.shadow.camera.near = 1;
+sol.shadow.camera.far = CONFIG.sombras.distancia * 2.2;
+sol.shadow.camera.updateProjectionMatrix();
+escena.add(sol);
+escena.add(sol.target);
+
+const dirSol = new THREE.Vector3(0, 1, 0);
+
+function posicionarSol(centro) {
+  const z = dirSol;
+  const x = new THREE.Vector3(0, 1, 0).cross(z);
+  if (x.lengthSq() < 1e-6) x.set(1, 0, 0);
+  x.normalize();
+  const y = z.clone().cross(x);
+  const texel = (2 * CONFIG.sombras.radio) / sol.shadow.mapSize.x;
+  const cx = centro.dot(x);
+  const cy = centro.dot(y);
+  const ajustado = centro.clone()
+    .addScaledVector(x, Math.round(cx / texel) * texel - cx)
+    .addScaledVector(y, Math.round(cy / texel) * texel - cy);
+  sol.target.position.copy(ajustado);
+  sol.position.copy(ajustado).addScaledVector(z, CONFIG.sombras.distancia);
+}
+
+const sombreadoCielo = {
+  vertice: `
+    varying vec3 vDir;
+    void main() {
+      vDir = normalize(position);
+      vec4 p = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      gl_Position = p.xyww;
+    }
+  `,
+  fragmento: `
+    varying vec3 vDir;
+    uniform vec3 cimaColor;
+    uniform vec3 horizonteColor;
+    uniform vec3 solDir;
+    uniform vec3 solColor;
+    uniform vec3 lunaDir;
+    uniform vec3 lunaColor;
+    uniform vec3 nubeColor;
+    uniform vec3 nubeSombra;
+    uniform float solBrillo;
+    uniform float lunaBrillo;
+    uniform float estrellas;
+    uniform float nubes;
+    uniform float tiempo;
+
+    float h2(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123); }
+    float h3(vec3 p) {
+      p = fract(p * 0.3183099 + 0.1);
+      p *= 17.0;
+      return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
+    }
+    float ruido(vec2 p) {
+      vec2 i = floor(p);
+      vec2 f = fract(p);
+      f = f * f * (3.0 - 2.0 * f);
+      return mix(mix(h2(i), h2(i + vec2(1.0, 0.0)), f.x), mix(h2(i + vec2(0.0, 1.0)), h2(i + vec2(1.0, 1.0)), f.x), f.y);
+    }
+    float fbm(vec2 p) {
+      float v = 0.0;
+      float a = 0.5;
+      for (int i = 0; i < 5; i++) {
+        v += a * ruido(p);
+        p *= 2.03;
+        a *= 0.5;
+      }
+      return v;
+    }
+
+    void main() {
+      vec3 d = normalize(vDir);
+      vec3 col = mix(horizonteColor, cimaColor, pow(clamp(d.y, 0.0, 1.0), 0.5));
+
+      float sd = dot(d, solDir);
+      float disco = smoothstep(0.9988, 0.9992, sd);
+      float brillo = pow(max(sd, 0.0), 90.0) * 0.5 + pow(max(sd, 0.0), 6.0) * 0.18;
+      col += solColor * (disco * 4.0 + brillo) * solBrillo;
+
+      float md = dot(d, lunaDir);
+      float discoLuna = smoothstep(0.99935, 0.9996, md);
+      vec3 e1 = normalize(cross(lunaDir, vec3(0.0, 1.0, 0.0)));
+      vec3 e2 = cross(e1, lunaDir);
+      vec2 q = vec2(dot(d, e1), dot(d, e2)) * 28.0;
+      float mares = ruido(q * 3.0) * 0.35 + ruido(q * 9.0) * 0.15;
+      col = mix(col, lunaColor * (0.85 - mares) * 1.6, discoLuna * lunaBrillo);
+      col += lunaColor * (pow(max(md, 0.0), 140.0) * 0.25 + pow(max(md, 0.0), 14.0) * 0.035) * lunaBrillo;
+
+      if (estrellas > 0.0 && d.y > 0.0) {
+        float h = h3(floor(d * 260.0));
+        float parpadeo = 0.6 + 0.4 * sin(tiempo * 2.0 + h * 400.0);
+        col += vec3(step(0.9975, h) * parpadeo) * estrellas * smoothstep(0.0, 0.2, d.y);
+      }
+
+      if (d.y > 0.0) {
+        vec2 uv = d.xz / (d.y + 0.18) * 1.1 + vec2(tiempo * 0.008, tiempo * 0.003);
+        float densidad = fbm(uv);
+        float cobertura = smoothstep(1.0 - nubes, 1.0 - nubes + 0.28, densidad);
+        float luz = smoothstep(0.35, 0.75, fbm(uv + solDir.xz * 0.25 + 3.7));
+        vec3 colNube = mix(nubeSombra, nubeColor, luz);
+        col = mix(col, colNube, cobertura * smoothstep(0.0, 0.22, d.y) * 0.92);
+      }
+
+      gl_FragColor = vec4(col, 1.0);
+      #include <tonemapping_fragment>
+      #include <colorspace_fragment>
+    }
+  `
+};
+
+const materialCielo = new THREE.ShaderMaterial({
+  uniforms: {
+    cimaColor: { value: new THREE.Color() },
+    horizonteColor: { value: new THREE.Color() },
+    solDir: { value: new THREE.Vector3(0, 1, 0) },
+    solColor: { value: new THREE.Color() },
+    lunaDir: { value: new THREE.Vector3(0, 1, 0) },
+    lunaColor: { value: new THREE.Color() },
+    nubeColor: { value: new THREE.Color() },
+    nubeSombra: { value: new THREE.Color() },
+    solBrillo: { value: 1 },
+    lunaBrillo: { value: 0 },
+    estrellas: { value: 0 },
+    nubes: { value: 0.5 },
+    tiempo: { value: 0 }
+  },
+  vertexShader: sombreadoCielo.vertice,
+  fragmentShader: sombreadoCielo.fragmento,
+  side: THREE.BackSide,
+  depthWrite: false,
+  fog: false
+});
+
+const cielo = new THREE.Mesh(new THREE.SphereGeometry(1500, 32, 16), materialCielo);
+cielo.frustumCulled = false;
+cielo.renderOrder = 1000;
+escena.add(cielo);
+
+let centroEscena = new THREE.Vector3();
+let radioEscena = 200;
+
+function direccionDesde(elevacion, azimut) {
+  const e = THREE.MathUtils.degToRad(elevacion);
+  const a = THREE.MathUtils.degToRad(azimut);
+  return new THREE.Vector3(Math.cos(e) * Math.sin(a), Math.sin(e), Math.cos(e) * Math.cos(a));
+}
+
+const COMPARTIDOS = ["cimaColor", "horizonteColor", "solDir", "solColor", "solBrillo", "lunaDir", "lunaColor", "lunaBrillo"];
+const materialesFuente = [];
+
+function sincronizarFuente(material) {
+  const u = materialCielo.uniforms;
+  const w = material.uniforms;
+  COMPARTIDOS.forEach((clave) => {
+    if (!w[clave]) return;
+    if (typeof u[clave].value === "number") w[clave].value = u[clave].value;
+    else w[clave].value.copy(u[clave].value);
+  });
+  const a = AMBIENTES[ambienteActual];
+  if (w.luz) w.luz.value = a.agua.luz;
+  if (w.brillo) w.brillo.value = a.agua.brillo;
+}
+
+function aplicarCielo(a) {
+  const c = a.cielo;
+  const u = materialCielo.uniforms;
+  u.cimaColor.value.setHex(c.cima);
+  u.horizonteColor.value.setHex(c.horizonte);
+  u.solDir.value.copy(direccionDesde(c.sol.elevacion, c.sol.azimut));
+  u.solColor.value.setHex(c.sol.color);
+  u.solBrillo.value = c.sol.brillo;
+  u.lunaDir.value.copy(direccionDesde(c.luna.elevacion, c.luna.azimut));
+  u.lunaColor.value.setHex(c.luna.color);
+  u.lunaBrillo.value = c.luna.brillo;
+  u.estrellas.value = c.estrellas;
+  u.nubes.value = c.nubes;
+  u.nubeColor.value.setHex(c.nubeColor);
+  u.nubeSombra.value.setHex(c.nubeSombra);
+  hemisferio.color.setHex(a.hemi.cielo);
+  hemisferio.groundColor.setHex(a.hemi.suelo);
+  sol.color.setHex(a.luz.color);
+  dirSol.copy(a.luz.fuente === "luna" ? u.lunaDir.value : u.solDir.value).normalize();
+  posicionarSol(camara.position);
+}
+
+const lamparas = [];
+const emisivos = [];
+const reflectoresLuz = [];
+const postesLuz = [];
+const lucesAuditorio = [];
+const hazProyector = [];
+let ambienteActual = CONFIG.ambienteInicial;
+
+function pintar(obj) {
+  const material = obj.material.clone();
+  material.side = THREE.DoubleSide;
+  if (material.metalness === 1 && material.roughness === 1) {
+    material.metalness = 0;
+    material.roughness = 0.8;
+  }
+  obj.material = material;
+}
+
+function aplicarAmbiente(clave) {
+  const a = AMBIENTES[clave];
+  ambienteActual = clave;
+  renderer.toneMappingExposure = a.exposicion;
+  sol.intensity = a.sol;
+  const sinLamparas = a.lamparas > 0 && lamparas.length === 0;
+  hemisferio.intensity = a.hemisferio * (sinLamparas ? 2.2 : 1);
+  escena.environmentIntensity = a.entorno * (sinLamparas ? 2.2 : 1);
+  lamparas.forEach((luz) => { luz.intensity = CONFIG.intensidadLamparas * a.lamparas; });
+  emisivos.forEach(({ material, grupo, base }) => {
+    material.emissiveIntensity = grupo === "aud" ? base * a.auditorio : base * a.brillo;
+  });
+  lucesAuditorio.forEach((luz) => { luz.intensity = CONFIG.auditorio.intensidad * a.auditorio; });
+  hazProyector.forEach((haz) => { haz.material.opacity = CONFIG.auditorio.opacidadProyector * a.auditorio; });
+  reflectoresLuz.forEach(({ luz, haz, destello, escala }) => {
+    luz.intensity = CONFIG.intensidadReflectores * escala * a.lamparas;
+    haz.visible = a.lamparas > 0;
+    destello.visible = a.lamparas > 0;
+  });
+  postesLuz.forEach(({ luz, bulbo }) => {
+    luz.intensity = CONFIG.intensidadPostes * a.lamparas;
+    bulbo.visible = a.lamparas > 0;
+  });
+  aplicarCielo(a);
+  materialesFuente.forEach(sincronizarFuente);
+  escena.fog = new THREE.Fog(a.niebla, 200, 900);
+  document.querySelectorAll("#ambientes button").forEach((boton) => {
+    boton.classList.toggle("activo", boton.dataset.a === clave);
+  });
+}
+
+function nombreCoincide(obj, patron) {
+  for (let nodo = obj; nodo; nodo = nodo.parent) {
+    if (patron.test(nodo.name)) return true;
+  }
+  return false;
+}
+
+function centrosDeLuminarias(obj, margen = 1.5) {
+  const grupos = [];
+  const v = new THREE.Vector3();
+  obj.updateMatrixWorld(true);
+  obj.traverse((malla) => {
+    if (!malla.isMesh) return;
+    const atributo = malla.geometry.attributes.position;
+    for (let i = 0; i < atributo.count; i++) {
+      v.fromBufferAttribute(atributo, i).applyMatrix4(malla.matrixWorld);
+      let grupo = null;
+      for (let k = 0; k < grupos.length; k++) {
+        if (grupos[k].distanceToPoint(v) < margen) {
+          grupo = grupos[k];
+          break;
+        }
+      }
+      if (!grupo) {
+        grupo = new THREE.Box3();
+        grupos.push(grupo);
+      }
+      grupo.expandByPoint(v);
+    }
+  });
+  return grupos.map((caja) => ({ centro: caja.getCenter(new THREE.Vector3()), minY: caja.min.y }));
+}
+
+function valoresUnicos(valores, tolerancia = 2) {
+  const orden = valores.slice().sort((a, b) => a - b);
+  const salida = [];
+  orden.forEach((valor) => {
+    if (!salida.length || valor - salida[salida.length - 1] > tolerancia) salida.push(valor);
+  });
+  return salida;
+}
+
+function repartir(total, cantidad) {
+  const n = Math.min(cantidad, total);
+  return Array.from({ length: n }, (_, k) =>
+    Math.max(0, Math.min(total - 1, Math.round(((k + 0.5) * total) / n - 0.5)))
+  );
+}
+
+function crearLucesAuditorio(raiz, piezas) {
+  if (!CONFIG.auditorio.activo) return;
+  const techo = piezas.find((p) => p.obj.name === "aud_luces_techo");
+  if (!techo) return;
+  const luminarias = centrosDeLuminarias(techo.obj);
+  if (!luminarias.length) return;
+
+  const xs = valoresUnicos(luminarias.map((l) => l.centro.x));
+  const zs = valoresUnicos(luminarias.map((l) => l.centro.z));
+  const columnas = repartir(xs.length, CONFIG.auditorio.columnas).map((i) => xs[i]);
+  const filas = repartir(zs.length, CONFIG.auditorio.filas).map((i) => zs[i]);
+
+  luminarias.forEach((l) => {
+    const enColumna = columnas.some((x) => Math.abs(x - l.centro.x) < 2);
+    const enFila = filas.some((z) => Math.abs(z - l.centro.z) < 2);
+    if (!enColumna || !enFila) return;
+    const luz = new THREE.SpotLight(
+      CONFIG.auditorio.color, 0, CONFIG.auditorio.alcance, CONFIG.auditorio.angulo, CONFIG.auditorio.penumbra, 2
+    );
+    luz.position.set(l.centro.x, l.minY - 0.3, l.centro.z);
+    luz.target.position.set(l.centro.x, l.minY - 24, l.centro.z);
+    escena.add(luz, luz.target);
+    lucesAuditorio.push(luz);
+  });
+
+  const ventana = piezas.find((p) => p.obj.name === "aud_cabina_ventana");
+  const pantalla = piezas.find((p) => p.obj.name === "pantalla");
+  if (CONFIG.auditorio.proyector && ventana && pantalla) {
+    const origen = ventana.centro.clone();
+    origen.z += 0.3;
+    const c = pantalla.caja;
+    const mx = (c.max.x - c.min.x) * 0.03;
+    const my = (c.max.y - c.min.y) * 0.04;
+    const zp = c.min.z - 0.1;
+    const vertices = [
+      origen,
+      new THREE.Vector3(c.min.x + mx, c.min.y + my, zp),
+      new THREE.Vector3(c.max.x - mx, c.min.y + my, zp),
+      new THREE.Vector3(c.max.x - mx, c.max.y - my, zp),
+      new THREE.Vector3(c.min.x + mx, c.max.y - my, zp)
+    ];
+    const geometria = new THREE.BufferGeometry().setFromPoints(vertices);
+    geometria.setIndex([0, 1, 2, 0, 2, 3, 0, 3, 4, 0, 4, 1]);
+    const haz = new THREE.Mesh(
+      geometria,
+      new THREE.MeshBasicMaterial({
+        color: 0xcfe0ff,
+        transparent: true,
+        opacity: CONFIG.auditorio.opacidadProyector,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        side: THREE.DoubleSide,
+        toneMapped: false
+      })
+    );
+    haz.frustumCulled = false;
+    escena.add(haz);
+    hazProyector.push(haz);
+  }
+}
+
+let piezasModelo = [];
+
+function prepararModelo(raiz) {
+  raiz.updateMatrixWorld(true);
+  const piezas = [];
+  raiz.traverse((obj) => {
+    if (!obj.isMesh || !obj.visible) return;
+    pintar(obj);
+    obj.castShadow = !obj.material.transparent;
+    obj.receiveShadow = true;
+    const caja = new THREE.Box3().setFromObject(obj);
+    piezas.push({ obj, caja, centro: caja.getCenter(new THREE.Vector3()) });
+  });
+  piezasModelo = piezas;
+
+  const mediana = (valores) => valores.slice().sort((a, b) => a - b)[valores.length >> 1];
+  const medianaX = mediana(piezas.map((p) => p.centro.x));
+  const medianaZ = mediana(piezas.map((p) => p.centro.z));
+  const total = new THREE.Box3();
+  piezas.forEach((p) => {
+    if (Math.hypot(p.centro.x - medianaX, p.centro.z - medianaZ) < 400) total.union(p.caja);
+  });
+  const tamano = total.getSize(new THREE.Vector3());
+  centroEscena = total.getCenter(new THREE.Vector3());
+  radioEscena = Math.max(tamano.x, tamano.z) * 0.75;
+
+  piezas.forEach((p) => {
+    const regla = EMISIVOS.find((r) => r.patron.test(p.obj.name));
+    if (!regla) return;
+    const material = p.obj.material;
+    if (regla.color !== undefined) material.emissive = new THREE.Color(regla.color);
+    else if (material.emissive.getHex() === 0) material.emissive = material.color.clone();
+    emisivos.push({ material, grupo: regla.grupo, base: regla.base });
+  });
+
+  const reglaDe = (obj) => CONFIG.lamparas.findIndex((regla) => nombreCoincide(obj, regla.patron));
+  const piezasLampara = piezas
+    .filter((p) => /^(lampara|luces)\d*$/i.test(p.obj.name))
+    .sort((a, b) => reglaDe(a.obj) - reglaDe(b.obj));
+
+  piezasLampara.forEach((p) => {
+    const cerca = lamparas.some((luz) => luz.position.distanceTo(p.centro) < 3);
+    if (cerca || lamparas.length >= CONFIG.maxLamparas) return;
+    const regla = CONFIG.lamparas[reglaDe(p.obj)];
+    const objetivo = new THREE.Vector3(p.centro.x, p.centro.y - CONFIG.alturaLamparas, p.centro.z);
+    if (regla && regla.modo === "centro") {
+      const grupo = piezasLampara.filter((q) => nombreCoincide(q.obj, regla.patron));
+      const promedioX = grupo.reduce((suma, q) => suma + q.centro.x, 0) / grupo.length;
+      if (Math.abs(promedioX - p.centro.x) > 4) objetivo.x = promedioX;
+    }
+    const luz = new THREE.SpotLight(0xfff1d6, 0, CONFIG.alcanceLamparas, 0.95, 0.6, 2);
+    luz.position.copy(p.centro);
+    luz.target.position.copy(objetivo);
+    escena.add(luz, luz.target);
+    lamparas.push(luz);
+  });
+
+  crearLucesAuditorio(raiz, piezas);
+  aplicarAmbiente(CONFIG.ambienteInicial);
+}
+
+function buscarObjetos(raiz, patron) {
+  const resultado = [];
+  raiz.traverse((obj) => {
+    if (patron.test(obj.name)) resultado.push(obj);
+  });
+  return resultado;
+}
+
+function primeraMalla(raiz) {
+  let encontrada = null;
+  raiz.traverse((obj) => {
+    if (!encontrada && obj.isMesh) encontrada = obj;
+  });
+  return encontrada;
+}
+
+function recorrerTriangulos(malla, alVisitar) {
+  const posicion = malla.geometry.attributes.position;
+  const indice = malla.geometry.index;
+  const total = indice ? indice.count : posicion.count;
+  const a = new THREE.Vector3();
+  const b = new THREE.Vector3();
+  const c = new THREE.Vector3();
+  for (let i = 0; i < total; i += 3) {
+    a.fromBufferAttribute(posicion, indice ? indice.getX(i) : i).applyMatrix4(malla.matrixWorld);
+    b.fromBufferAttribute(posicion, indice ? indice.getX(i + 1) : i + 1).applyMatrix4(malla.matrixWorld);
+    c.fromBufferAttribute(posicion, indice ? indice.getX(i + 2) : i + 2).applyMatrix4(malla.matrixWorld);
+    alVisitar(a, b, c);
+  }
+}
+
+function puntoSuperior(obj) {
+  let alto = -Infinity;
+  const vertice = new THREE.Vector3();
+  const posiciones = [];
+  obj.traverse((malla) => {
+    if (!malla.isMesh) return;
+    const atributo = malla.geometry.attributes.position;
+    for (let i = 0; i < atributo.count; i++) {
+      vertice.fromBufferAttribute(atributo, i).applyMatrix4(malla.matrixWorld);
+      posiciones.push(vertice.x, vertice.y, vertice.z);
+      if (vertice.y > alto) alto = vertice.y;
+    }
+  });
+  const suma = new THREE.Vector3();
+  let cuenta = 0;
+  for (let i = 0; i < posiciones.length; i += 3) {
+    if (posiciones[i + 1] > alto - 1.2) {
+      suma.x += posiciones[i];
+      suma.z += posiciones[i + 2];
+      cuenta++;
+    }
+  }
+  return new THREE.Vector3(suma.x / cuenta, alto, suma.z / cuenta);
+}
+
+function crearLucesPostes(raiz) {
+  buscarObjetos(raiz, /^poste/i).forEach((poste) => {
+    const cima = puntoSuperior(poste);
+    const luz = new THREE.SpotLight(0xffe7b8, 0, 0, 0.95, 0.8, 2);
+    luz.position.set(cima.x, cima.y - 0.4, cima.z);
+    luz.target.position.set(cima.x, cima.y - 40, cima.z);
+    const bulbo = new THREE.Mesh(
+      new THREE.SphereGeometry(0.6, 12, 8),
+      new THREE.MeshBasicMaterial({ color: 0xfff0c8, toneMapped: false })
+    );
+    bulbo.position.copy(luz.position);
+    escena.add(luz, luz.target, bulbo);
+    postesLuz.push({ luz, bulbo });
+  });
+}
+
+let horizonteMalla = null;
+
+function crearHorizonte(raiz) {
+  const suelo = buscarObjetos(raiz, /^superficie$/i)[0];
+  if (!suelo) return;
+  const caja = new THREE.Box3().setFromObject(suelo);
+  const color = suelo.material && suelo.material.color ? suelo.material.color.clone() : new THREE.Color(0x4a6a3a);
+  horizonteMalla = new THREE.Mesh(
+    new THREE.CircleGeometry(1900, 48).rotateX(-Math.PI / 2),
+    new THREE.MeshStandardMaterial({ color, roughness: 1, metalness: 0 })
+  );
+  horizonteMalla.position.set((caja.min.x + caja.max.x) / 2, caja.max.y - 0.1, (caja.min.z + caja.max.z) / 2);
+  horizonteMalla.receiveShadow = true;
+  escena.add(horizonteMalla);
+}
+
+function construirPasto(raiz, malla) {
+  const suelo = buscarObjetos(raiz, /^superficie$/i)[0];
+  if (!suelo || !malla.material.map) return;
+
+  const cajaSuelo = new THREE.Box3().setFromObject(suelo);
+  const nivel = cajaSuelo.max.y;
+  const celda = CONFIG.pasto.celda;
+  const x0 = cajaSuelo.min.x;
+  const z0 = cajaSuelo.min.z;
+  const ancho = Math.ceil((cajaSuelo.max.x - x0) / celda);
+  const alto = Math.ceil((cajaSuelo.max.z - z0) / celda);
+  const ocupado = new Uint8Array(ancho * alto);
+
+  const marcarCelda = (i, j) => {
+    if (i >= 0 && i < ancho && j >= 0 && j < alto) ocupado[j * ancho + i] = 1;
+  };
+
+  const marcar = (minX, minZ, maxX, maxZ) => {
+    const i0 = Math.max(Math.floor((minX - x0) / celda), 0);
+    const i1 = Math.min(Math.floor((maxX - x0) / celda), ancho - 1);
+    const j0 = Math.max(Math.floor((minZ - z0) / celda), 0);
+    const j1 = Math.min(Math.floor((maxZ - z0) / celda), alto - 1);
+    for (let j = j0; j <= j1; j++) {
+      for (let i = i0; i <= i1; i++) ocupado[j * ancho + i] = 1;
+    }
+  };
+
+  const marcarSegmento = (ax, az, bx, bz) => {
+    const pasos = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / (celda * 0.5)));
+    for (let k = 0; k <= pasos; k++) {
+      const t = k / pasos;
+      marcarCelda(Math.floor((ax + (bx - ax) * t - x0) / celda), Math.floor((az + (bz - az) * t - z0) / celda));
+    }
+  };
+
+  const marcarTriangulo = (a, b, c) => {
+    marcarSegmento(a.x, a.z, b.x, b.z);
+    marcarSegmento(b.x, b.z, c.x, c.z);
+    marcarSegmento(c.x, c.z, a.x, a.z);
+    const denominador = (b.z - c.z) * (a.x - c.x) + (c.x - b.x) * (a.z - c.z);
+    if (Math.abs(denominador) < 1e-9) return;
+    const i0 = Math.max(Math.floor((Math.min(a.x, b.x, c.x) - x0) / celda), 0);
+    const i1 = Math.min(Math.floor((Math.max(a.x, b.x, c.x) - x0) / celda), ancho - 1);
+    const j0 = Math.max(Math.floor((Math.min(a.z, b.z, c.z) - z0) / celda), 0);
+    const j1 = Math.min(Math.floor((Math.max(a.z, b.z, c.z) - z0) / celda), alto - 1);
+    for (let j = j0; j <= j1; j++) {
+      const pz = z0 + (j + 0.5) * celda;
+      for (let i = i0; i <= i1; i++) {
+        const px = x0 + (i + 0.5) * celda;
+        const l1 = ((b.z - c.z) * (px - c.x) + (c.x - b.x) * (pz - c.z)) / denominador;
+        const l2 = ((c.z - a.z) * (px - c.x) + (a.x - c.x) * (pz - c.z)) / denominador;
+        if (l1 >= 0 && l2 >= 0 && 1 - l1 - l2 >= 0) ocupado[j * ancho + i] = 1;
+      }
+    }
+  };
+
+  raiz.traverse((obj) => {
+    if (!obj.isMesh || !obj.visible || nombreCoincide(obj, /^superficie$/i)) return;
+    recorrerTriangulos(obj, (a, b, c) => {
+      if (Math.max(a.y, b.y, c.y) <= nivel + CONFIG.pasto.alturaMinima) return;
+      marcarTriangulo(a, b, c);
+    });
+  });
+
+  CONFIG.pasto.margenes.forEach(([patron, margen]) => {
+    buscarObjetos(raiz, patron).forEach((obj) => {
+      const caja = new THREE.Box3().setFromObject(obj);
+      marcar(caja.min.x - margen, caja.min.z - margen, caja.max.x + margen, caja.max.z + margen);
+    });
+  });
+
+  const holgura = CONFIG.pasto.holgura;
+  const bloqueado = new Uint8Array(ocupado);
+  for (let j = 0; j < alto; j++) {
+    for (let i = 0; i < ancho; i++) {
+      if (!ocupado[j * ancho + i]) continue;
+      for (let dj = -holgura; dj <= holgura; dj++) {
+        for (let di = -holgura; di <= holgura; di++) {
+          const ii = i + di;
+          const jj = j + dj;
+          if (ii >= 0 && ii < ancho && jj >= 0 && jj < alto) bloqueado[jj * ancho + ii] = 1;
+        }
+      }
+    }
+  }
+
+  const tamanoTextura = new THREE.Box3().setFromObject(malla).getSize(new THREE.Vector3());
+  const anchoTextura = tamanoTextura.x * CONFIG.pasto.escalaTextura;
+  const altoTextura = tamanoTextura.z * CONFIG.pasto.escalaTextura;
+  const y = nivel + CONFIG.pasto.elevacion;
+  const usado = new Uint8Array(ancho * alto);
+  const posiciones = [];
+  const coordenadas = [];
+  const indices = [];
+  let vertice = 0;
+
+  for (let j = 0; j < alto; j++) {
+    for (let i = 0; i < ancho; i++) {
+      const k = j * ancho + i;
+      if (bloqueado[k] || usado[k]) continue;
+      let w = 1;
+      while (i + w < ancho && !bloqueado[k + w] && !usado[k + w]) w++;
+      let h = 1;
+      let crece = true;
+      while (j + h < alto && crece) {
+        for (let d = 0; d < w; d++) {
+          const m = (j + h) * ancho + i + d;
+          if (bloqueado[m] || usado[m]) {
+            crece = false;
+            break;
+          }
+        }
+        if (crece) h++;
+      }
+      for (let dj = 0; dj < h; dj++) {
+        for (let di = 0; di < w; di++) usado[(j + dj) * ancho + i + di] = 1;
+      }
+      const xa = x0 + i * celda;
+      const xb = x0 + (i + w) * celda;
+      const za = z0 + j * celda;
+      const zb = z0 + (j + h) * celda;
+      posiciones.push(xa, y, za, xa, y, zb, xb, y, zb, xb, y, za);
+      coordenadas.push(
+        xa / anchoTextura, za / altoTextura, xa / anchoTextura, zb / altoTextura,
+        xb / anchoTextura, zb / altoTextura, xb / anchoTextura, za / altoTextura
+      );
+      indices.push(vertice, vertice + 1, vertice + 2, vertice, vertice + 2, vertice + 3);
+      vertice += 4;
+    }
+  }
+
+  const normales = new Float32Array(posiciones.length);
+  for (let i = 1; i < normales.length; i += 3) normales[i] = 1;
+
+  const geometria = new THREE.BufferGeometry();
+  geometria.setAttribute("position", new THREE.Float32BufferAttribute(posiciones, 3));
+  geometria.setAttribute("normal", new THREE.BufferAttribute(normales, 3));
+  geometria.setAttribute("uv", new THREE.Float32BufferAttribute(coordenadas, 2));
+  geometria.setIndex(indices);
+
+  const textura = malla.material.map;
+  textura.wrapS = THREE.MirroredRepeatWrapping;
+  textura.wrapT = THREE.MirroredRepeatWrapping;
+  textura.anisotropy = 8;
+  textura.needsUpdate = true;
+
+  const cesped = new THREE.Mesh(
+    geometria,
+    new THREE.MeshStandardMaterial({
+      map: textura,
+      roughness: 0.95,
+      metalness: 0,
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+      polygonOffsetUnits: -2
+    })
+  );
+  cesped.receiveShadow = true;
+  escena.add(cesped);
+
+  const texturaLejana = textura.clone();
+  const radioHorizonte = 1900;
+  texturaLejana.repeat.set((radioHorizonte * 2) / anchoTextura, (radioHorizonte * 2) / altoTextura);
+  texturaLejana.needsUpdate = true;
+  if (horizonteMalla) {
+    horizonteMalla.material.map = texturaLejana;
+    horizonteMalla.material.color.set(0xffffff);
+    horizonteMalla.material.needsUpdate = true;
+  }
+}
+
+function colocarPantera(raiz, malla) {
+  const pedestal = buscarObjetos(raiz, /^exibidor$/i)[0];
+  if (!pedestal) return;
+
+  const geometria = malla.geometry;
+  geometria.computeVertexNormals();
+  geometria.computeBoundingBox();
+  const caja = geometria.boundingBox;
+  const escala = CONFIG.pantera.alto / (caja.max.y - caja.min.y);
+
+  const figura = new THREE.Mesh(
+    geometria,
+    new THREE.MeshStandardMaterial({
+      color: CONFIG.pantera.color,
+      roughness: CONFIG.pantera.rugosidad,
+      metalness: CONFIG.pantera.metal
+    })
+  );
+  figura.castShadow = true;
+  figura.receiveShadow = true;
+  figura.scale.setScalar(escala);
+  figura.position.set(
+    -((caja.min.x + caja.max.x) / 2) * escala,
+    -caja.min.y * escala,
+    -((caja.min.z + caja.max.z) / 2) * escala
+  );
+
+  const cajaPedestal = new THREE.Box3().setFromObject(pedestal);
+  const pivote = new THREE.Group();
+  pivote.position.set(
+    (cajaPedestal.min.x + cajaPedestal.max.x) / 2,
+    cajaPedestal.max.y,
+    (cajaPedestal.min.z + cajaPedestal.max.z) / 2
+  );
+  pivote.add(figura);
+
+  const reflectores = buscarObjetos(raiz, /^reflector/i)
+    .map((obj) => new THREE.Box3().setFromObject(obj))
+    .filter((cajaReflector) => {
+      const centro = cajaReflector.getCenter(new THREE.Vector3());
+      return Math.hypot(centro.x - pivote.position.x, centro.z - pivote.position.z) < CONFIG.pantera.radioReflectores;
+    });
+
+  let giro = CONFIG.pantera.giroPorDefecto;
+  if (reflectores.length) {
+    const promedio = new THREE.Vector3();
+    reflectores.forEach((cajaReflector) => promedio.add(cajaReflector.getCenter(new THREE.Vector3())));
+    promedio.divideScalar(reflectores.length);
+    const ux = promedio.x - pivote.position.x;
+    const uz = promedio.z - pivote.position.z;
+    const largo = Math.hypot(ux, uz);
+    giro = Math.atan2(uz / largo, -ux / largo);
+  }
+  pivote.rotation.y = giro;
+  escena.add(pivote);
+  solidos.push(figura);
+  registrarMalla("pantera", figura);
+  pivote.updateMatrixWorld(true);
+}
+
+function caraFrontal(obj, haciaObjetivo) {
+  const grupos = new Map();
+  const e1 = new THREE.Vector3();
+  const e2 = new THREE.Vector3();
+  const n = new THREE.Vector3();
+  obj.traverse((malla) => {
+    if (!malla.isMesh) return;
+    recorrerTriangulos(malla, (a, b, c) => {
+      n.crossVectors(e1.subVectors(b, a), e2.subVectors(c, a));
+      const area = n.length() / 2;
+      if (area < 1e-9) return;
+      n.normalize();
+      const clave = [n.x, n.y, n.z].map((v) => Math.round(v * 5)).join(",");
+      const grupo = grupos.get(clave) || { area: 0, normal: new THREE.Vector3(), centro: new THREE.Vector3() };
+      grupo.area += area;
+      grupo.normal.addScaledVector(n, area);
+      grupo.centro.x += ((a.x + b.x + c.x) / 3) * area;
+      grupo.centro.y += ((a.y + b.y + c.y) / 3) * area;
+      grupo.centro.z += ((a.z + b.z + c.z) / 3) * area;
+      grupos.set(clave, grupo);
+    });
+  });
+  let mejor = null;
+  let mejorPuntaje = 0.5;
+  grupos.forEach((grupo) => {
+    if (grupo.area < 0.2) return;
+    const normal = grupo.normal.clone().normalize();
+    const puntaje = normal.dot(haciaObjetivo);
+    if (puntaje > mejorPuntaje) {
+      mejorPuntaje = puntaje;
+      mejor = { normal, centro: grupo.centro.clone().divideScalar(grupo.area) };
+    }
+  });
+  return mejor;
+}
+
+function crearHaz(origen, destino, angulo, opacidad) {
+  const largo = origen.distanceTo(destino);
+  const geometria = new THREE.ConeGeometry(Math.tan(angulo) * largo, largo, 32, 1, true);
+  geometria.translate(0, -largo / 2, 0);
+  const haz = new THREE.Mesh(
+    geometria,
+    new THREE.MeshBasicMaterial({
+      color: 0xfff1d0,
+      transparent: true,
+      opacity: opacidad,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      side: THREE.FrontSide,
+      toneMapped: false
+    })
+  );
+  haz.position.copy(origen);
+  haz.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), destino.clone().sub(origen).normalize());
+  return haz;
+}
+
+function cajaSinAtipicos(obj) {
+  const vertice = new THREE.Vector3();
+  const puntos = [];
+  obj.traverse((malla) => {
+    if (!malla.isMesh) return;
+    const atributo = malla.geometry.attributes.position;
+    for (let i = 0; i < atributo.count; i++) {
+      puntos.push(vertice.fromBufferAttribute(atributo, i).applyMatrix4(malla.matrixWorld).clone());
+    }
+  });
+  const mediana = (valores) => valores.slice().sort((a, b) => a - b)[valores.length >> 1];
+  const medianaX = mediana(puntos.map((punto) => punto.x));
+  const medianaZ = mediana(puntos.map((punto) => punto.z));
+  const caja = new THREE.Box3();
+  puntos.forEach((punto) => {
+    if (Math.hypot(punto.x - medianaX, punto.z - medianaZ) < CONFIG.letras.radioAtipicos) caja.expandByPoint(punto);
+  });
+  return caja;
+}
+
+function crearLucesReflectores(raiz) {
+  const pedestal = buscarObjetos(raiz, /^exibidor$/i)[0];
+  const mural = buscarObjetos(raiz, /^mural$/i)[0];
+  const objetivos = [];
+  if (pedestal && CONFIG.pantera.activo) {
+    const caja = new THREE.Box3().setFromObject(pedestal);
+    objetivos.push({
+      tipo: "pantera",
+      punto: new THREE.Vector3(
+        (caja.min.x + caja.max.x) / 2,
+        caja.max.y + CONFIG.pantera.alto * CONFIG.pantera.alturaFoco,
+        (caja.min.z + caja.max.z) / 2
+      )
+    });
+  }
+  if (mural) {
+    objetivos.push({ tipo: "mural", punto: new THREE.Box3().setFromObject(mural).getCenter(new THREE.Vector3()) });
+  }
+  const baseLetras = CONFIG.letras.activo ? buscarObjetos(raiz, CONFIG.letras.base)[0] : null;
+  if (baseLetras) {
+    const cajaBase = cajaSinAtipicos(baseLetras);
+    objetivos.push({
+      tipo: "letras",
+      punto: new THREE.Vector3(
+        (cajaBase.min.x + cajaBase.max.x) / 2,
+        cajaBase.max.y + CONFIG.letras.alturaFoco,
+        cajaBase.min.z + CONFIG.letras.retranqueo
+      )
+    });
+  }
+  if (!objetivos.length) return;
+
+  buscarObjetos(raiz, /^reflector/i).forEach((reflector) => {
+    const centroCaja = new THREE.Box3().setFromObject(reflector).getCenter(new THREE.Vector3());
+    const objetivo = objetivos.reduce((mejor, o) =>
+      centroCaja.distanceTo(o.punto) < centroCaja.distanceTo(mejor.punto) ? o : mejor
+    );
+    const hacia = objetivo.punto.clone().sub(centroCaja).normalize();
+    const cara = caraFrontal(reflector, hacia);
+    const normal = cara ? cara.normal : hacia;
+    const posicion = (cara ? cara.centro : centroCaja).clone().addScaledVector(normal, 0.25);
+    const esPantera = objetivo.tipo === "pantera";
+    const punto = objetivo.punto.clone();
+    if (objetivo.tipo === "mural") punto.x += (centroCaja.x - punto.x) * 0.5;
+    const distancia = posicion.distanceTo(punto);
+    const angulo = { pantera: CONFIG.pantera.anguloFoco, letras: CONFIG.letras.anguloFoco, mural: CONFIG.anguloFocoMural }[objetivo.tipo];
+
+    const luz = new THREE.SpotLight(0xfff3dc, 0, 0, angulo, 0.55, 2);
+    luz.position.copy(posicion);
+    luz.target.position.copy(punto);
+    if (esPantera) {
+      luz.castShadow = true;
+      luz.shadow.mapSize.set(1024, 1024);
+      luz.shadow.bias = -0.0004;
+      luz.shadow.camera.near = 1;
+      luz.shadow.camera.far = 90;
+    }
+
+    const haz = crearHaz(posicion, punto, angulo, esPantera ? 0.02 : 0.012);
+    const destello = new THREE.Mesh(
+      new THREE.SphereGeometry(0.28, 12, 8),
+      new THREE.MeshBasicMaterial({ color: 0xfff3dc, toneMapped: false })
+    );
+    destello.position.copy(posicion).addScaledVector(normal, 0.1);
+    escena.add(luz, luz.target, haz, destello);
+    reflectoresLuz.push({ luz, haz, destello, escala: (distancia / 16) ** 2 * CONFIG.factorFoco[objetivo.tipo] });
+  });
+}
+
+function colocarLetras(raiz, malla) {
+  const base = buscarObjetos(raiz, CONFIG.letras.base)[0];
+  if (!base) return;
+  const cajaBase = cajaSinAtipicos(base);
+  const geometria = malla.geometry;
+  geometria.computeBoundingBox();
+  const caja = geometria.boundingBox;
+  const escala = ((cajaBase.max.x - cajaBase.min.x) * CONFIG.letras.ocupacion) / (caja.max.x - caja.min.x);
+
+  const figura = new THREE.Mesh(
+    geometria,
+    new THREE.MeshStandardMaterial({
+      color: CONFIG.letras.color,
+      roughness: 0.45,
+      metalness: 0.15,
+      flatShading: true
+    })
+  );
+  figura.castShadow = true;
+  figura.receiveShadow = true;
+  figura.scale.setScalar(escala);
+  figura.position.set(
+    -((caja.min.x + caja.max.x) / 2) * escala,
+    -caja.min.y * escala,
+    -((caja.min.z + caja.max.z) / 2) * escala
+  );
+
+  const pivote = new THREE.Group();
+  pivote.add(figura);
+  pivote.position.set((cajaBase.min.x + cajaBase.max.x) / 2, cajaBase.max.y, cajaBase.min.z + CONFIG.letras.retranqueo);
+  pivote.rotation.y = Math.PI;
+  escena.add(pivote);
+  registrarMalla("letras", figura);
+}
+
+const uViento = { value: 0 };
+
+function agregarViento(material) {
+  material.onBeforeCompile = (sombreador) => {
+    sombreador.uniforms.tiempoViento = uViento;
+    sombreador.vertexShader = sombreador.vertexShader
+      .replace("#include <common>", "#include <common>\nuniform float tiempoViento;")
+      .replace(
+        "#include <begin_vertex>",
+        `#include <begin_vertex>
+        float alturaRel = clamp(position.y / 65535.0, 0.0, 1.0);
+        float fase = instanceMatrix[3].x * 0.05 + instanceMatrix[3].z * 0.07;
+        float vaiven = alturaRel * alturaRel;
+        transformed.x += sin(tiempoViento * 1.1 + fase + position.y * 0.00005) * 900.0 * vaiven;
+        transformed.z += cos(tiempoViento * 0.9 + fase * 1.3 + position.x * 0.00005) * 700.0 * vaiven;`
+      );
+  };
+  material.customProgramCacheKey = () => "viento";
+}
+
+function colocarArboles(raiz, gltf) {
+  const macetas = buscarObjetos(raiz, CONFIG.arboles.patron).filter((obj) => obj.isMesh);
+  if (!macetas.length) return;
+  gltf.scene.updateMatrixWorld(true);
+  const piezas = [];
+  gltf.scene.traverse((malla) => {
+    if (malla.isMesh) piezas.push(malla);
+  });
+
+  const instancias = piezas.map((malla) => {
+    const material = malla.material;
+    const esHoja = /hoja|leaf|leaves/i.test(material.name);
+    if (esHoja) material.side = THREE.DoubleSide;
+    if (CONFIG.arboles.viento) agregarViento(material);
+    const instanciada = new THREE.InstancedMesh(malla.geometry, material, macetas.length);
+    instanciada.castShadow = true;
+    instanciada.receiveShadow = true;
+    instanciada.userData.esHoja = esHoja;
+    return instanciada;
+  });
+
+  const matriz = new THREE.Matrix4();
+  const posicion = new THREE.Vector3();
+  const rotacion = new THREE.Quaternion();
+  const tamano = new THREE.Vector3();
+  const giro = new THREE.Vector3(0, 1, 0);
+  const tinte = new THREE.Color();
+
+  macetas.forEach((maceta, indice) => {
+    const caja = new THREE.Box3().setFromObject(maceta);
+    const azar = Math.sin(indice * 12.9898 + 78.233) * 43758.5453;
+    const fraccion = azar - Math.floor(azar);
+    const factor = CONFIG.arboles.escala * (1 + (fraccion - 0.5) * 2 * CONFIG.arboles.variacion);
+    posicion.set((caja.min.x + caja.max.x) / 2, caja.max.y - CONFIG.arboles.hundimiento, (caja.min.z + caja.max.z) / 2);
+    rotacion.setFromAxisAngle(giro, fraccion * Math.PI * 2);
+    tamano.setScalar(factor);
+    matriz.compose(posicion, rotacion, tamano);
+    piezas.forEach((malla, parte) => {
+      instancias[parte].setMatrixAt(indice, matriz.clone().multiply(malla.matrixWorld));
+      if (instancias[parte].userData.esHoja) {
+        tinte.setHSL(0, 0, 0.88 + fraccion * 0.24);
+        instancias[parte].setColorAt(indice, tinte);
+      }
+    });
+  });
+
+  instancias.forEach((instanciada) => {
+    instanciada.instanceMatrix.needsUpdate = true;
+    if (instanciada.instanceColor) instanciada.instanceColor.needsUpdate = true;
+    instanciada.computeBoundingSphere();
+    escena.add(instanciada);
+  });
+}
+
+const sombreadoAgua = {
+  vertice: `
+    varying vec3 vMundo;
+    #include <fog_pars_vertex>
+    void main() {
+      vec4 mundo = modelMatrix * vec4(position, 1.0);
+      vMundo = mundo.xyz;
+      vec4 mvPosition = viewMatrix * mundo;
+      gl_Position = projectionMatrix * mvPosition;
+      #include <fog_vertex>
+    }
+  `,
+  fragmento: `
+    uniform float tiempo;
+    uniform vec3 centro;
+    uniform float escala;
+    uniform vec3 cimaColor;
+    uniform vec3 horizonteColor;
+    uniform vec3 solDir;
+    uniform vec3 solColor;
+    uniform float solBrillo;
+    uniform vec3 lunaDir;
+    uniform vec3 lunaColor;
+    uniform float lunaBrillo;
+    uniform float luz;
+    uniform float brillo;
+    uniform vec3 somero;
+    uniform vec3 profundo;
+    varying vec3 vMundo;
+    #include <fog_pars_fragment>
+
+    vec2 onda(vec2 p, vec2 d, float f, float v, float a, float t) {
+      float fase = dot(p, d) * f + t * v;
+      return d * (cos(fase) * f * a);
+    }
+
+    void main() {
+      float t = tiempo;
+      vec2 p = vMundo.xz / escala;
+
+      vec2 g = vec2(0.0);
+      g += onda(p, vec2(0.96, 0.28), 1.7, 1.3, 0.030, t);
+      g += onda(p, vec2(-0.55, 0.83), 2.6, 1.7, 0.022, t);
+      g += onda(p, vec2(0.31, -0.95), 4.1, 2.2, 0.014, t);
+      g += onda(p, vec2(-0.88, -0.47), 6.3, 2.9, 0.009, t);
+      g += onda(p, vec2(0.71, 0.71), 9.5, 3.7, 0.005, t);
+
+      vec2 dc = (vMundo.xz - centro.xz) / escala;
+      float r = length(dc);
+      vec2 radial = dc / max(r, 0.001);
+      float anillo = cos(r * 3.2 - t * 2.6) * exp(-r * 0.12) * 0.09 * smoothstep(0.5, 2.0, r);
+      float anillo2 = cos(r * 5.5 - t * 3.4) * exp(-r * 0.2) * 0.05 * smoothstep(3.0, 6.0, r);
+      g += radial * (anillo + anillo2);
+
+      vec3 N = normalize(vec3(-g.x, 1.0, -g.y));
+      vec3 V = normalize(cameraPosition - vMundo);
+      float cosv = clamp(dot(N, V), 0.0, 1.0);
+      float fresnel = mix(0.05, 1.0, pow(1.0 - cosv, 3.5));
+
+      vec3 R = reflect(-V, N);
+      R.y = abs(R.y);
+      vec3 cielo = mix(horizonteColor, cimaColor, pow(clamp(R.y, 0.0, 1.0), 0.5));
+
+      float s = max(dot(R, solDir), 0.0);
+      vec3 brilloSol = solColor * (pow(s, 380.0) * 3.5 + pow(s, 45.0) * 0.18) * solBrillo;
+      float m = max(dot(R, lunaDir), 0.0);
+      vec3 brilloLuna = lunaColor * (pow(m, 380.0) * 2.0 + pow(m, 45.0) * 0.1) * lunaBrillo;
+
+      vec3 fondo = mix(somero, profundo, smoothstep(2.0, 9.0, r));
+      float c = abs(sin(p.x * 3.1 + t * 0.9) + sin(p.y * 3.7 - t * 1.2) + sin((p.x + p.y) * 2.3 + t * 0.7)) / 3.0;
+      fondo += vec3(0.55, 0.8, 0.9) * pow(1.0 - c, 7.0) * 0.28;
+      fondo *= luz;
+
+      vec3 resplandor = vec3(0.08, 0.5, 0.7) * brillo * (0.25 + 0.9 * exp(-r * 0.16));
+      vec3 espuma = vec3(1.0) * pow(max(anillo * 11.0, 0.0), 3.0) * 0.35 * (0.3 + luz);
+
+      vec3 col = mix(fondo, cielo, fresnel) + brilloSol + brilloLuna + resplandor + espuma;
+      float alfa = clamp(mix(0.8, 1.0, fresnel) + length(espuma) * 0.2, 0.0, 1.0);
+
+      gl_FragColor = vec4(col, alfa);
+      #include <tonemapping_fragment>
+      #include <colorspace_fragment>
+      #include <fog_fragment>
+    }
+  `
+};
+
+function crearMaterialAgua(centro, escala) {
+  const material = new THREE.ShaderMaterial({
+    uniforms: THREE.UniformsUtils.merge([
+      THREE.UniformsLib.fog,
+      {
+        tiempo: { value: 0 },
+        centro: { value: centro.clone() },
+        escala: { value: escala },
+        cimaColor: { value: new THREE.Color() },
+        horizonteColor: { value: new THREE.Color() },
+        solDir: { value: new THREE.Vector3(0, 1, 0) },
+        solColor: { value: new THREE.Color() },
+        solBrillo: { value: 1 },
+        lunaDir: { value: new THREE.Vector3(0, 1, 0) },
+        lunaColor: { value: new THREE.Color() },
+        lunaBrillo: { value: 0 },
+        luz: { value: 1 },
+        brillo: { value: 0 },
+        somero: { value: new THREE.Color(0x5fa6b8) },
+        profundo: { value: new THREE.Color(0x0f4560) }
+      }
+    ]),
+    vertexShader: sombreadoAgua.vertice,
+    fragmentShader: sombreadoAgua.fragmento,
+    transparent: true,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+    fog: true
+  });
+  return material;
+}
+
+const sombreadoChorro = {
+  vertice: `
+    attribute vec4 semilla;
+    uniform float tiempo;
+    uniform float vy;
+    uniform float gravedad;
+    uniform float suelo;
+    uniform float factorPx;
+    uniform float escala;
+    varying float vAlfa;
+    void main() {
+      float cat = semilla.w;
+      float az = semilla.y * 6.2831853;
+      float vyP;
+      float vh;
+      float tam;
+      if (cat < 0.4) {
+        vyP = vy * (0.9 + 0.1 * semilla.z);
+        vh = semilla.z * 0.7;
+        tam = 0.55;
+      } else if (cat < 0.65) {
+        vyP = vy * 0.5 * (0.85 + 0.3 * semilla.z);
+        vh = 3.0 + semilla.z * 3.0;
+        tam = 0.45;
+      } else {
+        az = floor(semilla.y * 8.0) / 8.0 * 6.2831853 + (semilla.z - 0.5) * 0.08;
+        vyP = 6.5 + semilla.z * 0.6;
+        vh = 6.0 + fract(semilla.x * 7.0) * 1.6;
+        tam = 0.4;
+      }
+      float vida = (vyP + sqrt(vyP * vyP - 2.0 * gravedad * suelo)) / gravedad;
+      float ciclo = fract(tiempo / vida + semilla.x);
+      float t = ciclo * vida;
+      vec3 p = vec3(cos(az) * vh * t, vyP * t - 0.5 * gravedad * t * t, sin(az) * vh * t);
+      vAlfa = smoothstep(0.0, 0.06, ciclo) * (1.0 - smoothstep(0.9, 1.0, ciclo));
+      vec4 mv = modelViewMatrix * vec4(p, 1.0);
+      gl_Position = projectionMatrix * mv;
+      gl_PointSize = clamp(tam * (0.6 + semilla.z * 0.8) * escala * factorPx / max(-mv.z, 0.1), 1.5, 48.0);
+    }
+  `,
+  fragmento: `
+    uniform float luz;
+    uniform float brillo;
+    varying float vAlfa;
+    void main() {
+      vec2 c = gl_PointCoord - 0.5;
+      float d = length(c) * 2.0;
+      float a = (1.0 - smoothstep(0.35, 1.0, d)) * vAlfa * 0.5;
+      if (a < 0.01) discard;
+      vec3 col = vec3(0.85, 0.93, 1.0) * (0.25 + 0.75 * luz) + vec3(0.1, 0.5, 0.7) * brillo * 0.5;
+      gl_FragColor = vec4(col, a);
+      #include <tonemapping_fragment>
+      #include <colorspace_fragment>
+    }
+  `
+};
+
+function crearChorros(origenLocal, aguaY, escala) {
+  const cantidad = CONFIG.fuentes.chorros.particulas;
+  const semillas = new Float32Array(cantidad * 4);
+  for (let i = 0; i < cantidad; i++) {
+    semillas[i * 4] = Math.random();
+    semillas[i * 4 + 1] = Math.random();
+    semillas[i * 4 + 2] = Math.random();
+    semillas[i * 4 + 3] = Math.random();
+  }
+  const geometria = new THREE.BufferGeometry();
+  geometria.setAttribute("position", new THREE.BufferAttribute(new Float32Array(cantidad * 3), 3));
+  geometria.setAttribute("semilla", new THREE.BufferAttribute(semillas, 4));
+  geometria.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0, 0), 40);
+
+  const gravedad = CONFIG.fuentes.chorros.gravedad;
+  const material = new THREE.ShaderMaterial({
+    uniforms: {
+      tiempo: { value: 0 },
+      vy: { value: Math.sqrt(2 * gravedad * CONFIG.fuentes.chorros.altura) },
+      gravedad: { value: gravedad },
+      suelo: { value: aguaY - origenLocal.y },
+      factorPx: { value: 800 },
+      escala: { value: escala },
+      luz: { value: 1 },
+      brillo: { value: 0 }
+    },
+    vertexShader: sombreadoChorro.vertice,
+    fragmentShader: sombreadoChorro.fragmento,
+    transparent: true,
+    depthWrite: false
+  });
+  const puntos = new THREE.Points(geometria, material);
+  puntos.position.copy(origenLocal);
+  puntos.frustumCulled = false;
+  return puntos;
+}
+
+const posicionesFuentes = [];
+
+function colocarFuentes(raiz, gltf) {
+  const anclas = buscarObjetos(raiz, CONFIG.fuentes.ancla).map((obj) => obj.getWorldPosition(new THREE.Vector3()));
+  const lugares = anclas.length ? anclas : CONFIG.fuentes.respaldo.map((l) => new THREE.Vector3(l.x, 0, l.z));
+  const pisos = buscarObjetos(raiz, CONFIG.fuentes.piso).filter((obj) => obj.isMesh);
+  const suelo = buscarObjetos(raiz, /^superficie$/i)[0];
+  const nivelBase = suelo ? new THREE.Box3().setFromObject(suelo).max.y : 0;
+
+  gltf.scene.updateMatrixWorld(true);
+  const cajaFuente = new THREE.Box3().setFromObject(gltf.scene);
+  const tamanoFuente = cajaFuente.getSize(new THREE.Vector3());
+  const centroFuente = cajaFuente.getCenter(new THREE.Vector3());
+  let cajaColumna = null;
+  let cajaAgua = null;
+  gltf.scene.traverse((malla) => {
+    if (!malla.isMesh) return;
+    if (malla.material.name === "piedra2") cajaColumna = new THREE.Box3().setFromObject(malla);
+    if (malla.material.name === "agua") cajaAgua = new THREE.Box3().setFromObject(malla);
+  });
+  const origenLocal = new THREE.Vector3(
+    cajaColumna ? (cajaColumna.min.x + cajaColumna.max.x) / 2 - centroFuente.x : 0,
+    cajaColumna ? cajaColumna.max.y - cajaFuente.min.y : 1.2,
+    cajaColumna ? (cajaColumna.min.z + cajaColumna.max.z) / 2 - centroFuente.z : 0
+  );
+  const aguaY = cajaAgua ? cajaAgua.max.y - cajaFuente.min.y : 0.47;
+
+  lugares.forEach((lugar) => {
+    let piso = null;
+    let mejorDistancia = Infinity;
+    pisos.forEach((candidato) => {
+      const c = new THREE.Box3().setFromObject(candidato).getCenter(new THREE.Vector3());
+      const d = Math.hypot(c.x - lugar.x, c.z - lugar.z);
+      if (d < mejorDistancia) {
+        mejorDistancia = d;
+        piso = candidato;
+      }
+    });
+
+    let cx = lugar.x;
+    let cz = lugar.z;
+    let nivel = nivelBase;
+    let escala = CONFIG.fuentes.escala;
+    if (piso && mejorDistancia < 40) {
+      const cajaPiso = new THREE.Box3().setFromObject(piso);
+      const tamanoPiso = cajaPiso.getSize(new THREE.Vector3());
+      cx = (cajaPiso.min.x + cajaPiso.max.x) / 2;
+      cz = (cajaPiso.min.z + cajaPiso.max.z) / 2;
+      nivel = cajaPiso.max.y;
+      escala = (Math.min(tamanoPiso.x, tamanoPiso.z) * CONFIG.fuentes.ajustePiso) / Math.max(tamanoFuente.x, tamanoFuente.z);
+    }
+
+    const grupo = new THREE.Group();
+    grupo.position.set(cx, nivel, cz);
+    grupo.scale.setScalar(escala);
+
+    const fuente = gltf.scene.clone(true);
+    fuente.position.set(-centroFuente.x, -cajaFuente.min.y, -centroFuente.z);
+    const centroMundo = new THREE.Vector3(cx, nivel + aguaY * escala, cz);
+    fuente.traverse((malla) => {
+      if (!malla.isMesh) return;
+      if (malla.material.name === "agua") {
+        const agua = crearMaterialAgua(centroMundo, escala);
+        malla.material = agua;
+        malla.castShadow = false;
+        malla.receiveShadow = false;
+        malla.renderOrder = 2;
+        materialesFuente.push(agua);
+      } else {
+        malla.receiveShadow = true;
+        malla.castShadow = true;
+      }
+    });
+    grupo.add(fuente);
+
+    const chorros = crearChorros(origenLocal, aguaY, escala);
+    chorros.renderOrder = 3;
+    grupo.add(chorros);
+    materialesFuente.push(chorros.material);
+    escena.add(grupo);
+
+    const cajaColision = new THREE.Mesh(
+      new THREE.BoxGeometry(tamanoFuente.x * escala * 0.98, 4, tamanoFuente.z * escala * 0.98),
+      new THREE.MeshBasicMaterial({ visible: false })
+    );
+    cajaColision.position.set(cx, nivel + 2, cz);
+    escena.add(cajaColision);
+    cajaColision.updateMatrixWorld(true);
+    solidos.push(cajaColision);
+    registrarMalla("fuentes", cajaColision);
+
+    posicionesFuentes.push(new THREE.Vector3(cx, nivel, cz));
+  });
+
+  materialesFuente.forEach(sincronizarFuente);
+  construirParadas(raiz);
+  dibujarBaseMapa();
+}
+
+function prepararExtras(raiz) {
+  crearHorizonte(raiz);
+  crearLucesPostes(raiz);
+  crearLucesReflectores(raiz);
+  crearPantallaVideo(raiz);
+  crearLucesExtra(raiz);
+  crearExtrasMuseo(raiz);
+  prepararAsientos(raiz);
+  prepararBocinas(raiz);
+  registrarPuntosModelo(raiz);
+  aplicarAmbiente(ambienteActual);
+
+  if (CONFIG.pasto.activo) {
+    cargador.load(
+      CONFIG.pasto.archivo,
+      (gltf) => {
+        const malla = primeraMalla(gltf.scene);
+        if (malla) construirPasto(raiz, malla);
+      },
+      undefined,
+      () => console.warn("No se encontró " + CONFIG.pasto.archivo)
+    );
+  }
+
+  if (CONFIG.arboles.activo) {
+    cargador.load(
+      esTactil ? CONFIG.arboles.archivoMovil : CONFIG.arboles.archivo,
+      (gltf) => colocarArboles(raiz, gltf),
+      undefined,
+      () => {
+        console.warn("No se encontró " + (esTactil ? CONFIG.arboles.archivoMovil : CONFIG.arboles.archivo));
+        if (esTactil) cargador.load(CONFIG.arboles.archivo, (gltf) => colocarArboles(raiz, gltf));
+      }
+    );
+  }
+
+  if (CONFIG.fuentes.activo) {
+    cargador.load(
+      CONFIG.fuentes.archivo,
+      (gltf) => colocarFuentes(raiz, gltf),
+      undefined,
+      () => console.warn("No se encontró " + CONFIG.fuentes.archivo)
+    );
+  }
+
+  if (CONFIG.letras.activo) {
+    cargador.load(
+      CONFIG.letras.archivo,
+      (gltf) => {
+        const malla = primeraMalla(gltf.scene);
+        if (malla) colocarLetras(raiz, malla);
+      },
+      undefined,
+      () => console.warn("No se encontró " + CONFIG.letras.archivo)
+    );
+  }
+
+  if (CONFIG.pantera.activo) {
+    cargador.load(
+      CONFIG.pantera.archivo,
+      (gltf) => {
+        const malla = primeraMalla(gltf.scene);
+        if (malla) {
+          colocarPantera(raiz, malla);
+          aplicarAmbiente(ambienteActual);
+        }
+      },
+      undefined,
+      () => console.warn("No se encontró " + CONFIG.pantera.archivo)
+    );
+  }
+}
+
+let yaw = Math.atan2(-(CONFIG.mirarHacia.x - CONFIG.inicio.x), -(CONFIG.mirarHacia.z - CONFIG.inicio.z));
+let pitch = 0;
+const mallas = [];
+const solidos = [];
+const teclas = new Set();
+const joy = { x: 0, y: 0 };
+let activo = false;
+let listo = false;
+let paradas = [];
+
+function ajustarTamano() {
+  const ancho = visor.clientWidth;
+  const alto = visor.clientHeight;
+  if (!ancho || !alto) return;
+  renderer.setSize(ancho, alto, false);
+  camara.aspect = ancho / alto;
+  camara.updateProjectionMatrix();
+}
+new ResizeObserver(ajustarTamano).observe(visor);
+ajustarTamano();
+
+const decodificadorDraco = new DRACOLoader();
+decodificadorDraco.setDecoderPath("https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/libs/draco/gltf/");
+
+const cargador = new GLTFLoader();
+cargador.setMeshoptDecoder(MeshoptDecoder);
+cargador.setDRACOLoader(decodificadorDraco);
+cargador.load(
+  CONFIG.modelo,
+  (gltf) => {
+    escena.add(gltf.scene);
+    gltf.scene.traverse((obj) => {
+      if (!obj.isMesh) return;
+      if (nombreCoincide(obj, /^sky/i)) {
+        obj.visible = false;
+        return;
+      }
+      if (obj.material && obj.material.map) obj.material.map.anisotropy = 8;
+      if (CONFIG.ignorarColision.some((patron) => nombreCoincide(obj, patron))) return;
+      if (CONFIG.solidos.some((patron) => nombreCoincide(obj, patron))) solidos.push(obj);
+      else if (!nombreCoincide(obj, /leaves/i)) mallas.push(obj);
+    });
+    prepararModelo(gltf.scene);
+    prepararExtras(gltf.scene);
+    construirParadas(gltf.scene);
+    dibujarBaseMapa();
+    estado.textContent = "Preparando colisiones";
+    barra.style.width = "100%";
+    setTimeout(() => {
+      construirColisiones();
+      finalizarCarga();
+    }, 60);
+  },
+  (evento) => {
+    if (evento.lengthComputable) {
+      const porcentaje = Math.round((evento.loaded / evento.total) * 100);
+      barra.style.width = porcentaje + "%";
+      barra.parentElement.classList.remove("indeterminada");
+      porcentajeEl.textContent = porcentaje + "%";
+      estado.textContent = "Cargando el museo " + porcentaje + "%";
+    } else {
+      barra.parentElement.classList.add("indeterminada");
+    }
+  },
+  () => {
+    estado.textContent = "No se encontró " + CONFIG.modelo + " junto a esta página";
+    barra.parentElement.classList.add("oculto");
+  }
+);
+
+const rayo = new THREE.Raycaster();
+rayo.firstHitOnly = true;
+const abajo = new THREE.Vector3(0, -1, 0);
+const origen = new THREE.Vector3();
+const direccion = new THREE.Vector3();
+
+function chocaEn(lista, x, y, z, dx, dz, distancia) {
+  origen.set(x, y, z);
+  direccion.set(dx, 0, dz).normalize();
+  rayo.set(origen, direccion);
+  rayo.far = distancia;
+  return rayo.intersectObjects(lista, false).length > 0;
+}
+
+function alturaSuelo(x, y, z, alcance = CONFIG.alturaOjos * 3) {
+  origen.set(x, y, z);
+  rayo.set(origen, abajo);
+  rayo.far = alcance;
+  const impactos = rayo.intersectObjects(mallas, false);
+  return impactos.length ? impactos[0].point.y : null;
+}
+
+function mover(dt) {
+  let avance = 0;
+  let lateral = 0;
+  if (teclas.has("KeyW") || teclas.has("ArrowUp")) avance += 1;
+  if (teclas.has("KeyS") || teclas.has("ArrowDown")) avance -= 1;
+  if (teclas.has("KeyD") || teclas.has("ArrowRight")) lateral += 1;
+  if (teclas.has("KeyA") || teclas.has("ArrowLeft")) lateral -= 1;
+  avance += -joy.y;
+  lateral += joy.x;
+
+  const magnitud = Math.hypot(avance, lateral);
+  if (magnitud > 1) {
+    avance /= magnitud;
+    lateral /= magnitud;
+  }
+
+  const correr = teclas.has("ShiftLeft") || teclas.has("ShiftRight") ? CONFIG.multiplicadorCarrera : 1;
+  const paso = CONFIG.velocidad * correr * dt;
+  const seno = Math.sin(yaw);
+  const coseno = Math.cos(yaw);
+  let dx = (-seno * avance + coseno * lateral) * paso;
+  let dz = (-coseno * avance - seno * lateral) * paso;
+
+  const p = camara.position;
+  const yPies = p.y - CONFIG.alturaOjos * CONFIG.alturaRayoColision;
+
+  const yBajo = p.y - CONFIG.alturaOjos * CONFIG.alturaRayoBajo;
+  const chocaX = (largo) => chocaEn(mallas, p.x, yPies, p.z, Math.sign(dx), 0, largo) || chocaEn(solidos, p.x, yBajo, p.z, Math.sign(dx), 0, largo);
+  const chocaZ = (largo) => chocaEn(mallas, p.x, yPies, p.z, 0, Math.sign(dz), largo) || chocaEn(solidos, p.x, yBajo, p.z, 0, Math.sign(dz), largo);
+  if (dx !== 0 && chocaX(CONFIG.radioColision + Math.abs(dx))) dx = 0;
+  if (dz !== 0 && chocaZ(CONFIG.radioColision + Math.abs(dz))) dz = 0;
+
+  p.x += dx;
+  p.z += dz;
+
+  const suelo = alturaSuelo(p.x, p.y, p.z);
+  if (suelo !== null) {
+    const objetivo = suelo + CONFIG.alturaOjos;
+    p.y += (objetivo - p.y) * Math.min(1, dt * 12);
+  }
+}
+
+function construirParadas(raiz) {
+  if (paradas.length && !posicionesFuentes.length) return;
+  const lista = [];
+
+  const pois = CONFIG.puntosInteres
+    .map(([patron, nombre]) => {
+      const obj = buscarObjetos(raiz, patron)[0];
+      return obj ? { nombre, pos: obj.getWorldPosition(new THREE.Vector3()) } : null;
+    })
+    .filter(Boolean);
+
+  const spawn = buscarObjetos(raiz, /^spawn$/i)[0];
+  const puntoInicio = spawn ? spawn.getWorldPosition(new THREE.Vector3()) : new THREE.Vector3(CONFIG.inicio.x, CONFIG.inicio.y, CONFIG.inicio.z);
+  const yawInicio = Math.atan2(-(CONFIG.mirarHacia.x - puntoInicio.x), -(CONFIG.mirarHacia.z - puntoInicio.z));
+  lista.push({ etiqueta: "Inicio", x: puntoInicio.x, y: puntoInicio.y, z: puntoInicio.z, yaw: yawInicio });
+
+  const numero = (obj) => parseInt(obj.name.replace(/\D+/g, ""), 10) || 0;
+  buscarObjetos(raiz, /^parada_\d+$/i)
+    .sort((a, b) => numero(a) - numero(b))
+    .forEach((obj) => {
+      const pos = obj.getWorldPosition(new THREE.Vector3());
+      const frente = new THREE.Vector3(0, 0, -1).applyQuaternion(obj.getWorldQuaternion(new THREE.Quaternion()));
+      const horizontal = Math.hypot(frente.x, frente.z);
+      let giro = horizontal > 0.3 ? Math.atan2(-frente.x, -frente.z) : null;
+      let etiqueta = "Parada " + numero(obj);
+      if (horizontal > 0.3) {
+        let mejor = null;
+        let mejorAngulo = 0.45;
+        pois.forEach((poi) => {
+          const hx = poi.pos.x - pos.x;
+          const hz = poi.pos.z - pos.z;
+          const largo = Math.hypot(hx, hz) || 1;
+          const angulo = Math.acos(Math.max(-1, Math.min(1, (hx * frente.x + hz * frente.z) / (largo * horizontal))));
+          if (angulo < mejorAngulo) {
+            mejorAngulo = angulo;
+            mejor = poi;
+          }
+        });
+        if (mejor) etiqueta += " · " + mejor.nombre;
+      }
+      lista.push({ etiqueta, x: pos.x, y: pos.y, z: pos.z, yaw: giro });
+    });
+
+  const a = CONFIG.auditorioParada;
+  lista.push({ etiqueta: "Auditorio", x: a.x, y: a.y, z: a.z, yaw: Math.PI });
+
+  posicionesFuentes.forEach((f, i) => {
+    const haciaCentro = new THREE.Vector3(centroEscena.x - f.x, 0, centroEscena.z - f.z).normalize();
+    const px = f.x + haciaCentro.x * 26;
+    const pz = f.z + haciaCentro.z * 26;
+    lista.push({
+      etiqueta: "Fuente " + (i + 1),
+      x: px, y: f.y, z: pz,
+      yaw: Math.atan2(-(f.x - px), -(f.z - pz))
+    });
+  });
+
+  paradas = lista;
+  if (!spawnAplicado) {
+    spawnAplicado = true;
+    irA(lista[0]);
+  }
+
+  listaParadas.textContent = "";
+  lista.forEach((parada, i) => {
+    const boton = document.createElement("button");
+    boton.type = "button";
+    boton.textContent = parada.etiqueta;
+    boton.dataset.i = String(i);
+    listaParadas.appendChild(boton);
+  });
+  bloqueParadas.classList.remove("oculto");
+}
+
+let spawnAplicado = false;
+
+function irA(destino) {
+  sentado = null;
+  const suelo = alturaSuelo(destino.x, destino.y + CONFIG.alturaOjos + 1, destino.z);
+  camara.position.set(destino.x, (suelo !== null ? suelo : destino.y) + CONFIG.alturaOjos, destino.z);
+  if (destino.yaw !== null && destino.yaw !== undefined) yaw = destino.yaw;
+  pitch = 0;
+}
+
+listaParadas.addEventListener("click", (e) => {
+  const boton = e.target.closest("button[data-i]");
+  if (!boton) return;
+  irA(paradas[Number(boton.dataset.i)]);
+  entrar();
+});
+
+const lienzoBase = document.createElement("canvas");
+lienzoBase.width = lienzoBase.height = 300;
+
+function aMapa(x, z) {
+  const R = (radioEscena / 1.5) * 1.04;
+  return [150 + ((x - centroEscena.x) / R) * 150, 150 - ((z - centroEscena.z) / R) * 150];
+}
+
+function dibujarBaseMapa() {
+  if (!piezasModelo.length) return;
+  const c = lienzoBase.getContext("2d");
+  c.clearRect(0, 0, 300, 300);
+  c.fillStyle = "rgba(13,7,9,.72)";
+  c.beginPath();
+  c.arc(150, 150, 150, 0, Math.PI * 2);
+  c.fill();
+  c.save();
+  c.beginPath();
+  c.arc(150, 150, 150, 0, Math.PI * 2);
+  c.clip();
+
+  piezasModelo.forEach((p) => {
+    const nombre = p.obj.name;
+    let color = null;
+    if (/^(estructura|sala)$/i.test(nombre)) color = "rgba(255,255,255,.7)";
+    else if (/^auditorio$/i.test(nombre)) color = "rgba(232,165,180,.85)";
+    else if (/^maceta\d+$/i.test(nombre)) color = "rgba(120,200,120,.9)";
+    if (!color) return;
+    const [x0, y0] = aMapa(p.caja.min.x, p.caja.max.z);
+    const [x1, y1] = aMapa(p.caja.max.x, p.caja.min.z);
+    c.fillStyle = color;
+    if (/^maceta/i.test(nombre)) {
+      c.beginPath();
+      c.arc((x0 + x1) / 2, (y0 + y1) / 2, 4, 0, Math.PI * 2);
+      c.fill();
+    } else {
+      c.fillRect(x0, y0, x1 - x0, y1 - y0);
+    }
+  });
+
+  c.fillStyle = "rgba(110,190,230,.95)";
+  posicionesFuentes.forEach((f) => {
+    const [x, y] = aMapa(f.x, f.z);
+    c.beginPath();
+    c.arc(x, y, 7, 0, Math.PI * 2);
+    c.fill();
+  });
+  c.restore();
+  c.strokeStyle = "rgba(255,255,255,.35)";
+  c.lineWidth = 2;
+  c.beginPath();
+  c.arc(150, 150, 149, 0, Math.PI * 2);
+  c.stroke();
+}
+
+function dibujarMapa() {
+  if (mapaImg.listo) {
+    dibujarMinimapa();
+    return;
+  }
+  contextoMapa.clearRect(0, 0, 300, 300);
+  contextoMapa.drawImage(lienzoBase, 0, 0);
+  const [x, y] = aMapa(camara.position.x, camara.position.z);
+  const dx = -Math.sin(yaw);
+  const dy = Math.cos(yaw);
+  const angulo = Math.atan2(dy, dx);
+  contextoMapa.save();
+  contextoMapa.translate(x, y);
+  contextoMapa.rotate(angulo);
+  contextoMapa.fillStyle = "#e8a5b4";
+  contextoMapa.strokeStyle = "#7a122e";
+  contextoMapa.lineWidth = 2;
+  contextoMapa.beginPath();
+  contextoMapa.moveTo(13, 0);
+  contextoMapa.lineTo(-8, 8);
+  contextoMapa.lineTo(-4, 0);
+  contextoMapa.lineTo(-8, -8);
+  contextoMapa.closePath();
+  contextoMapa.fill();
+  contextoMapa.stroke();
+  contextoMapa.restore();
+}
+
+const sonido = { ctx: null, ganancia: null, encendido: true };
+
+function iniciarAudio() {
+  if (sonido.ctx) {
+    if (sonido.ctx.state === "suspended") sonido.ctx.resume();
+    return;
+  }
+  const Contexto = window.AudioContext || window.webkitAudioContext;
+  if (!Contexto) return;
+  const ctx = new Contexto();
+  const largo = ctx.sampleRate * 3;
+  const buffer = ctx.createBuffer(1, largo, ctx.sampleRate);
+  const datos = buffer.getChannelData(0);
+  for (let i = 0; i < largo; i++) datos[i] = Math.random() * 2 - 1;
+  const fuente = ctx.createBufferSource();
+  fuente.buffer = buffer;
+  fuente.loop = true;
+  const pasaAltos = ctx.createBiquadFilter();
+  pasaAltos.type = "highpass";
+  pasaAltos.frequency.value = 500;
+  const pasaBanda = ctx.createBiquadFilter();
+  pasaBanda.type = "bandpass";
+  pasaBanda.frequency.value = 2400;
+  pasaBanda.Q.value = 0.4;
+  const ganancia = ctx.createGain();
+  ganancia.gain.value = 0;
+  fuente.connect(pasaAltos);
+  pasaAltos.connect(pasaBanda);
+  pasaBanda.connect(ganancia);
+  ganancia.connect(ctx.destination);
+  fuente.start();
+  sonido.ctx = ctx;
+  sonido.ganancia = ganancia;
+}
+
+function actualizarAudio() {
+  if (!sonido.ctx) return;
+  let distancia = Infinity;
+  posicionesFuentes.forEach((f) => {
+    distancia = Math.min(distancia, Math.hypot(f.x - camara.position.x, f.z - camara.position.z));
+  });
+  const cerca = THREE.MathUtils.clamp(1 - (distancia - 12) / 90, 0, 1);
+  const nivel = activo && sonido.encendido ? 0.35 * cerca * cerca : 0;
+  sonido.ganancia.gain.setTargetAtTime(nivel, sonido.ctx.currentTime, 0.25);
+}
+
+function alternarSonido() {
+  sonido.encendido = !sonido.encendido;
+  botonSonido.textContent = sonido.encendido ? "Sonido" : "Silencio";
+  botonSonido.classList.toggle("activo", !sonido.encendido);
+}
+
+const pantallaVideo = { video: null, plano: null, auditorio: null, lista: [], indice: 0, pausado: false, sinSonido: false };
+
+function crearPantallaVideo(raiz) {
+  const cfg = CONFIG.pantallaVideo;
+  const lista = [].concat(cfg.archivos || []);
+  if (!cfg.activo || !lista.length) return;
+  const pantalla = buscarObjetos(raiz, cfg.objeto).find((obj) => obj.isMesh);
+  if (!pantalla) {
+    console.warn("No se encontró la pantalla del auditorio");
+    return;
+  }
+
+  const caja = new THREE.Box3().setFromObject(pantalla);
+  const c = caja.getCenter(new THREE.Vector3());
+  const t = caja.getSize(new THREE.Vector3());
+  const eje = t.x < t.z ? "x" : "z";
+  const butacas = buscarObjetos(raiz, /^aud_butacas$/i)[0];
+  const publico = butacas ? new THREE.Box3().setFromObject(butacas).getCenter(new THREE.Vector3()) : centroEscena;
+  const lado = Math.sign(publico[eje] - c[eje]) || 1;
+  const ancho = (eje === "z" ? t.x : t.z) * 0.98;
+  const alto = t.y * 0.96;
+
+  const video = document.createElement("video");
+  video.muted = true;
+  video.loop = lista.length === 1;
+  video.playsInline = true;
+  video.setAttribute("playsinline", "");
+  video.preload = "none";
+  video.crossOrigin = "anonymous";
+
+  const textura = new THREE.VideoTexture(video);
+  textura.colorSpace = THREE.SRGBColorSpace;
+  textura.minFilter = THREE.LinearFilter;
+  textura.generateMipmaps = false;
+
+  const plano = new THREE.Mesh(
+    new THREE.PlaneGeometry(1, 1),
+    new THREE.MeshBasicMaterial({ map: textura, toneMapped: false, fog: false })
+  );
+  plano.position.copy(c);
+  plano.position[eje] += lado * (t[eje] / 2 + 0.08);
+  plano.rotation.y = eje === "z" ? (lado > 0 ? 0 : Math.PI) : (lado > 0 ? Math.PI / 2 : -Math.PI / 2);
+  plano.visible = false;
+  plano.renderOrder = 1;
+  escena.add(plano);
+
+  const ajustar = () => {
+    const a = video.videoWidth / video.videoHeight || 16 / 9;
+    const pa = ancho / alto;
+    let w = ancho;
+    let h = alto;
+    textura.repeat.set(1, 1);
+    textura.offset.set(0, 0);
+    if (cfg.ajuste === "contener") {
+      if (a < pa) w = alto * a;
+      else h = ancho / a;
+    } else if (cfg.ajuste === "cubrir") {
+      if (a < pa) textura.repeat.y = a / pa;
+      else textura.repeat.x = pa / a;
+      textura.offset.set((1 - textura.repeat.x) / 2, (1 - textura.repeat.y) / 2);
+    }
+    plano.scale.set(w, h, 1);
+  };
+  video.addEventListener("loadedmetadata", ajustar);
+  video.addEventListener("ended", () => {
+    if (lista.length < 2) return;
+    pantallaVideo.indice = (pantallaVideo.indice + 1) % lista.length;
+    video.src = lista[pantallaVideo.indice];
+    reproducirVideo();
+  });
+  let fallos = 0;
+  video.addEventListener("loadeddata", () => { fallos = 0; });
+  video.addEventListener("error", () => {
+    console.warn("No se pudo cargar el video: " + lista[pantallaVideo.indice]);
+    fallos++;
+    if (lista.length > 1 && fallos < lista.length) {
+      pantallaVideo.indice = (pantallaVideo.indice + 1) % lista.length;
+      video.src = lista[pantallaVideo.indice];
+      reproducirVideo();
+      return;
+    }
+    escena.remove(plano);
+    pantallaVideo.video = null;
+  });
+
+  const cajaAuditorio = buscarObjetos(raiz, /^auditorio$/i)[0];
+  Object.assign(pantallaVideo, {
+    video, plano, lista,
+    auditorio: cajaAuditorio ? new THREE.Box3().setFromObject(cajaAuditorio) : null
+  });
+}
+
+function reproducirVideo() {
+  const v = pantallaVideo.video;
+  if (!v) return;
+  v.muted = !sonido.encendido;
+  const promesa = v.play();
+  if (promesa) {
+    promesa.catch(() => {
+      if (!v.muted) {
+        pantallaVideo.sinSonido = true;
+        v.muted = true;
+        v.play().catch(() => {});
+      }
+    });
+  }
+}
+
+function actualizarPantallaVideo() {
+  const pv = pantallaVideo;
+  const v = pv.video;
+  if (!v) return;
+  const d = camara.position.distanceTo(pv.plano.position);
+  const dentro = pv.auditorio ? pv.auditorio.containsPoint(camara.position) : false;
+  const cerca = activo && (dentro || d < CONFIG.pantallaVideo.distancia);
+  if (!cerca) {
+    if (!v.paused) v.pause();
+    renderer.shadowMap.autoUpdate = true;
+    ajustarResolucion(false);
+    return;
+  }
+  if (!v.getAttribute("src")) {
+    v.preload = "auto";
+    v.src = pv.lista[pv.indice];
+  }
+  const t = performance.now();
+  if (v.paused && !pv.pausado && t - (pv.ultimoIntento || 0) > 1500) {
+    pv.ultimoIntento = t;
+    reproducirVideo();
+  }
+  pv.plano.visible = v.readyState >= 2 && pv.plano.scale.x > 1;
+  const alcance = CONFIG.pantallaVideo.distancia;
+  const volumen = dentro ? 1 - 0.5 * Math.min(1, d / 90) : 0.12 * Math.max(0, 1 - d / alcance);
+  conectarAudioVideo();
+  if (bocinas.activo) {
+    actualizarOyente();
+    const ganancia = ((DATOS.BOCINAS && DATOS.BOCINAS.ganancia) || 2.6) / Math.sqrt(bocinas.posiciones.length);
+    const nivel = !sonido.encendido || pv.sinSonido
+      ? 0
+      : (dentro ? 1 : 0.5 * Math.max(0, 1 - d / alcance)) * CONFIG.pantallaVideo.volumen * ganancia;
+    const t0 = sonido.ctx.currentTime;
+    bocinas.maestro.gain.setTargetAtTime(nivel, t0, 0.15);
+    bocinas.filtro.frequency.setTargetAtTime(dentro ? 20000 : 700, t0, 0.3);
+    if (v.volume !== 1) v.volume = 1;
+    if (v.muted !== pv.sinSonido) v.muted = pv.sinSonido;
+  } else {
+    const vol = Math.round(THREE.MathUtils.clamp(volumen * CONFIG.pantallaVideo.volumen, 0, 1) * 50) / 50;
+    if (Math.abs(v.volume - vol) > 0.001) v.volume = vol;
+    const mudo = !sonido.encendido || pv.sinSonido || vol <= 0;
+    if (v.muted !== mudo) v.muted = mudo;
+  }
+  if (CONFIG.pantallaVideo.ahorro) {
+    renderer.shadowMap.autoUpdate = !dentro;
+    ajustarResolucion(dentro);
+  }
+}
+
+function ajustarResolucion(ligera) {
+  const normal = Math.min(window.devicePixelRatio, esTactil ? 1.5 : 2);
+  const objetivo = ligera ? 1 : normal;
+  if (renderer.getPixelRatio() === objetivo) return;
+  renderer.setPixelRatio(objetivo);
+  ajustarTamano();
+}
+
+renderer.domElement.addEventListener("click", (e) => {
+  const pv = pantallaVideo;
+  if (!pv.video || !activo || !pv.plano.visible) return;
+  const bloqueado = document.pointerLockElement === renderer.domElement;
+  const r = renderer.domElement.getBoundingClientRect();
+  const punto = bloqueado
+    ? new THREE.Vector2(0, 0)
+    : new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  rayo.setFromCamera(punto, camara);
+  rayo.far = 400;
+  if (!rayo.intersectObject(pv.plano, false).length) return;
+  pv.pausado = !pv.pausado;
+  if (pv.pausado) pv.video.pause();
+  else reproducirVideo();
+});
+["pointerdown", "keydown", "touchend"].forEach((evento) => {
+  window.addEventListener(evento, () => {
+    const pv = pantallaVideo;
+    if (pv.video && pv.sinSonido && sonido.encendido) {
+      pv.sinSonido = false;
+      pv.video.muted = false;
+    }
+  }, { passive: true });
+});
+
+const lucesExtra = { halos: [], reales: [], textura: null };
+
+function texturaHalo() {
+  if (lucesExtra.textura) return lucesExtra.textura;
+  const lienzo = document.createElement("canvas");
+  lienzo.width = lienzo.height = 128;
+  const g = lienzo.getContext("2d");
+  const grad = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  grad.addColorStop(0, "rgba(255,244,214,1)");
+  grad.addColorStop(0.25, "rgba(255,226,170,0.55)");
+  grad.addColorStop(0.6, "rgba(255,200,130,0.14)");
+  grad.addColorStop(1, "rgba(255,200,130,0)");
+  g.fillStyle = grad;
+  g.fillRect(0, 0, 128, 128);
+  const textura = new THREE.CanvasTexture(lienzo);
+  textura.colorSpace = THREE.SRGBColorSpace;
+  lucesExtra.textura = textura;
+  return textura;
+}
+
+function agregarHalo(posicion, tamano, base) {
+  const cfg = CONFIG.lucesExtra;
+  if (!cfg.halos || lucesExtra.halos.length >= cfg.maxHalos) return;
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: texturaHalo(),
+    color: cfg.color,
+    transparent: true,
+    opacity: 0,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    toneMapped: false,
+    fog: false
+  }));
+  sprite.position.copy(posicion);
+  sprite.scale.setScalar(tamano);
+  sprite.renderOrder = 4;
+  sprite.visible = false;
+  escena.add(sprite);
+  lucesExtra.halos.push({ sprite, base });
+}
+
+function crearLucesExtra(raiz) {
+  const cfg = CONFIG.lucesExtra;
+  if (!cfg.activo) return;
+
+  piezasModelo
+    .filter((p) => /^(lampara|luces)\d*$/i.test(p.obj.name) || /^luz-led/i.test(p.obj.name))
+    .forEach((p) => {
+      const esLed = /^luz-led/i.test(p.obj.name);
+      centrosDeLuminarias(p.obj).forEach((l) => {
+        const pos = new THREE.Vector3(l.centro.x, l.minY - 0.2, l.centro.z);
+        agregarHalo(pos, cfg.tamanoHalo * (esLed ? 0.6 : 1), esLed ? 0.55 : 0.9);
+        if (esLed || lucesExtra.reales.length >= cfg.maxReales) return;
+        const yaTieneLuz = lamparas.some((luz) => luz.position.distanceTo(pos) < 6) ||
+          lucesExtra.reales.some((luz) => luz.position.distanceTo(pos) < 8);
+        if (yaTieneLuz) return;
+        const luz = new THREE.PointLight(cfg.color, 0, cfg.alcance, 2);
+        luz.position.copy(pos);
+        escena.add(luz);
+        lucesExtra.reales.push(luz);
+      });
+    });
+
+  reflectoresLuz.forEach(({ destello }) => agregarHalo(destello.position, cfg.tamanoHalo * 0.8, 0.9));
+
+  postesLuz.forEach(({ bulbo }) => agregarHalo(bulbo.position, cfg.tamanoHalo * 1.4, 0.9));
+}
+
+function actualizarLucesExtra() {
+  if (!lucesExtra.halos.length && !lucesExtra.reales.length) return;
+  const a = AMBIENTES[ambienteActual];
+  const k = Math.min(1.5, a.lamparas);
+  const cam = camara.position;
+  lucesExtra.halos.forEach(({ sprite, base }) => {
+    sprite.visible = k > 0 && sprite.position.distanceToSquared(cam) < CONFIG.lucesExtra.distanciaHalo ** 2;
+    sprite.material.opacity = base * k;
+  });
+  lucesExtra.reales.forEach((luz) => { luz.intensity = CONFIG.lucesExtra.intensidad * a.lamparas; });
+}
+
+function finalizarCarga() {
+  listo = true;
+  clearInterval(consejoTimer);
+  pantallaCarga.classList.add("oculto");
+  cubierta.classList.remove("oculto");
+}
+
+function construirColisiones() {
+  if (!bvhActivo) return;
+  const hechas = new Set();
+  mallas.concat(solidos).forEach((malla) => {
+    const geometria = malla.geometry;
+    if (!geometria || hechas.has(geometria) || geometria.boundsTree) return;
+    hechas.add(geometria);
+    const posicion = geometria.attributes.position;
+    if (!posicion || posicion.isInterleavedBufferAttribute || posicion.normalized || !(posicion.array instanceof Float32Array)) return;
+    try {
+      geometria.computeBoundsTree();
+    } catch (error) {
+      console.warn("BVH no disponible para " + malla.name, error);
+    }
+  });
+}
+
+let visorVisible = true;
+new IntersectionObserver((entradas) => {
+  visorVisible = entradas[0].isIntersecting;
+}, { threshold: 0 }).observe(visor);
+
+const infoPorId = new Map();
+(DATOS.PUNTOS || []).forEach((p) => infoPorId.set(p.id, p));
+(DATOS.VITRINAS || []).forEach((v) => infoPorId.set(v.id, Object.assign({ etiqueta: "Vitrina" }, v)));
+const objetivosInfo = [];
+
+function registrarMalla(id, malla) {
+  if (!malla || !infoPorId.has(id)) return;
+  malla.userData.infoId = id;
+  objetivosInfo.push(malla);
+}
+
+function registrarObjeto(id, obj) {
+  obj.traverse((malla) => {
+    if (malla.isMesh) registrarMalla(id, malla);
+  });
+}
+
+function registrarPuntosModelo(raiz) {
+  (DATOS.PUNTOS || []).forEach((p) => {
+    if (!p.objeto) return;
+    const patron = new RegExp(p.objeto, "i");
+    buscarObjetos(raiz, patron).forEach((obj) => registrarObjeto(p.id, obj));
+  });
+}
+
+const rayoInfo = new THREE.Raycaster();
+rayoInfo.firstHitOnly = true;
+const centroPantalla = new THREE.Vector2(0, 0);
+
+function apuntar(punto) {
+  if (!objetivosInfo.length) return null;
+  rayoInfo.setFromCamera(punto, camara);
+  rayoInfo.far = 160;
+  const impactos = rayoInfo.intersectObjects(objetivosInfo, false);
+  if (!impactos.length) return null;
+  const impacto = impactos[0];
+  const id = impacto.object.userData.infoId;
+  const info = infoPorId.get(id);
+  if (!info || impacto.distance > (info.distancia || 45)) return null;
+  rayoInfo.far = impacto.distance - 0.08;
+  if (rayoInfo.intersectObjects(mallas, false).length) return null;
+  return { id, info };
+}
+
+function abrirModal(el) {
+  ui.modal = true;
+  teclas.clear();
+  soltarJoystick();
+  el.classList.remove("oculto");
+  sugerencia.classList.add("oculto");
+  botonSentar.classList.add("oculto");
+  if (document.pointerLockElement) document.exitPointerLock();
+}
+
+function cerrarModal(el) {
+  el.classList.add("oculto");
+  if (el === panelInfo) document.getElementById("infoCuerpo").textContent = "";
+  if ([panelInfo, mapaGrande, guia].some((m) => !m.classList.contains("oculto"))) return;
+  ui.modal = false;
+  if (activo && !esTactil) {
+    try {
+      renderer.domElement.requestPointerLock();
+    } catch (error) { /* se reanuda con Continuar */ }
+  }
+}
+
+function cerrarTodosModales() {
+  [panelInfo, mapaGrande, guia].forEach((el) => cerrarModal(el));
+}
+
+function abrirInfo(id) {
+  const info = infoPorId.get(id);
+  if (!info) return;
+  document.getElementById("infoEtiqueta").textContent = info.etiqueta || "";
+  document.getElementById("infoTitulo").textContent = info.titulo || "";
+  const cuerpo = document.getElementById("infoCuerpo");
+  cuerpo.textContent = "";
+  [].concat(info.texto || []).forEach((texto) => {
+    const p = document.createElement("p");
+    p.textContent = texto;
+    cuerpo.appendChild(p);
+  });
+  [].concat(info.imagenes || []).forEach((src) => {
+    const img = document.createElement("img");
+    img.src = src;
+    img.alt = info.titulo || "";
+    img.loading = "lazy";
+    img.onerror = () => img.remove();
+    cuerpo.appendChild(img);
+  });
+  if (info.video) {
+    const video = document.createElement("video");
+    video.src = info.video;
+    video.controls = true;
+    video.playsInline = true;
+    video.preload = "metadata";
+    cuerpo.appendChild(video);
+  }
+  abrirModal(panelInfo);
+}
+
+document.getElementById("cerrarInfo").addEventListener("click", () => cerrarModal(panelInfo));
+document.getElementById("cerrarMapa").addEventListener("click", () => cerrarModal(mapaGrande));
+document.getElementById("cerrarGuia").addEventListener("click", () => cerrarModal(guia));
+[panelInfo, mapaGrande, guia].forEach((el) => {
+  el.addEventListener("click", (e) => {
+    if (e.target === el) cerrarModal(el);
+  });
+});
+
+renderer.domElement.addEventListener("click", () => {
+  if (esTactil || !activo || ui.modal || document.pointerLockElement !== renderer.domElement) return;
+  const a = apuntar(centroPantalla);
+  if (a) abrirInfo(a.id);
+});
+
+let toqueTap = null;
+renderer.domElement.addEventListener("touchstart", (e) => {
+  const t = e.touches.length === 1 ? e.changedTouches[0] : null;
+  toqueTap = t ? { id: t.identifier, x: t.clientX, y: t.clientY, t: performance.now() } : null;
+}, { passive: true });
+renderer.domElement.addEventListener("touchend", (e) => {
+  if (!toqueTap || !activo || ui.modal) return;
+  const t = Array.from(e.changedTouches).find((q) => q.identifier === toqueTap.id);
+  if (!t) return;
+  const corto = performance.now() - toqueTap.t < 400 && Math.hypot(t.clientX - toqueTap.x, t.clientY - toqueTap.y) < 14;
+  toqueTap = null;
+  if (!corto) return;
+  const r = renderer.domElement.getBoundingClientRect();
+  const punto = new THREE.Vector2(((t.clientX - r.left) / r.width) * 2 - 1, -((t.clientY - r.top) / r.height) * 2 + 1);
+  const a = apuntar(punto);
+  if (a) abrirInfo(a.id);
+}, { passive: true });
+
+let ultimoHover = 0;
+function actualizarInteraccion(ahora) {
+  if (!activo) {
+    sugerencia.classList.add("oculto");
+    botonSentar.classList.add("oculto");
+    mira.classList.remove("activa");
+    return;
+  }
+  if (ui.modal) return;
+  if (ahora - ultimoHover < 130) return;
+  ultimoHover = ahora;
+  actualizarAsientoCercano();
+  const a = esTactil ? null : apuntar(centroPantalla);
+  mira.classList.toggle("activa", !!a);
+  let texto = "";
+  if (a) texto = "Clic · " + (a.info.titulo || "Ver información");
+  else if (vuelo.activo) texto = "";
+  else if (sentado) texto = "E · Levantarse";
+  else if (asiento.cercano) texto = "E · Sentarse (fila " + asiento.cercano.fila + " · butaca " + asiento.cercano.butaca + ")";
+  sugerencia.textContent = texto;
+  sugerencia.classList.toggle("oculto", !texto || esTactil);
+  const verBoton = esTactil && !vuelo.activo && (sentado || asiento.cercano);
+  botonSentar.classList.toggle("oculto", !verBoton);
+  if (verBoton) botonSentar.textContent = sentado ? "Levantarse" : "Sentarse";
+}
+
+function guiaVista() {
+  try {
+    return localStorage.getItem("museoGuiaVista") === "1";
+  } catch (error) {
+    return false;
+  }
+}
+
+function construirGuia() {
+  const grid = document.getElementById("guiaGrid");
+  if (grid.childElementCount) return;
+  const tipo = esTactil ? "tactil" : "pc";
+  (DATOS.GUIA || []).filter((i) => i.para === "todos" || i.para === tipo).forEach((i) => {
+    const tarjeta = document.createElement("div");
+    tarjeta.className = "mv-guia-card";
+    tarjeta.innerHTML = '<i class="fa-solid ' + i.icono + '"></i><b></b><span></span>';
+    tarjeta.querySelector("b").textContent = i.titulo;
+    tarjeta.querySelector("span").textContent = i.texto;
+    grid.appendChild(tarjeta);
+  });
+}
+
+function abrirGuia() {
+  construirGuia();
+  abrirModal(guia);
+}
+
+document.getElementById("guiaOk").addEventListener("click", () => {
+  try {
+    localStorage.setItem("museoGuiaVista", "1");
+  } catch (error) { /* sin almacenamiento: se mostrará de nuevo */ }
+  cerrarModal(guia);
+});
+document.getElementById("botonGuia").addEventListener("click", abrirGuia);
+
+const mapaImg = { img: new Image(), listo: false };
+if (DATOS.MAPA) {
+  mapaImg.img.onload = () => { mapaImg.listo = true; };
+  mapaImg.img.src = DATOS.MAPA.imagen;
+}
+
+function aImagen(x, z) {
+  const M = DATOS.MAPA;
+  return [M.a[0] * x + M.b[0] * z + M.c[0], M.a[1] * x + M.b[1] * z + M.c[1]];
+}
+
+function dibujarMinimapa() {
+  const c = contextoMapa;
+  const M = DATOS.MAPA;
+  c.clearRect(0, 0, 300, 300);
+  c.save();
+  c.beginPath();
+  c.arc(150, 150, 149, 0, Math.PI * 2);
+  c.clip();
+  c.fillStyle = "#0d0709";
+  c.fillRect(0, 0, 300, 300);
+  const [px, py] = aImagen(camara.position.x, camara.position.z);
+  const rot = -Math.PI / 2 - Math.atan2(-Math.cos(yaw), -Math.sin(yaw));
+  const zoom = M.zoomMinimapa || 0.75;
+  c.translate(150, 150);
+  c.rotate(rot);
+  c.scale(zoom, zoom);
+  c.translate(-px, -py);
+  c.drawImage(mapaImg.img, 0, 0, M.ancho, M.alto);
+  paradas.forEach((p) => {
+    const [qx, qy] = aImagen(p.x, p.z);
+    c.beginPath();
+    c.arc(qx, qy, 7 / zoom, 0, Math.PI * 2);
+    c.fillStyle = "#7a122e";
+    c.fill();
+    c.lineWidth = 2 / zoom;
+    c.strokeStyle = "#fff";
+    c.stroke();
+  });
+  c.restore();
+
+  c.lineWidth = 3;
+  c.strokeStyle = "rgba(255,255,255,.55)";
+  c.beginPath();
+  c.arc(150, 150, 148, 0, Math.PI * 2);
+  c.stroke();
+
+  c.fillStyle = "#e8a5b4";
+  c.strokeStyle = "#7a122e";
+  c.lineWidth = 2;
+  c.beginPath();
+  c.moveTo(150, 132);
+  c.lineTo(161, 164);
+  c.lineTo(150, 157);
+  c.lineTo(139, 164);
+  c.closePath();
+  c.fill();
+  c.stroke();
+
+  const nx = 150 + Math.sin(rot) * 130;
+  const ny = 150 - Math.cos(rot) * 130;
+  c.beginPath();
+  c.arc(nx, ny, 12, 0, Math.PI * 2);
+  c.fillStyle = "rgba(13,7,9,.8)";
+  c.fill();
+  c.fillStyle = "#fff";
+  c.font = "bold 14px Montserrat, sans-serif";
+  c.textAlign = "center";
+  c.textBaseline = "middle";
+  c.fillText("N", nx, ny + 1);
+}
+
+const canvasMapa = document.getElementById("mapaCanvas");
+const ctxGrande = canvasMapa.getContext("2d");
+let paradaHover = -1;
+
+function dibujarMapaGrande() {
+  const c = ctxGrande;
+  const M = DATOS.MAPA;
+  if (!M) return;
+  const W = canvasMapa.width;
+  const H = canvasMapa.height;
+  const sx = W / M.ancho;
+  const sy = H / M.alto;
+  c.clearRect(0, 0, W, H);
+  if (mapaImg.listo) c.drawImage(mapaImg.img, 0, 0, W, H);
+  else {
+    c.fillStyle = "#1a1014";
+    c.fillRect(0, 0, W, H);
+  }
+  paradas.forEach((p, i) => {
+    const [qx, qy] = aImagen(p.x, p.z);
+    const x = qx * sx;
+    const y = qy * sy;
+    const on = i === paradaHover;
+    c.beginPath();
+    c.arc(x, y, on ? 18 : 14, 0, Math.PI * 2);
+    c.fillStyle = on ? "#e8a5b4" : "#7a122e";
+    c.fill();
+    c.lineWidth = 3;
+    c.strokeStyle = "#fff";
+    c.stroke();
+    c.fillStyle = on ? "#7a122e" : "#fff";
+    c.font = "bold 14px Montserrat, sans-serif";
+    c.textAlign = "center";
+    c.textBaseline = "middle";
+    c.fillText(String(i + 1), x, y + 1);
+  });
+  if (paradaHover >= 0 && paradas[paradaHover]) {
+    const p = paradas[paradaHover];
+    const [qx, qy] = aImagen(p.x, p.z);
+    c.font = "600 18px Montserrat, sans-serif";
+    const w = c.measureText(p.etiqueta).width + 20;
+    const x = Math.max(w / 2 + 4, Math.min(W - w / 2 - 4, qx * sx));
+    const y = Math.max(30, qy * sy - 34);
+    c.fillStyle = "rgba(13,7,9,.88)";
+    c.fillRect(x - w / 2, y - 16, w, 32);
+    c.fillStyle = "#fff";
+    c.textAlign = "center";
+    c.fillText(p.etiqueta, x, y + 1);
+  }
+  const [jx, jy] = aImagen(camara.position.x, camara.position.z);
+  c.save();
+  c.translate(jx * sx, jy * sy);
+  c.rotate(Math.atan2(-Math.cos(yaw), -Math.sin(yaw)) + Math.PI / 2);
+  c.fillStyle = "#ffe08a";
+  c.strokeStyle = "#7a122e";
+  c.lineWidth = 3;
+  c.beginPath();
+  c.moveTo(0, -20);
+  c.lineTo(13, 14);
+  c.lineTo(0, 7);
+  c.lineTo(-13, 14);
+  c.closePath();
+  c.fill();
+  c.stroke();
+  c.restore();
+}
+
+function paradaEnMapa(e) {
+  const M = DATOS.MAPA;
+  const r = canvasMapa.getBoundingClientRect();
+  const mx = (e.clientX - r.left) * (canvasMapa.width / r.width);
+  const my = (e.clientY - r.top) * (canvasMapa.height / r.height);
+  let mejor = -1;
+  let distancia = 26;
+  paradas.forEach((p, i) => {
+    const [qx, qy] = aImagen(p.x, p.z);
+    const d = Math.hypot(qx * (canvasMapa.width / M.ancho) - mx, qy * (canvasMapa.height / M.alto) - my);
+    if (d < distancia) {
+      distancia = d;
+      mejor = i;
+    }
+  });
+  return mejor;
+}
+canvasMapa.addEventListener("mousemove", (e) => { paradaHover = DATOS.MAPA ? paradaEnMapa(e) : -1; });
+canvasMapa.addEventListener("mouseleave", () => { paradaHover = -1; });
+canvasMapa.addEventListener("click", (e) => {
+  if (!DATOS.MAPA) return;
+  const i = paradaEnMapa(e);
+  if (i < 0) return;
+  irA(paradas[i]);
+  entrar();
+});
+
+function alternarMapa() {
+  if (!activo) return;
+  if (mapaGrande.classList.contains("oculto")) abrirModal(mapaGrande);
+  else cerrarModal(mapaGrande);
+}
+document.getElementById("botonMapa").addEventListener("click", alternarMapa);
+
+const asiento = { lista: [], cercano: null, mirarA: null };
+let sentado = null;
+
+function prepararAsientos(raiz) {
+  const A = DATOS.ASIENTOS;
+  const butacas = buscarObjetos(raiz, /^aud_butacas$/i)[0];
+  if (!A || !A.columnasX || !butacas) return;
+  const celdas = new Map();
+  const v = new THREE.Vector3();
+  butacas.updateMatrixWorld(true);
+  butacas.traverse((malla) => {
+    if (!malla.isMesh) return;
+    const atributo = malla.geometry.attributes.position;
+    for (let i = 0; i < atributo.count; i++) {
+      v.fromBufferAttribute(atributo, i).applyMatrix4(malla.matrixWorld);
+      const fila = Math.floor((v.z - A.z0 + 0.2) / A.paso);
+      if (fila < 0 || fila >= A.filas) continue;
+      let col = 0;
+      let mejor = Infinity;
+      for (let k = 0; k < A.columnasX.length; k++) {
+        const d = Math.abs(A.columnasX[k] - v.x);
+        if (d < mejor) {
+          mejor = d;
+          col = k;
+        }
+      }
+      const clave = col * 100 + fila;
+      const celda = celdas.get(clave) || { n: 0, y: Infinity };
+      celda.n++;
+      if (v.y < celda.y) celda.y = v.y;
+      celdas.set(clave, celda);
+    }
+  });
+  celdas.forEach((celda, clave) => {
+    if (celda.n < 20) return;
+    const col = Math.floor(clave / 100);
+    const fila = clave % 100;
+    asiento.lista.push({ x: A.columnasX[col], z: A.z0 + fila * A.paso + A.desplazamiento, y: celda.y, fila: fila + 1, butaca: col + 1 });
+  });
+  const pantalla = buscarObjetos(raiz, /^pantalla$/i)[0];
+  asiento.mirarA = pantalla ? new THREE.Box3().setFromObject(pantalla).getCenter(new THREE.Vector3()) : null;
+}
+
+function actualizarAsientoCercano() {
+  asiento.cercano = null;
+  if (!asiento.lista.length || sentado) return;
+  const p = camara.position;
+  const suelo = p.y - CONFIG.alturaOjos;
+  let distancia = (DATOS.ASIENTOS && DATOS.ASIENTOS.distanciaMaxima) || 3.6;
+  asiento.lista.forEach((s) => {
+    const d = Math.hypot(s.x - p.x, s.z - p.z);
+    if (d < distancia && Math.abs(suelo - s.y) < 3) {
+      distancia = d;
+      asiento.cercano = s;
+    }
+  });
+}
+
+function alternarAsiento() {
+  if (!activo || ui.modal) return;
+  if (sentado) {
+    sentado = null;
+    return;
+  }
+  const s = asiento.cercano;
+  if (!s) return;
+  const m = asiento.mirarA || new THREE.Vector3(s.x, 0, s.z + 50);
+  sentado = {
+    destino: new THREE.Vector3(s.x, s.y + DATOS.ASIENTOS.alturaOjos, s.z),
+    desde: camara.position.clone(),
+    t: 0,
+    yawDestino: Math.atan2(-(m.x - s.x), -(m.z - s.z))
+  };
+}
+
+function actualizarSentado(dt) {
+  const s = sentado;
+  s.t = Math.min(1, s.t + dt / 0.8);
+  const k = s.t * s.t * (3 - 2 * s.t);
+  camara.position.lerpVectors(s.desde, s.destino, k);
+  if (s.t < 1) {
+    let dif = s.yawDestino - yaw;
+    dif = Math.atan2(Math.sin(dif), Math.cos(dif));
+    yaw += dif * Math.min(1, dt * 4);
+    pitch += (0.04 - pitch) * Math.min(1, dt * 4);
+  } else {
+    const mueve = ["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].some((t) => teclas.has(t));
+    if (mueve || Math.hypot(joy.x, joy.y) > 0.5) sentado = null;
+  }
+}
+botonSentar.addEventListener("click", alternarAsiento);
+
+const bocinas = { posiciones: [], listo: false, activo: false, maestro: null, filtro: null };
+const vecFrente = new THREE.Vector3();
+const vecArriba = new THREE.Vector3();
+
+function prepararBocinas(raiz) {
+  const cfg = DATOS.BOCINAS || {};
+  const patron = new RegExp(cfg.objeto || "bocina|altavoz|parlante|speaker", "i");
+  const objetos = buscarObjetos(raiz, patron).filter((o) => !(o.parent && patron.test(o.parent.name)));
+  const posiciones = [];
+  objetos.forEach((o) => centrosDeLuminarias(o, 2).forEach((l) => posiciones.push(l.centro.clone())));
+  if (posiciones.length > 8) posiciones.length = 8;
+  if (!posiciones.length) {
+    const pantalla = buscarObjetos(raiz, /^pantalla$/i)[0];
+    if (pantalla) {
+      const caja = new THREE.Box3().setFromObject(pantalla);
+      const y = (caja.min.y + caja.max.y) / 2;
+      posiciones.push(new THREE.Vector3(caja.min.x + 3, y, caja.min.z - 3), new THREE.Vector3(caja.max.x - 3, y, caja.min.z - 3));
+    }
+  }
+  bocinas.posiciones = posiciones;
+}
+
+function conectarAudioVideo() {
+  if (bocinas.listo || !sonido.ctx || !pantallaVideo.video || !bocinas.posiciones.length) return;
+  bocinas.listo = true;
+  try {
+    const ctx = sonido.ctx;
+    const fuente = ctx.createMediaElementSource(pantallaVideo.video);
+    const mono = ctx.createGain();
+    mono.channelCount = 1;
+    mono.channelCountMode = "explicit";
+    mono.channelInterpretation = "speakers";
+    const filtro = ctx.createBiquadFilter();
+    filtro.type = "lowpass";
+    filtro.frequency.value = 20000;
+    const maestro = ctx.createGain();
+    maestro.gain.value = 0;
+    fuente.connect(mono);
+    bocinas.posiciones.forEach((p) => {
+      const panner = ctx.createPanner();
+      panner.panningModel = "HRTF";
+      panner.distanceModel = "inverse";
+      panner.refDistance = (DATOS.BOCINAS && DATOS.BOCINAS.distanciaReferencia) || 14;
+      panner.rolloffFactor = 1;
+      panner.maxDistance = 600;
+      if (panner.positionX) {
+        panner.positionX.value = p.x;
+        panner.positionY.value = p.y;
+        panner.positionZ.value = p.z;
+      } else panner.setPosition(p.x, p.y, p.z);
+      mono.connect(panner);
+      panner.connect(filtro);
+    });
+    filtro.connect(maestro);
+    maestro.connect(ctx.destination);
+    bocinas.maestro = maestro;
+    bocinas.filtro = filtro;
+    bocinas.activo = true;
+  } catch (error) {
+    console.warn("Audio espacial no disponible", error);
+    bocinas.activo = false;
+  }
+}
+
+function actualizarOyente() {
+  const L = sonido.ctx.listener;
+  const p = camara.position;
+  vecFrente.set(0, 0, -1).applyQuaternion(camara.quaternion);
+  vecArriba.set(0, 1, 0).applyQuaternion(camara.quaternion);
+  if (L.positionX) {
+    L.positionX.value = p.x;
+    L.positionY.value = p.y;
+    L.positionZ.value = p.z;
+    L.forwardX.value = vecFrente.x;
+    L.forwardY.value = vecFrente.y;
+    L.forwardZ.value = vecFrente.z;
+    L.upX.value = vecArriba.x;
+    L.upY.value = vecArriba.y;
+    L.upZ.value = vecArriba.z;
+  } else {
+    L.setPosition(p.x, p.y, p.z);
+    L.setOrientation(vecFrente.x, vecFrente.y, vecFrente.z, vecArriba.x, vecArriba.y, vecArriba.z);
+  }
+}
+
+function matOro() { return new THREE.MeshStandardMaterial({ color: 0xd4a437, metalness: 1, roughness: 0.28 }); }
+function matAcero() { return new THREE.MeshStandardMaterial({ color: 0xb9bec7, metalness: 0.9, roughness: 0.3 }); }
+function matColor(c, rug = 0.6, met = 0.05) { return new THREE.MeshStandardMaterial({ color: c, roughness: rug, metalness: met }); }
+function matLuz(c) { return new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 1.6 }); }
+
+function caja(w, h, d, material, x = 0, y = 0, z = 0) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
+  m.position.set(x, y, z);
+  return m;
+}
+
+function crearPieza(tipo) {
+  const g = new THREE.Group();
+  if (tipo === "trofeo") {
+    const perfil = [[0.001, 0], [0.55, 0], [0.55, 0.12], [0.35, 0.2], [0.35, 0.32], [0.14, 0.42], [0.14, 1.0], [0.5, 1.25], [0.78, 1.75], [0.7, 1.95], [0.55, 1.9]]
+      .map(([x, y]) => new THREE.Vector2(x, y));
+    const copa = new THREE.Mesh(new THREE.LatheGeometry(perfil, 28), matOro());
+    copa.material.side = THREE.DoubleSide;
+    g.add(copa);
+    [-1, 1].forEach((lado) => {
+      const asa = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.05, 8, 16, Math.PI), matOro());
+      asa.position.set(lado * 0.72, 1.5, 0);
+      asa.rotation.z = lado > 0 ? -Math.PI / 2 : Math.PI / 2;
+      g.add(asa);
+    });
+  } else if (tipo === "medalla") {
+    g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.8, 0.14, 24), matColor(0x2a1a14, 0.5, 0.2)));
+    const varilla = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.1, 8), matAcero());
+    varilla.position.set(0, 0.65, -0.1);
+    g.add(varilla);
+    const disco = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.46, 0.08, 32), matOro());
+    disco.rotation.x = Math.PI / 2;
+    disco.position.set(0, 0.95, 0.02);
+    g.add(disco);
+    const cinta = caja(0.22, 0.6, 0.03, matColor(0xb01c3c), 0, 1.55, 0);
+    g.add(cinta);
+  } else if (tipo === "prototipo") {
+    [[-0.75, -0.45], [0.75, -0.45], [-0.75, 0.45], [0.75, 0.45]].forEach(([x, z]) => g.add(caja(0.08, 0.2, 0.08, matAcero(), x, 0.1, z)));
+    g.add(caja(1.9, 0.07, 1.25, matColor(0x1d7a3a, 0.5, 0.1), 0, 0.23, 0));
+    [[-0.5, 0.25], [0.35, -0.2], [0.5, 0.3]].forEach(([x, z], i) => g.add(caja(0.4, 0.1, 0.4, matColor(0x15151a, 0.4), x, 0.32, z + (i ? 0 : 0))));
+    [[0.1, 0.4], [-0.2, -0.35], [0.8, -0.35]].forEach(([x, z], i) => {
+      const led = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), matLuz(i % 2 ? 0x30ff7a : 0xff3b3b));
+      led.position.set(x, 0.31, z);
+      g.add(led);
+    });
+    [[-0.85, -0.3], [-0.85, 0.0]].forEach(([x, z]) => {
+      const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.22, 12), matAcero());
+      cap.position.set(x, 0.38, z);
+      g.add(cap);
+    });
+  } else if (tipo === "robot") {
+    g.add(caja(0.9, 0.8, 0.6, matAcero(), 0, 0.75, 0));
+    g.add(caja(0.6, 0.45, 0.5, matColor(0xe9edf2, 0.4, 0.2), 0, 1.38, 0));
+    [-0.15, 0.15].forEach((x) => {
+      const ojo = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), matLuz(0x40e0ff));
+      ojo.position.set(x, 1.4, 0.26);
+      g.add(ojo);
+    });
+    const antena = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.3, 6), matAcero());
+    antena.position.set(0, 1.76, 0);
+    g.add(antena);
+    const punta = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), matLuz(0xff3b3b));
+    punta.position.set(0, 1.94, 0);
+    g.add(punta);
+    [-1, 1].forEach((lado) => {
+      const brazo = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.7, 10), matAcero());
+      brazo.position.set(lado * 0.58, 0.75, 0);
+      g.add(brazo);
+      const rueda = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.14, 18), matColor(0x1a1a1f, 0.8));
+      rueda.rotation.z = Math.PI / 2;
+      rueda.position.set(lado * 0.5, 0.22, 0);
+      g.add(rueda);
+    });
+  } else if (tipo === "engrane") {
+    g.add(caja(1.1, 0.1, 0.8, matColor(0x2a1a14, 0.5, 0.2), 0, 0.05, 0));
+    const cuerpo = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.18, 28), matAcero());
+    cuerpo.rotation.x = Math.PI / 2;
+    cuerpo.position.set(0, 0.85, 0);
+    g.add(cuerpo);
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2;
+      const diente = caja(0.18, 0.22, 0.18, matAcero(), Math.cos(a) * 0.62, 0.85 + Math.sin(a) * 0.62, 0);
+      diente.rotation.z = a;
+      g.add(diente);
+    }
+    const eje = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.24, 14), matOro());
+    eje.rotation.x = Math.PI / 2;
+    eje.position.set(0, 0.85, 0);
+    g.add(eje);
+  } else if (tipo === "libro") {
+    g.add(caja(1.3, 0.2, 0.95, matColor(0x7a122e), 0, 0.1, 0));
+    const b = caja(1.2, 0.18, 0.9, matColor(0x23406e), 0, 0.29, 0);
+    b.rotation.y = 0.2;
+    g.add(b);
+    const c = caja(1.1, 0.16, 0.8, matColor(0xe8dfc8), 0, 0.46, 0);
+    c.rotation.y = -0.15;
+    g.add(c);
+  }
+  g.traverse((m) => { if (m.isMesh) m.castShadow = false; });
+  return g;
+}
+
+function texturaTexto(ancho, alto, dibujar) {
+  const lienzo = document.createElement("canvas");
+  lienzo.width = ancho;
+  lienzo.height = alto;
+  const textura = new THREE.CanvasTexture(lienzo);
+  textura.colorSpace = THREE.SRGBColorSpace;
+  textura.anisotropy = 8;
+  const pintar = () => {
+    dibujar(lienzo.getContext("2d"), ancho, alto);
+    textura.needsUpdate = true;
+  };
+  pintar();
+  if (document.fonts && document.fonts.load) document.fonts.load("700 40px Montserrat").then(pintar).catch(() => {});
+  return textura;
+}
+
+function ajustarTexto(c, texto, x, y, maxAncho, interlinea) {
+  const palabras = String(texto).split(" ");
+  let linea = "";
+  palabras.forEach((p) => {
+    const prueba = linea ? linea + " " + p : p;
+    if (c.measureText(prueba).width > maxAncho && linea) {
+      c.fillText(linea, x, y);
+      linea = p;
+      y += interlinea;
+    } else linea = prueba;
+  });
+  c.fillText(linea, x, y);
+  return y + interlinea;
+}
+
+function crearVitrina(cfg) {
+  const W = cfg.ancho || 4.6;
+  const H0 = 2.4;
+  const H1 = cfg.alto || 4.8;
+  const grupo = new THREE.Group();
+  const suelo = alturaSuelo(cfg.x, 10, cfg.z, 20);
+  grupo.position.set(cfg.x, suelo !== null ? suelo : 0, cfg.z);
+  grupo.rotation.y = cfg.giro || 0;
+
+  const madera = matColor(0x3a0f1a, 0.55, 0.1);
+  grupo.add(caja(W + 0.4, H0, W + 0.4, madera, 0, H0 / 2, 0));
+  grupo.add(caja(W + 0.55, 0.1, W + 0.55, matColor(0xe8dfc8, 0.4, 0.2), 0, H0 + 0.05, 0));
+
+  const yVidrio = H0 + 0.1;
+  const vidrio = new THREE.Mesh(
+    new THREE.BoxGeometry(W, H1, W),
+    new THREE.MeshStandardMaterial({ color: 0xdff0ff, transparent: true, opacity: 0.14, roughness: 0.05, metalness: 0, side: THREE.DoubleSide, depthWrite: false })
+  );
+  vidrio.position.y = yVidrio + H1 / 2;
+  vidrio.renderOrder = 2;
+  grupo.add(vidrio);
+
+  const marco = matAcero();
+  [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sz]) => grupo.add(caja(0.12, H1, 0.12, marco, sx * W / 2, yVidrio + H1 / 2, sz * W / 2)));
+  grupo.add(caja(W + 0.12, 0.14, W + 0.12, marco, 0, yVidrio + H1 + 0.07, 0));
+  const lampara = new THREE.Mesh(new THREE.PlaneGeometry(W * 0.8, W * 0.8), new THREE.MeshBasicMaterial({ color: 0xfff4dc, toneMapped: false, side: THREE.DoubleSide }));
+  lampara.rotation.x = Math.PI / 2;
+  lampara.position.y = yVidrio + H1 - 0.02;
+  grupo.add(lampara);
+
+  const piezas = cfg.contenido || [];
+  piezas.forEach((tipo, i) => {
+    const pieza = crearPieza(tipo);
+    const x = piezas.length === 1 ? 0 : -W * 0.3 + (i * W * 0.6) / (piezas.length - 1);
+    pieza.position.set(x, yVidrio, 0);
+    pieza.scale.setScalar(0.85);
+    grupo.add(pieza);
+  });
+  (cfg.modelos || []).forEach((archivo, i, lista) => {
+    cargador.load(archivo, (gltf) => {
+      const cajaModelo = new THREE.Box3().setFromObject(gltf.scene);
+      const tam = cajaModelo.getSize(new THREE.Vector3());
+      const factor = Math.min(W * 0.5 / Math.max(tam.x, tam.z, 0.001), 2.4 / Math.max(tam.y, 0.001));
+      gltf.scene.scale.setScalar(factor);
+      const c2 = new THREE.Box3().setFromObject(gltf.scene);
+      const centro = c2.getCenter(new THREE.Vector3());
+      const x = lista.length === 1 ? 0 : -W * 0.3 + (i * W * 0.6) / (lista.length - 1);
+      gltf.scene.position.set(x - centro.x, yVidrio - c2.min.y, -centro.z);
+      grupo.add(gltf.scene);
+      registrarObjeto(cfg.id, gltf.scene);
+    }, undefined, () => console.warn("No se encontró " + archivo));
+  });
+
+  const letrero = new THREE.Mesh(
+    new THREE.PlaneGeometry(W * 0.8, 0.9),
+    new THREE.MeshStandardMaterial({
+      map: texturaTexto(768, 216, (c, w, h) => {
+        c.fillStyle = "#c9a24a";
+        c.fillRect(0, 0, w, h);
+        c.fillStyle = "#1d0a10";
+        c.fillRect(8, 8, w - 16, h - 16);
+        c.fillStyle = "#e8d9a8";
+        c.textAlign = "center";
+        c.textBaseline = "middle";
+        c.font = "700 64px Montserrat, sans-serif";
+        c.fillText(String(cfg.titulo || "").toUpperCase(), w / 2, h / 2);
+      }),
+      roughness: 0.5,
+      metalness: 0.3
+    })
+  );
+  letrero.position.set(0, H0 * 0.5, (W + 0.4) / 2 + 0.01);
+  grupo.add(letrero);
+
+  escena.add(grupo);
+  grupo.updateMatrixWorld(true);
+  registrarObjeto(cfg.id, grupo);
+
+  const bloqueo = new THREE.Mesh(new THREE.BoxGeometry(W + 0.7, 8, W + 0.7), new THREE.MeshBasicMaterial({ visible: false }));
+  bloqueo.position.set(cfg.x, (suelo || 0) + 4, cfg.z);
+  bloqueo.rotation.y = cfg.giro || 0;
+  escena.add(bloqueo);
+  bloqueo.updateMatrixWorld(true);
+  solidos.push(bloqueo);
+}
+
+function crearPlacaPantera(raiz) {
+  const cfg = DATOS.PLACA_PANTERA;
+  if (!cfg || !cfg.activo) return;
+  const patron = new RegExp(cfg.objeto, "i");
+  const pedestal = buscarObjetos(raiz, patron).find((o) => o.isMesh) || buscarObjetos(raiz, patron)[0];
+  if (!pedestal) return;
+  const cajaPedestal = new THREE.Box3().setFromObject(pedestal);
+  const centro = cajaPedestal.getCenter(new THREE.Vector3());
+  const tam = cajaPedestal.getSize(new THREE.Vector3());
+
+  let hacia = null;
+  let mejor = Infinity;
+  buscarObjetos(raiz, /^parada_\d+$/i).forEach((o) => {
+    const p = o.getWorldPosition(new THREE.Vector3());
+    const d = Math.hypot(p.x - centro.x, p.z - centro.z);
+    if (d < mejor) {
+      mejor = d;
+      hacia = p;
+    }
+  });
+  const dx = hacia ? hacia.x - centro.x : 1;
+  const dz = hacia ? hacia.z - centro.z : 0;
+  const enX = Math.abs(dx) / (tam.x / 2) > Math.abs(dz) / (tam.z / 2);
+  const normal = enX ? new THREE.Vector3(Math.sign(dx) || 1, 0, 0) : new THREE.Vector3(0, 0, Math.sign(dz) || 1);
+  const mitad = enX ? tam.x / 2 : tam.z / 2;
+  const y = Math.min(cfg.altura, cajaPedestal.max.y - cfg.alto / 2 - 0.1);
+
+  const grupo = new THREE.Group();
+  grupo.position.set(centro.x + normal.x * (mitad + 0.05), y, centro.z + normal.z * (mitad + 0.05));
+  grupo.rotation.y = Math.atan2(normal.x, normal.z);
+
+  const marco = new THREE.Mesh(new THREE.BoxGeometry(cfg.ancho + 0.35, cfg.alto + 0.35, 0.12), new THREE.MeshStandardMaterial({ color: 0xc9a24a, metalness: 1, roughness: 0.3 }));
+  marco.position.z = 0.02;
+  grupo.add(marco);
+  const lienzoAlto = Math.round(1024 * cfg.alto / cfg.ancho);
+  const placa = new THREE.Mesh(
+    new THREE.PlaneGeometry(cfg.ancho, cfg.alto),
+    new THREE.MeshStandardMaterial({
+      map: texturaTexto(1024, lienzoAlto, (c, w, h) => {
+        const g = c.createLinearGradient(0, 0, w, h);
+        g.addColorStop(0, "#2a1810");
+        g.addColorStop(1, "#4a2f1a");
+        c.fillStyle = g;
+        c.fillRect(0, 0, w, h);
+        c.strokeStyle = "#d9b659";
+        c.lineWidth = 6;
+        c.strokeRect(22, 22, w - 44, h - 44);
+        c.textAlign = "center";
+        c.textBaseline = "middle";
+        c.fillStyle = "#f0d684";
+        c.font = "700 " + Math.round(h * 0.22) + "px Montserrat, sans-serif";
+        c.fillText(cfg.titulo, w / 2, h * 0.24);
+        c.fillStyle = "#e8d9b0";
+        c.font = "500 " + Math.round(h * 0.09) + "px Montserrat, sans-serif";
+        c.fillText(cfg.subtitulo, w / 2, h * 0.42);
+        c.fillStyle = "#d9b659";
+        c.fillRect(w * 0.3, h * 0.5, w * 0.4, 3);
+        c.fillStyle = "#f4ecd2";
+        c.font = "400 " + Math.round(h * 0.075) + "px Montserrat, sans-serif";
+        (cfg.lineas || []).forEach((l, i) => c.fillText(l, w / 2, h * (0.62 + i * 0.12)));
+      }),
+      emissive: 0xffffff,
+      roughness: 0.45,
+      metalness: 0.35
+    })
+  );
+  placa.material.emissiveMap = placa.material.map;
+  placa.material.emissiveIntensity = 0.3;
+  placa.position.z = 0.1;
+  grupo.add(placa);
+  escena.add(grupo);
+  registrarMalla(cfg.infoId, placa);
+  registrarMalla(cfg.infoId, marco);
+}
+
+function crearGaleria(cfg) {
+  if (!cfg.activo || !(cfg.imagenes || []).length) return;
+  const lector = new THREE.TextureLoader();
+  Promise.all(cfg.imagenes.map((img, i) => new Promise((resolver) => {
+    lector.load(img.archivo, (textura) => resolver({ img, i, textura }), undefined, () => {
+      console.warn("No se encontró " + img.archivo);
+      resolver(null);
+    });
+  }))).then((resultado) => {
+    const cargadas = resultado.filter(Boolean);
+    if (!cargadas.length) return;
+    const a = new THREE.Vector3(cfg.desde[0], 0, cfg.desde[1]);
+    const b = new THREE.Vector3(cfg.hasta[0], 0, cfg.hasta[1]);
+    const largoPared = a.distanceTo(b);
+    const dir = b.clone().sub(a).normalize();
+    const lado = cfg.lado || 1;
+    const normal = new THREE.Vector3(dir.z * lado, 0, -dir.x * lado);
+    const sep = cfg.separacion || 1.2;
+    const anchos = cargadas.map((c) => cfg.alto * (c.textura.image.width / c.textura.image.height));
+    let total = anchos.reduce((s, w) => s + w, 0) + sep * (cargadas.length - 1);
+    const factor = total > largoPared ? largoPared / total : 1;
+    total *= factor;
+    let cursor = (largoPared - total) / 2;
+    cargadas.forEach((c, k) => {
+      const w = anchos[k] * factor;
+      const h = cfg.alto * factor;
+      c.textura.colorSpace = THREE.SRGBColorSpace;
+      c.textura.anisotropy = 8;
+      const grupo = new THREE.Group();
+      const marco = new THREE.Mesh(new THREE.BoxGeometry(w + 0.3, h + 0.3, 0.1), matColor(0x1d0a10, 0.5, 0.2));
+      marco.position.z = 0.02;
+      const foto = new THREE.Mesh(
+        new THREE.PlaneGeometry(w, h),
+        new THREE.MeshStandardMaterial({ map: c.textura, emissive: 0xffffff, emissiveMap: c.textura, emissiveIntensity: 0.35, roughness: 0.8 })
+      );
+      foto.position.z = 0.08;
+      grupo.add(marco, foto);
+      const centro = a.clone().addScaledVector(dir, cursor + w / 2).addScaledVector(normal, 0.12);
+      grupo.position.set(centro.x, cfg.y, centro.z);
+      grupo.rotation.y = Math.atan2(normal.x, normal.z);
+      escena.add(grupo);
+      const id = cfg.id + "_" + c.i;
+      infoPorId.set(id, { etiqueta: "Galería", titulo: c.img.titulo, texto: c.img.texto, imagenes: [c.img.archivo], distancia: cfg.distancia || 45 });
+      registrarMalla(id, foto);
+      registrarMalla(id, marco);
+      cursor += w + sep * factor;
+    });
+  });
+}
+
+function crearExtrasMuseo(raiz) {
+  crearPlacaPantera(raiz);
+  (DATOS.VITRINAS || []).forEach((v) => crearVitrina(v));
+  (DATOS.GALERIAS || []).forEach((g) => crearGaleria(g));
+}
+
+const vuelo = { activo: false, vel: new THREE.Vector3(), escala: 1, subir: false, bajar: false, aterrizaY: null };
+const vueloDir = new THREE.Vector3();
+const vueloObjetivo = new THREE.Vector3();
+const badgeVuelo = document.getElementById("badgeVuelo");
+const botonVuelo = document.getElementById("botonVuelo");
+
+function textoVuelo() {
+  badgeVuelo.textContent = "Cámara libre · velocidad ×" + vuelo.escala.toFixed(1) + (esTactil ? "" : " · F para salir");
+}
+
+function marcarVueloUI() {
+  visor.classList.toggle("vuelo", vuelo.activo);
+  botonVuelo.classList.toggle("activo", vuelo.activo);
+  badgeVuelo.classList.toggle("oculto", !vuelo.activo);
+  if (vuelo.activo) textoVuelo();
+}
+
+function apagarVuelo() {
+  vuelo.activo = false;
+  vuelo.subir = false;
+  vuelo.bajar = false;
+  vuelo.aterrizaY = null;
+  marcarVueloUI();
+}
+
+function alternarVuelo() {
+  if (!activo || ui.modal) return;
+  if (!vuelo.activo) {
+    sentado = null;
+    vuelo.aterrizaY = null;
+    vuelo.vel.set(0, 0, 0);
+    vuelo.activo = true;
+    marcarVueloUI();
+    return;
+  }
+  vuelo.activo = false;
+  vuelo.subir = false;
+  vuelo.bajar = false;
+  const p = camara.position;
+  const suelo = alturaSuelo(p.x, p.y, p.z, 3000);
+  vuelo.aterrizaY = (suelo !== null ? suelo : CONFIG.inicio.y) + CONFIG.alturaOjos;
+  marcarVueloUI();
+}
+
+function actualizarVuelo(dt) {
+  const c = CONFIG.vuelo;
+  let f = 0;
+  let l = 0;
+  let u = 0;
+  if (teclas.has("KeyW") || teclas.has("ArrowUp")) f += 1;
+  if (teclas.has("KeyS") || teclas.has("ArrowDown")) f -= 1;
+  if (teclas.has("KeyD") || teclas.has("ArrowRight")) l += 1;
+  if (teclas.has("KeyA") || teclas.has("ArrowLeft")) l -= 1;
+  f += -joy.y;
+  l += joy.x;
+  if (teclas.has("Space") || teclas.has("KeyE") || vuelo.subir) u += 1;
+  if (teclas.has("KeyC") || teclas.has("KeyQ") || vuelo.bajar) u -= 1;
+  const turbo = teclas.has("ShiftLeft") || teclas.has("ShiftRight") ? c.turbo : 1;
+  const cp = Math.cos(pitch);
+  vueloDir.set(
+    -Math.sin(yaw) * cp * f + Math.cos(yaw) * l,
+    Math.sin(pitch) * f + u,
+    -Math.cos(yaw) * cp * f - Math.sin(yaw) * l
+  );
+  if (vueloDir.lengthSq() > 1) vueloDir.normalize();
+  vueloObjetivo.copy(vueloDir).multiplyScalar(c.velocidad * vuelo.escala * turbo);
+  vuelo.vel.lerp(vueloObjetivo, 1 - Math.exp(-dt * c.suavidad));
+  camara.position.addScaledVector(vuelo.vel, dt);
+  camara.position.y = THREE.MathUtils.clamp(camara.position.y, c.alturaMin, c.alturaMax);
+}
+
+function actualizarAterrizaje(dt) {
+  const p = camara.position;
+  p.y += (vuelo.aterrizaY - p.y) * Math.min(1, dt * 5);
+  if (Math.abs(vuelo.aterrizaY - p.y) < 0.05) {
+    p.y = vuelo.aterrizaY;
+    vuelo.aterrizaY = null;
+  }
+}
+
+window.addEventListener("wheel", (e) => {
+  if (!vuelo.activo || !activo || ui.modal) return;
+  e.preventDefault();
+  vuelo.escala = THREE.MathUtils.clamp(vuelo.escala * (e.deltaY < 0 ? 1.15 : 1 / 1.15), 0.2, 8);
+  textoVuelo();
+}, { passive: false });
+
+botonVuelo.addEventListener("click", alternarVuelo);
+[["botonSubir", "subir"], ["botonBajar", "bajar"]].forEach(([id, clave]) => {
+  const b = document.getElementById(id);
+  const activar = (e) => { e.preventDefault(); vuelo[clave] = true; };
+  const soltar = () => { vuelo[clave] = false; };
+  b.addEventListener("pointerdown", activar);
+  ["pointerup", "pointercancel", "pointerleave"].forEach((ev) => b.addEventListener(ev, soltar));
+});
+
+let anterior = performance.now();
+const tamanoBuffer = new THREE.Vector2();
+
+function animar(ahora) {
+  const dt = Math.min((ahora - anterior) / 1000, 0.1);
+  anterior = ahora;
+  if (document.hidden || (!visorVisible && !visor.classList.contains("inmersivo"))) {
+    if (pantallaVideo.video && !pantallaVideo.video.paused) pantallaVideo.video.pause();
+    requestAnimationFrame(animar);
+    return;
+  }
+  const segundos = ahora / 1000;
+  if (activo && listo && !ui.modal) {
+    if (vuelo.activo) actualizarVuelo(dt);
+    else if (vuelo.aterrizaY !== null) actualizarAterrizaje(dt);
+    else if (sentado) actualizarSentado(dt);
+    else mover(dt);
+  }
+
+  cielo.position.copy(camara.position);
+  materialCielo.uniforms.tiempo.value = segundos;
+  uViento.value = segundos;
+  posicionarSol(camara.position);
+
+  renderer.getDrawingBufferSize(tamanoBuffer);
+  const factorPx = tamanoBuffer.y / (2 * Math.tan(THREE.MathUtils.degToRad(camara.fov) / 2));
+  materialesFuente.forEach((material) => {
+    material.uniforms.tiempo.value = segundos;
+    if (material.uniforms.factorPx) material.uniforms.factorPx.value = factorPx;
+  });
+
+  camara.rotation.set(pitch, yaw, 0);
+  renderer.render(escena, camara);
+  if (visor.classList.contains("inmersivo")) dibujarMapa();
+  actualizarAudio();
+  actualizarPantallaVideo();
+  actualizarLucesExtra();
+  actualizarInteraccion(ahora);
+  if (!mapaGrande.classList.contains("oculto")) dibujarMapaGrande();
+  requestAnimationFrame(animar);
+}
+requestAnimationFrame(animar);
+
+const ADMIN_ACTIVO = new URLSearchParams(location.search).has("admin") || location.hash === "#admin";
+const admin = { abierto: false, puntos: [], seleccion: null, caja: null, ambiente: null, bucle: false };
+
+function iniciarAdmin() {
+  const estilo = document.createElement("style");
+  estilo.textContent = `
+    #panelAdmin{position:absolute;z-index:40;left:max(.9rem,env(safe-area-inset-left));top:4.4rem;width:min(20.5rem,92vw);max-height:calc(100% - 6rem);overflow-y:auto;padding:.7rem .8rem;background:rgba(13,7,9,.92);border:1px solid rgba(232,165,180,.6);font-size:.68rem;line-height:1.55;color:#fff;-webkit-user-select:text;user-select:text;touch-action:pan-y}
+    #panelAdmin details{border-top:1px solid rgba(255,255,255,.16);margin-top:.4rem}
+    #panelAdmin summary{cursor:pointer;font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:.6rem;color:#e8a5b4;padding:.4rem 0}
+    #panelAdmin pre,#panelAdmin .adm-txt{margin:0 0 .4rem;white-space:pre-wrap;word-break:break-word;font:inherit;color:rgba(255,255,255,.88)}
+    #panelAdmin button{background:rgba(122,18,46,.85);color:#fff;border:1px solid rgba(255,255,255,.3);padding:.35rem .6rem;font:inherit;font-size:.62rem;cursor:pointer}
+    #panelAdmin button:hover{background:#a01a40}
+    #panelAdmin input[type=text]{flex:1;min-width:0;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.3);padding:.3rem .45rem;font:inherit}
+    .adm-fila{display:flex;flex-wrap:wrap;gap:.35rem;margin:.35rem 0}
+    .adm-ctl{display:grid;grid-template-columns:1fr auto;gap:0 .5rem;margin:.25rem 0}
+    .adm-ctl input{grid-column:1/3;width:100%;accent-color:#e8a5b4}
+    .adm-ctl output{color:#e8a5b4}
+  `;
+  document.head.appendChild(estilo);
+
+  const panel = document.createElement("div");
+  panel.id = "panelAdmin";
+  panel.className = "oculto";
+  panel.innerHTML = `
+    <b style="letter-spacing:.2em">ADMIN</b> <span style="opacity:.6">· P cierra · arrastra para mirar</span>
+    <details open><summary>Posición</summary>
+      <pre id="admPos"></pre>
+      <div class="adm-fila"><button type="button" id="admCopiar">Copiar punto</button><button type="button" id="admGuardar">+ Guardar</button><button type="button" id="admLista">Copiar lista</button><span id="admN" style="align-self:center;opacity:.7">0 guardados</span></div>
+      <div class="adm-fila"><input type="text" id="admIr" placeholder="x y z   ó   x z" autocomplete="off"><button type="button" id="admIrBtn">Ir</button></div>
+    </details>
+    <details open><summary>Inspector · clic en un objeto</summary>
+      <div class="adm-txt" id="admSel">Haz clic en cualquier objeto del museo.</div>
+      <div class="adm-fila oculto" id="admSelBotones"><button type="button" id="admCopiarNombre">Copiar nombre</button><button type="button" id="admCopiarGolpe">Copiar punto</button></div>
+      <div class="adm-txt" style="opacity:.55">Three.js quita puntos y espacios de los nombres: "estructura.003" se ve como "estructura003".</div>
+    </details>
+    <details open><summary>Rendimiento</summary><pre id="admStats">midiendo…</pre></details>
+    <details><summary>Iluminación en vivo</summary>
+      <div class="adm-txt" id="admAmb" style="color:#e8a5b4"></div>
+      <div id="admLuz"></div>
+      <label class="adm-ctl"><span>Color de la niebla</span><input type="color" id="admNiebla" style="height:1.6rem;padding:0;border:0;background:none"></label>
+      <div class="adm-fila"><button type="button" id="admCopiarLuz">Copiar valores</button><button type="button" id="admReset">Restablecer</button></div>
+    </details>
+    <details><summary>Cámara</summary><div class="adm-fila"><button type="button" id="admVuelo">Cámara libre (F)</button></div></details>
+  `;
+  visor.appendChild(panel);
+  const $ = (id) => panel.querySelector("#" + id);
+  const redondear = (n, d = 2) => +n.toFixed(d);
+
+  function copiar(texto, boton) {
+    const aviso = () => {
+      const antes = boton.textContent;
+      boton.textContent = "¡Copiado!";
+      setTimeout(() => { boton.textContent = antes; }, 1200);
+    };
+    const respaldo = () => {
+      const area = document.createElement("textarea");
+      area.value = texto;
+      area.style.cssText = "position:fixed;opacity:0";
+      document.body.appendChild(area);
+      area.select();
+      try {
+        document.execCommand("copy");
+        aviso();
+      } catch (error) {
+        console.log(texto);
+      }
+      area.remove();
+    };
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(texto).then(aviso, respaldo);
+    else respaldo();
+  }
+
+  function datosPunto() {
+    const p = camara.position;
+    return { x: redondear(p.x), y: redondear(p.y - CONFIG.alturaOjos), z: redondear(p.z), yaw: redondear(yaw, 4) };
+  }
+  const gradosYaw = () => redondear(((yaw * 180 / Math.PI) % 360 + 360) % 360, 1);
+
+  function pintarPosicion() {
+    const d = datosPunto();
+    $("admPos").textContent =
+      "x " + d.x + "   y (pies) " + d.y + "   z " + d.z +
+      "\nojos " + redondear(camara.position.y) + " · yaw " + d.yaw + " rad (" + gradosYaw() + "°) · pitch " + redondear(pitch) +
+      "\nBlender: X " + d.x + "   Y " + redondear(-d.z) + "   Z " + d.y;
+  }
+
+  $("admCopiar").addEventListener("click", (e) => {
+    const d = datosPunto();
+    const fx = -Math.sin(yaw);
+    const fz = -Math.cos(yaw);
+    copiar([
+      "// Three/glTF: x " + d.x + ", y " + d.y + ", z " + d.z + " · yaw " + d.yaw + " rad (" + gradosYaw() + "°)",
+      "// Blender: X " + d.x + ", Y " + redondear(-d.z) + ", Z " + d.y,
+      "{ x: " + d.x + ", y: " + d.y + ", z: " + d.z + ", yaw: " + d.yaw + " }",
+      "inicio: { x: " + d.x + ", y: " + d.y + ", z: " + d.z + " }, mirarHacia: { x: " + redondear(d.x + fx * 50) + ", z: " + redondear(d.z + fz * 50) + " }"
+    ].join("\n"), e.currentTarget);
+  });
+  $("admGuardar").addEventListener("click", () => {
+    const d = datosPunto();
+    admin.puntos.push("{ etiqueta: \"Punto " + (admin.puntos.length + 1) + "\", x: " + d.x + ", y: " + d.y + ", z: " + d.z + ", yaw: " + d.yaw + " },");
+    $("admN").textContent = admin.puntos.length + " guardados";
+  });
+  $("admLista").addEventListener("click", (e) => {
+    if (admin.puntos.length) copiar(admin.puntos.join("\n"), e.currentTarget);
+  });
+
+  function irAdmin() {
+    const n = $("admIr").value.match(/-?\d+(\.\d+)?/g);
+    if (!n || n.length < 2) return;
+    const v = n.map(Number);
+    const pies = camara.position.y - CONFIG.alturaOjos;
+    irA(v.length >= 3 ? { x: v[0], y: v[1], z: v[2], yaw: null } : { x: v[0], y: pies, z: v[1], yaw: null });
+    $("admIr").blur();
+  }
+  $("admIrBtn").addEventListener("click", irAdmin);
+
+  const rayoAdmin = new THREE.Raycaster();
+
+  function limpiarSeleccion() {
+    if (admin.caja) {
+      escena.remove(admin.caja);
+      if (admin.caja.dispose) admin.caja.dispose();
+      admin.caja = null;
+    }
+    admin.seleccion = null;
+    $("admSelBotones").classList.add("oculto");
+  }
+
+  function inspeccionar(punto) {
+    const lista = [];
+    escena.traverse((o) => {
+      if (o.isMesh && o.visible && o !== cielo && o.material) lista.push(o);
+    });
+    rayoAdmin.setFromCamera(punto, camara);
+    rayoAdmin.far = 2000;
+    const impactos = rayoAdmin.intersectObjects(lista, false);
+    limpiarSeleccion();
+    if (!impactos.length) {
+      $("admSel").textContent = "No hay nada ahí.";
+      return;
+    }
+    const golpe = impactos[0];
+    const o = golpe.object;
+    const cadena = [];
+    for (let n = o; n; n = n.parent) if (n.name) cadena.push(n.name);
+    const geo = o.geometry;
+    const tris = geo ? Math.round((geo.index ? geo.index.count : geo.attributes.position.count) / 3) : 0;
+    const materiales = [].concat(o.material).map((m) => m.name || "(sin nombre)").join(", ");
+    const colision = solidos.includes(o)
+      ? "sólido (bloquea a la altura de las piernas)"
+      : mallas.includes(o) ? "malla de colisión y piso" : "sin colisión";
+    const invisible = [].concat(o.material).every((m) => m.visible === false) ? " · MATERIAL INVISIBLE (caja de colisión)" : "";
+    const p = golpe.point;
+    admin.seleccion = { nombre: cadena[0] || "(sin nombre)", punto: "x " + redondear(p.x) + ", y " + redondear(p.y) + ", z " + redondear(p.z) };
+    $("admSel").textContent =
+      "Nombre: " + admin.seleccion.nombre + invisible +
+      "\nJerarquía: " + (cadena.join(" › ") || "—") +
+      "\nMaterial: " + materiales +
+      "\nTriángulos: " + tris.toLocaleString("es") + (o.isInstancedMesh ? " × " + o.count + " instancias" : "") +
+      "\nColisión: " + colision +
+      "\nInformación: " + (o.userData.infoId || "ninguna") + " · sombra " + (o.castShadow ? "sí" : "no") +
+      "\nDistancia: " + redondear(golpe.distance, 1) + " · punto " + admin.seleccion.punto;
+    admin.caja = new THREE.Box3Helper(new THREE.Box3().setFromObject(o), 0xffe08a);
+    escena.add(admin.caja);
+    $("admSelBotones").classList.remove("oculto");
+  }
+  $("admCopiarNombre").addEventListener("click", (e) => {
+    if (admin.seleccion) copiar(admin.seleccion.nombre, e.currentTarget);
+  });
+  $("admCopiarGolpe").addEventListener("click", (e) => {
+    if (admin.seleccion) copiar(admin.seleccion.punto, e.currentTarget);
+  });
+
+  let arrastre = null;
+  renderer.domElement.addEventListener("mousedown", (e) => {
+    if (!admin.abierto || document.pointerLockElement || e.button !== 0) return;
+    arrastre = { mov: 0 };
+  });
+  window.addEventListener("mousemove", (e) => {
+    if (!arrastre) return;
+    arrastre.mov += Math.abs(e.movementX) + Math.abs(e.movementY);
+    if (arrastre.mov > 4) girar(e.movementX, e.movementY, CONFIG.sensibilidadMouse);
+  });
+  window.addEventListener("mouseup", (e) => {
+    if (!arrastre) return;
+    const a = arrastre;
+    arrastre = null;
+    if (a.mov > 4) return;
+    const r = renderer.domElement.getBoundingClientRect();
+    inspeccionar(new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1));
+  });
+
+  function pintarRendimiento(fps, ms, pico) {
+    let luces = 0;
+    let conSombra = 0;
+    escena.traverse((o) => {
+      if (!o.isLight) return;
+      luces++;
+      if (o.castShadow) conSombra++;
+    });
+    const i = renderer.info;
+    const memoria = performance.memory ? " · memoria JS " + Math.round(performance.memory.usedJSHeapSize / 1048576) + " MB" : "";
+    $("admStats").textContent =
+      "FPS " + fps.toFixed(0) + (fps < 25 ? " ⚠ bajo" : "") + " · " + ms.toFixed(1) + " ms (pico " + pico.toFixed(0) + " ms)" +
+      "\nLlamadas de dibujo " + i.render.calls + " · triángulos " + i.render.triangles.toLocaleString("es") +
+      "\nGeometrías " + i.memory.geometries + " · texturas " + i.memory.textures + " · shaders " + (i.programs ? i.programs.length : "?") +
+      "\nLuces " + luces + " (" + conSombra + " con sombra) · resolución ×" + redondear(renderer.getPixelRatio()) +
+      "\nLienzo " + renderer.domElement.width + "×" + renderer.domElement.height + memoria;
+  }
+
+  const A = () => AMBIENTES[ambienteActual];
+  const fuenteCielo = () => (A().luz.fuente === "luna" ? A().cielo.luna : A().cielo.sol);
+  const original = JSON.parse(JSON.stringify(AMBIENTES));
+  const globalOriginal = { l: CONFIG.intensidadLamparas, r: CONFIG.intensidadReflectores, p: CONFIG.intensidadPostes };
+  const controles = [
+    { n: "Exposición", min: 0.2, max: 3, paso: 0.05, leer: () => A().exposicion, poner: (v) => { A().exposicion = v; } },
+    { n: "Sol / luna", min: 0, max: 4, paso: 0.05, leer: () => A().sol, poner: (v) => { A().sol = v; } },
+    { n: "Hemisferio", min: 0, max: 2, paso: 0.05, leer: () => A().hemisferio, poner: (v) => { A().hemisferio = v; } },
+    { n: "Entorno (reflejos)", min: 0, max: 2, paso: 0.05, leer: () => A().entorno, poner: (v) => { A().entorno = v; } },
+    { n: "Lámparas (este ambiente)", min: 0, max: 3, paso: 0.05, leer: () => A().lamparas, poner: (v) => { A().lamparas = v; } },
+    { n: "Brillo de luminarias", min: 0, max: 4, paso: 0.05, leer: () => A().brillo, poner: (v) => { A().brillo = v; } },
+    { n: "Auditorio", min: 0, max: 3, paso: 0.05, leer: () => A().auditorio, poner: (v) => { A().auditorio = v; } },
+    { n: "Elevación sol / luna (°)", min: -10, max: 90, paso: 1, leer: () => fuenteCielo().elevacion, poner: (v) => { fuenteCielo().elevacion = v; } },
+    { n: "Azimut sol / luna (°)", min: 0, max: 360, paso: 1, leer: () => fuenteCielo().azimut, poner: (v) => { fuenteCielo().azimut = v; } },
+    { n: "Potencia lámparas (global)", min: 0, max: 3000, paso: 10, leer: () => CONFIG.intensidadLamparas, poner: (v) => { CONFIG.intensidadLamparas = v; } },
+    { n: "Potencia reflectores (global)", min: 0, max: 6000, paso: 50, leer: () => CONFIG.intensidadReflectores, poner: (v) => { CONFIG.intensidadReflectores = v; } },
+    { n: "Potencia postes (global)", min: 0, max: 6000, paso: 50, leer: () => CONFIG.intensidadPostes, poner: (v) => { CONFIG.intensidadPostes = v; } }
+  ];
+  const contenedorLuz = $("admLuz");
+  controles.forEach((c) => {
+    const fila = document.createElement("label");
+    fila.className = "adm-ctl";
+    const nombre = document.createElement("span");
+    nombre.textContent = c.n;
+    c.salida = document.createElement("output");
+    c.rango = document.createElement("input");
+    c.rango.type = "range";
+    c.rango.min = c.min;
+    c.rango.max = c.max;
+    c.rango.step = c.paso;
+    c.rango.addEventListener("input", () => {
+      c.poner(parseFloat(c.rango.value));
+      c.salida.textContent = redondear(parseFloat(c.rango.value));
+      aplicarAmbiente(ambienteActual);
+    });
+    c.rango.addEventListener("change", () => c.rango.blur());
+    fila.append(nombre, c.salida, c.rango);
+    contenedorLuz.appendChild(fila);
+  });
+  const selectorNiebla = $("admNiebla");
+  selectorNiebla.addEventListener("input", () => {
+    A().niebla = parseInt(selectorNiebla.value.slice(1), 16);
+    aplicarAmbiente(ambienteActual);
+  });
+  selectorNiebla.addEventListener("change", () => selectorNiebla.blur());
+
+  function sincronizarLuz() {
+    admin.ambiente = ambienteActual;
+    $("admAmb").textContent = "Ambiente: " + ambienteActual + " (cambia con 1 · 2 · 3)";
+    controles.forEach((c) => {
+      const v = c.leer();
+      c.rango.value = v;
+      c.salida.textContent = redondear(v);
+    });
+    selectorNiebla.value = "#" + A().niebla.toString(16).padStart(6, "0");
+  }
+
+  $("admCopiarLuz").addEventListener("click", (e) => {
+    const a = A();
+    const f = fuenteCielo();
+    const r = redondear;
+    copiar([
+      "// Ambiente: " + ambienteActual,
+      "exposicion: " + r(a.exposicion) + ", hemisferio: " + r(a.hemisferio) + ", entorno: " + r(a.entorno) + ", sol: " + r(a.sol) + ", lamparas: " + r(a.lamparas) + ", brillo: " + r(a.brillo) + ",",
+      "auditorio: " + r(a.auditorio) + ",",
+      "niebla: 0x" + a.niebla.toString(16).padStart(6, "0") + ",",
+      "// " + (a.luz.fuente === "luna" ? "luna" : "sol") + ": elevacion " + f.elevacion + ", azimut " + f.azimut,
+      "// CONFIG: intensidadLamparas: " + CONFIG.intensidadLamparas + ", intensidadReflectores: " + CONFIG.intensidadReflectores + ", intensidadPostes: " + CONFIG.intensidadPostes
+    ].join("\n"), e.currentTarget);
+  });
+  $("admReset").addEventListener("click", () => {
+    Object.keys(AMBIENTES).forEach((k) => { AMBIENTES[k] = JSON.parse(JSON.stringify(original[k])); });
+    CONFIG.intensidadLamparas = globalOriginal.l;
+    CONFIG.intensidadReflectores = globalOriginal.r;
+    CONFIG.intensidadPostes = globalOriginal.p;
+    aplicarAmbiente(ambienteActual);
+    sincronizarLuz();
+  });
+
+  $("admVuelo").addEventListener("click", () => alternarVuelo());
+
+  function iniciarBucle() {
+    if (admin.bucle) return;
+    admin.bucle = true;
+    let anteriorT = performance.now();
+    let inicioVentana = anteriorT;
+    let cuadros = 0;
+    let acumulado = 0;
+    let pico = 0;
+    const paso = (t) => {
+      if (!admin.abierto) {
+        admin.bucle = false;
+        return;
+      }
+      if (!visor.classList.contains("inmersivo")) {
+        cerrarPanel();
+        admin.bucle = false;
+        return;
+      }
+      const d = t - anteriorT;
+      anteriorT = t;
+      cuadros++;
+      acumulado += d;
+      pico = Math.max(pico, d);
+      pintarPosicion();
+      if (t - inicioVentana > 500) {
+        pintarRendimiento((cuadros * 1000) / acumulado, acumulado / cuadros, pico);
+        if (admin.ambiente !== ambienteActual) sincronizarLuz();
+        cuadros = 0;
+        acumulado = 0;
+        pico = 0;
+        inicioVentana = t;
+      }
+      requestAnimationFrame(paso);
+    };
+    requestAnimationFrame(paso);
+  }
+
+  function cerrarPanel() {
+    admin.abierto = false;
+    panel.classList.add("oculto");
+    limpiarSeleccion();
+    if (activo && !esTactil) {
+      try {
+        renderer.domElement.requestPointerLock();
+      } catch (error) { /* se reanuda con Continuar */ }
+    }
+  }
+
+  function alternarAdmin() {
+    if (!activo) return;
+    if (admin.abierto) {
+      cerrarPanel();
+      return;
+    }
+    admin.abierto = true;
+    panel.classList.remove("oculto");
+    if (document.pointerLockElement) document.exitPointerLock();
+    sincronizarLuz();
+    iniciarBucle();
+  }
+
+  window.addEventListener("keydown", (e) => {
+    if (e.target && e.target.id === "admIr") {
+      if (e.code === "Enter") irAdmin();
+      e.stopImmediatePropagation();
+      return;
+    }
+    if ((e.code === "KeyP" || e.code === "Backquote") && !e.repeat && visor.classList.contains("inmersivo") && !ui.modal) alternarAdmin();
+  });
+}
+
+if (ADMIN_ACTIVO) iniciarAdmin();
+
+function girar(dx, dy, sensibilidad) {
+  yaw -= dx * sensibilidad;
+  pitch -= dy * sensibilidad;
+  pitch = Math.max(-1.3, Math.min(1.3, pitch));
+}
+
+function soltarJoystick() {
+  idJoystick = null;
+  joy.x = 0;
+  joy.y = 0;
+  perilla.style.transform = "translate(0,0)";
+}
+
+function entrar() {
+  visor.classList.add("inmersivo");
+  document.documentElement.classList.add("sin-scroll");
+  cubierta.classList.add("oculto");
+  activo = true;
+  iniciarAudio();
+  panelInfo.classList.add("oculto");
+  mapaGrande.classList.add("oculto");
+  ui.modal = false;
+  if (!guiaVista()) {
+    abrirGuia();
+    return;
+  }
+  if (!esTactil) renderer.domElement.requestPointerLock();
+}
+
+function pausar() {
+  if (!activo) return;
+  activo = false;
+  teclas.clear();
+  soltarJoystick();
+  textoEntrar.textContent = "Continuar";
+  botonSalir.classList.remove("oculto");
+  cubierta.classList.remove("oculto");
+}
+
+function salir() {
+  activo = false;
+  sentado = null;
+  apagarVuelo();
+  [panelInfo, mapaGrande, guia].forEach((el) => el.classList.add("oculto"));
+  ui.modal = false;
+  teclas.clear();
+  soltarJoystick();
+  if (document.pointerLockElement) document.exitPointerLock();
+  visor.classList.remove("inmersivo");
+  document.documentElement.classList.remove("sin-scroll");
+  textoEntrar.textContent = "Entrar al museo";
+  botonSalir.classList.add("oculto");
+  cubierta.classList.remove("oculto");
+  visor.scrollIntoView({ block: "center" });
+}
+
+botonEntrar.addEventListener("click", entrar);
+botonSalir.addEventListener("click", salir);
+botonPausar.addEventListener("click", pausar);
+botonSonido.addEventListener("click", alternarSonido);
+
+document.addEventListener("pointerlockchange", () => {
+  if (!esTactil && !ui.modal && !admin.abierto && document.pointerLockElement !== renderer.domElement) pausar();
+});
+document.addEventListener("pointerlockerror", pausar);
+
+document.addEventListener("mousemove", (e) => {
+  if (document.pointerLockElement === renderer.domElement) girar(e.movementX, e.movementY, CONFIG.sensibilidadMouse);
+});
+
+const atajosAmbiente = { Digit1: "dia", Digit2: "galeria", Digit3: "noche" };
+
+window.addEventListener("keydown", (e) => {
+  if (!visor.classList.contains("inmersivo")) return;
+  if (atajosAmbiente[e.code]) aplicarAmbiente(atajosAmbiente[e.code]);
+  if (e.code === "KeyM") alternarSonido();
+  if (e.code === "Tab") {
+    e.preventDefault();
+    if (activo) alternarMapa();
+    return;
+  }
+  if (e.code === "KeyH" && activo && !ui.modal) abrirGuia();
+  if ((e.code === "Enter" || e.code === "Space") && !guia.classList.contains("oculto")) {
+    e.preventDefault();
+    document.getElementById("guiaOk").click();
+    return;
+  }
+  if (e.code === "Escape" && ui.modal) {
+    cerrarTodosModales();
+    return;
+  }
+  if (e.code === "KeyF" && activo && !ui.modal && !e.repeat) alternarVuelo();
+  if (e.code === "Space" && vuelo.activo) e.preventDefault();
+  if (e.code === "KeyE" && activo && !ui.modal && !vuelo.activo) alternarAsiento();
+  if (e.code === "Escape" && esTactil) pausar();
+  if (activo && !ui.modal) teclas.add(e.code);
+});
+window.addEventListener("keyup", (e) => teclas.delete(e.code));
+window.addEventListener("blur", () => teclas.clear());
+
+document.querySelectorAll("#ambientes button").forEach((boton) => {
+  boton.addEventListener("click", () => aplicarAmbiente(boton.dataset.a));
+});
+
+let idJoystick = null;
+let idMirada = null;
+let ultimoToque = null;
+
+function actualizarJoystick(toque) {
+  const caja = joystick.getBoundingClientRect();
+  const cx = caja.left + caja.width / 2;
+  const cy = caja.top + caja.height / 2;
+  let dx = toque.clientX - cx;
+  let dy = toque.clientY - cy;
+  const maximo = joystick.clientWidth / 2;
+  const distancia = Math.hypot(dx, dy);
+  if (distancia > maximo) {
+    dx = (dx / distancia) * maximo;
+    dy = (dy / distancia) * maximo;
+  }
+  perilla.style.transform = "translate(" + dx + "px," + dy + "px)";
+  joy.x = dx / maximo;
+  joy.y = dy / maximo;
+}
+
+joystick.addEventListener("touchstart", (e) => {
+  e.preventDefault();
+  const toque = e.changedTouches[0];
+  idJoystick = toque.identifier;
+  actualizarJoystick(toque);
+}, { passive: false });
+
+visor.addEventListener("touchstart", (e) => {
+  if (!activo || ui.modal) return;
+  for (const toque of e.changedTouches) {
+    if (toque.target.closest(".joystick, .hud, .cubierta, .mv-modal, #botonSentar, #controlesVuelo")) continue;
+    if (idMirada === null) {
+      idMirada = toque.identifier;
+      ultimoToque = { x: toque.clientX, y: toque.clientY };
+    }
+  }
+}, { passive: false });
+
+visor.addEventListener("touchmove", (e) => {
+  if (!activo || ui.modal) return;
+  e.preventDefault();
+  for (const toque of e.changedTouches) {
+    if (toque.identifier === idJoystick) {
+      actualizarJoystick(toque);
+    } else if (toque.identifier === idMirada && ultimoToque) {
+      girar(toque.clientX - ultimoToque.x, toque.clientY - ultimoToque.y, CONFIG.sensibilidadTactil);
+      ultimoToque = { x: toque.clientX, y: toque.clientY };
+    }
+  }
+}, { passive: false });
+
+function terminarToque(e) {
+  for (const toque of e.changedTouches) {
+    if (toque.identifier === idJoystick) soltarJoystick();
+    if (toque.identifier === idMirada) {
+      idMirada = null;
+      ultimoToque = null;
+    }
+  }
+}
+visor.addEventListener("touchend", terminarToque);
+visor.addEventListener("touchcancel", terminarToque);
+
+let puedeVolar = false, resolucionForzada = null, herramientasAbiertas = false, modoAdmin = null, ghost = null, ghostGiro = 0, seleccionada = null, tcAdmin = null, lineaRegla = null, reglaPts = [], helpersLuces = [], colisionLineas = [], ajustesCache = {}, paradasGuardadas = [], iniciadoAdmin = false, ultimoLocal = "", aislados = null, cargaFB = null, FA = null, FD = null, authI = null, dbI = null, fbApp = null;
+const vitrinasMapa = new Map();
+const rcMundo = new THREE.Raycaster();
+const FBURL = "https://www.gstatic.com/firebasejs/10.12.1/";
+const firebaseConfig = { apiKey: "AIzaSyAZ3EV-CTyH3bdPeMTcPAexWLmRLmoCSEg", authDomain: "amprg-28da9.firebaseapp.com", projectId: "amprg-28da9", storageBucket: "amprg-28da9.firebasestorage.app", messagingSenderId: "425308243013", appId: "1:425308243013:web:40661cf1b6fccb1ed50f2c", measurementId: "G-5RKJ08NNWW" };
+
+function cargarFirebase() {
+  return cargaFB ??= (async () => {
+    const [a, b, c] = await Promise.all([import(FBURL + "firebase-app.js"), import(FBURL + "firebase-auth.js"), import(FBURL + "firebase-firestore.js")]);
+    fbApp = a.initializeApp(firebaseConfig);
+    FA = b;
+    FD = c;
+    authI = b.getAuth(fbApp);
+    dbI = c.getFirestore(fbApp);
+  })();
+}
+function esperarListo() { return new Promise((r) => { const t = setInterval(() => { if (listo) { clearInterval(t); r(); } }, 150); }); }
+function estadoPro(t) { document.getElementById("ppEstado").textContent = t; }
+function copiarTexto(t) { navigator.clipboard?.writeText(t).catch(() => {}); }
+function puntoRaton(e) { const r = renderer.domElement.getBoundingClientRect(); return new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); }
+function esDelGizmo(o) { for (let n = o; n; n = n.parent) if (n === tcAdmin) return true; return false; }
+function golpe(p) {
+  rcMundo.setFromCamera(p, camara); rcMundo.far = 2000;
+  const lista = [];
+  escena.traverse((o) => { if (o.isMesh && o.visible && o !== cielo && o !== ghost && !esDelGizmo(o) && o.material && o.material.visible !== false) lista.push(o); });
+  return rcMundo.intersectObjects(lista, false)[0] || null;
+}
+function golpeSuelo(p) {
+  rcMundo.setFromCamera(p, camara); rcMundo.far = 2000;
+  for (const h of rcMundo.intersectObjects(mallas, false)) {
+    if (h.face && h.face.normal.clone().transformDirection(h.object.matrixWorld).y > 0.6) return h;
+  }
+  return null;
+}
+function asegurarGhost() {
+  if (ghost) return ghost;
+  ghost = new THREE.Mesh(new THREE.BoxGeometry(4.6, 4.8, 4.6), new THREE.MeshBasicMaterial({ color: 0xe8a5b4, wireframe: true, transparent: true, opacity: 0.8, depthTest: false }));
+  ghost.renderOrder = 20; ghost.visible = false; escena.add(ghost); return ghost;
+}
+function aplicarAjuste(nombre, a) {
+  const re = new RegExp("^" + nombre.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "$");
+  buscarObjetos(escena, re).forEach((o) => {
+    if (a.pos) o.position.fromArray(a.pos);
+    if (a.rot) o.rotation.fromArray(a.rot);
+    if (a.scl) o.scale.fromArray(a.scl);
+    if (a.vis !== undefined) o.visible = a.vis;
+    if (o.material && !Array.isArray(o.material)) {
+      if (a.color !== undefined && o.material.color) o.material.color.setHex(a.color);
+      if (a.rough !== undefined && o.material.roughness !== undefined) o.material.roughness = a.rough;
+    }
+  });
+}
+function mergeAjuste(nombre, datos) { return FD.setDoc(FD.doc(dbI, "ajustes", encodeURIComponent(nombre)), datos, { merge: true }); }
+function renderVitrina(cfg) { const antes = escena.children.length; crearVitrina(cfg); vitrinasMapa.set(cfg.id, escena.children.slice(antes)); }
+function quitarVitrina(id) {
+  (vitrinasMapa.get(id) || []).forEach((o) => { escena.remove(o); const i = solidos.indexOf(o); if (i >= 0) solidos.splice(i, 1); });
+  vitrinasMapa.delete(id);
+}
+async function sincronizarPublico() {
+  await cargarFirebase();
+  await esperarListo();
+  FD.onSnapshot(FD.collection(dbI, "ajustes"), (s) => {
+    ajustesCache = {};
+    s.forEach((d) => { ajustesCache[decodeURIComponent(d.id)] = d.data(); });
+    Object.entries(ajustesCache).forEach(([n, a]) => aplicarAjuste(n, a));
+  }, (e) => console.warn(e));
+  FD.onSnapshot(FD.collection(dbI, "vitrinas"), (s) => {
+    const vivas = new Set();
+    s.forEach((d) => { vivas.add(d.id); if (!vitrinasMapa.has(d.id)) renderVitrina(d.data()); });
+    [...vitrinasMapa.keys()].forEach((id) => { if (!vivas.has(id)) quitarVitrina(id); });
+  }, (e) => console.warn(e));
+  FD.onSnapshot(FD.doc(dbI, "config", "iluminacion"), (s) => {
+    const d = s.data(); if (!d) return;
+    if (d.ambientes) Object.assign(AMBIENTES, d.ambientes);
+    if (d.intensidades) { CONFIG.intensidadLamparas = d.intensidades.l; CONFIG.intensidadReflectores = d.intensidades.r; CONFIG.intensidadPostes = d.intensidades.p; }
+    aplicarAmbiente(ambienteActual);
+  }, (e) => console.warn(e));
+}
+async function iniciarSesion(correo, clave) {
+  await cargarFirebase();
+  const cred = await FA.signInWithEmailAndPassword(authI, correo.trim(), clave);
+  const mail = cred.user.email.toLowerCase();
+  const adm = await FD.getDoc(FD.doc(dbI, "admins", mail));
+  if (!adm.exists() || adm.data().activo === false) { await FA.signOut(authI); throw new Error("sin permiso"); }
+  return mail;
+}
+async function entrarAdmin() {
+  const msg = document.getElementById("loginMsg");
+  msg.textContent = "Verificando…";
+  try {
+    await iniciarSesion(document.getElementById("loginCorreo").value, document.getElementById("loginClave").value);
+    document.getElementById("loginClave").value = "";
+    cerrarModal(document.getElementById("loginAdmin"));
+    activarAdmin();
+  } catch (e) {
+    msg.textContent = "Correo o contraseña incorrectos, o la cuenta no tiene acceso de administrador.";
+  }
+}
+async function tcInit() {
+  if (tcAdmin) return;
+  const m = await import("three/addons/controls/TransformControls.js");
+  tcAdmin = new m.TransformControls(camara, renderer.domElement);
+  tcAdmin.size = 0.9;
+  tcAdmin.addEventListener("dragging-changed", (e) => { if (!e.value) guardarTransform(); });
+  escena.add(tcAdmin);
+}
+function guardarTransform() {
+  if (!seleccionada || !dbI) return;
+  mergeAjuste(seleccionada.name, { pos: seleccionada.position.toArray(), rot: [seleccionada.rotation.x, seleccionada.rotation.y, seleccionada.rotation.z], scl: seleccionada.scale.toArray() });
+}
+function seleccionar(obj) {
+  let o = obj;
+  while (o && !o.name && o.parent && o.parent !== escena) o = o.parent;
+  if (!o || !o.name || o.parent === escena || o === cielo) { estadoPro("Este objeto no tiene nombre o es la raíz del modelo; no se puede editar."); return; }
+  seleccionada = o;
+  if (tcAdmin) tcAdmin.attach(o);
+  document.getElementById("ppSel").textContent = "Seleccionado: " + o.name;
+  const m = o.material;
+  if (m && !Array.isArray(m)) {
+    if (m.color) document.getElementById("ppColor").value = "#" + m.color.getHexString();
+    if (m.roughness !== undefined) document.getElementById("ppRug").value = m.roughness;
+  }
+}
+function guardarMaterial() {
+  if (!seleccionada) return;
+  const datos = { color: parseInt(document.getElementById("ppColor").value.slice(1), 16), rough: parseFloat(document.getElementById("ppRug").value) };
+  aplicarAjuste(seleccionada.name, datos);
+  mergeAjuste(seleccionada.name, datos);
+  estadoPro("Material guardado para todos");
+}
+function alternarAislar() {
+  if (aislados) { aislados.forEach(([o, v]) => { o.visible = v; }); aislados = null; estadoPro("Todo visible de nuevo"); return; }
+  if (!seleccionada) return;
+  const dentro = new Set(); seleccionada.traverse((o) => dentro.add(o));
+  const arriba = new Set(); for (let n = seleccionada.parent; n; n = n.parent) arriba.add(n);
+  aislados = [];
+  escena.traverse((o) => { if (o.isMesh && !dentro.has(o) && !arriba.has(o) && !esDelGizmo(o) && o !== ghost) { aislados.push([o, o.visible]); o.visible = false; } });
+  estadoPro("Aislado: " + seleccionada.name + " (Aislar otra vez para volver)");
+}
+async function restablecer() {
+  if (!seleccionada) return;
+  await FD.deleteDoc(FD.doc(dbI, "ajustes", encodeURIComponent(seleccionada.name)));
+  location.reload();
+}
+function alternarColisiones(on) {
+  colisionLineas.forEach((l) => { if (l.parent) l.parent.remove(l); });
+  colisionLineas = [];
+  if (!on) return;
+  mallas.concat(solidos).forEach((o) => {
+    const g = o.geometry; if (!g) return;
+    const tris = (g.index ? g.index.count : g.attributes.position.count) / 3;
+    if (tris > 25000) return;
+    const l = new THREE.LineSegments(new THREE.WireframeGeometry(g), new THREE.LineBasicMaterial({ color: solidos.includes(o) ? 0xff5050 : 0x50ff90, transparent: true, opacity: 0.5, depthTest: false }));
+    l.renderOrder = 30; o.add(l); colisionLineas.push(l);
+  });
+}
+const fx = {
+  sombras(v) { renderer.shadowMap.enabled = v; sol.castShadow = v; escena.traverse((o) => { if (o.material) [].concat(o.material).forEach((m) => { m.needsUpdate = true; }); }); },
+  halos(v) { lucesExtra.halos.forEach((h) => { h.sprite.material.visible = v; }); },
+  arboles(v) { escena.children.forEach((o) => { if (o.isInstancedMesh) o.visible = v; }); },
+  pasto(v) { escena.traverse((o) => { if (o.isMesh && o.material && o.material.polygonOffset && o.material.map) o.visible = v; }); },
+  video(v) { if (pantallaVideo.plano) pantallaVideo.plano.material.visible = v; },
+  auditorio(v) { lucesAuditorio.forEach((l) => { l.visible = v; }); },
+  chorros(v) { escena.traverse((o) => { if (o.isPoints) o.visible = v; }); }
+};
+function mezclar(a, b, t) {
+  const COLOR = new Set(["cima", "horizonte", "color", "suelo", "cielo", "niebla", "nubeColor", "nubeSombra"]);
+  const r = {};
+  for (const k in a) {
+    const x = a[k], y = b[k];
+    if (typeof x === "number" && typeof y === "number") r[k] = COLOR.has(k) ? new THREE.Color(x).lerp(new THREE.Color(y), t).getHex() : x + (y - x) * t;
+    else if (x && typeof x === "object") r[k] = mezclar(x, y, t);
+    else r[k] = x;
+  }
+  return r;
+}
+function horaAmbiente(h) {
+  const f = THREE.MathUtils.clamp(Math.sin(Math.PI * (h - 5) / 14), 0, 1);
+  const w = THREE.MathUtils.clamp(Math.max(Math.exp(-((h - 19) / 1.6) ** 2), Math.exp(-((h - 6) / 1.4) ** 2)) * 0.8, 0, 1);
+  const r = mezclar(mezclar(AMBIENTES.noche, AMBIENTES.dia, f), AMBIENTES.galeria, w);
+  const sE = 65 * Math.sin(Math.PI * (h - 6) / 12), sA = 90 + (h - 6) * 15, lE = 50 * Math.sin(Math.PI * (h - 18) / 12), lA = sA + 180;
+  Object.assign(r.cielo.sol, { elevacion: sE, azimut: sA, brillo: sE > 0 ? 1 : 0 });
+  Object.assign(r.cielo.luna, { elevacion: lE, azimut: lA, brillo: lE > 0 ? 1 : 0 });
+  r.luz.fuente = sE > 0 ? "sol" : "luna";
+  AMBIENTES.hora = r;
+  aplicarAmbiente("hora");
+  document.getElementById("ppHoraOut").textContent = String(Math.floor(h)).padStart(2, "0") + ":" + String(Math.round((h - Math.floor(h)) * 60) % 60).padStart(2, "0");
+}
+function fijarModo(m) {
+  modoAdmin = modoAdmin === m ? null : m;
+  document.querySelectorAll("[data-modo-admin]").forEach((b) => b.classList.toggle("activo", b.dataset.modoAdmin === modoAdmin));
+  if (modoAdmin !== "colocar" && ghost) ghost.visible = false;
+  estadoPro(modoAdmin === "colocar" ? "Clic en el piso para colocar. Rueda para girar." : modoAdmin === "regla" ? "Haz dos clics para medir." : "");
+}
+async function colocarVitrina(punto) {
+  await cargarFirebase();
+  const id = "vitrina_" + Date.now();
+  const cfg = { id, x: +punto.x.toFixed(2), z: +punto.z.toFixed(2), giro: +ghostGiro.toFixed(3), ancho: 4.6, alto: 4.8, titulo: "Nueva vitrina", contenido: [] };
+  await FD.setDoc(FD.doc(dbI, "vitrinas", id), cfg);
+  copiarTexto(JSON.stringify(cfg));
+  estadoPro("Vitrina colocada y visible para todos. JSON copiado.");
+}
+function medir(p) {
+  reglaPts.push(p.clone());
+  if (reglaPts.length < 2) { document.getElementById("ppReglaOut").textContent = "Haz el segundo clic"; return; }
+  const d = reglaPts[0].distanceTo(reglaPts[1]);
+  if (lineaRegla) { escena.remove(lineaRegla); lineaRegla.geometry.dispose(); }
+  lineaRegla = new THREE.Line(new THREE.BufferGeometry().setFromPoints(reglaPts), new THREE.LineBasicMaterial({ color: 0xffe08a, depthTest: false }));
+  lineaRegla.renderOrder = 25; escena.add(lineaRegla);
+  document.getElementById("ppReglaOut").textContent = d.toFixed(2) + " unidades";
+  reglaPts = [];
+}
+function tomarFoto() {
+  renderer.render(escena, camara);
+  const a = document.createElement("a");
+  a.href = renderer.domElement.toDataURL("image/png");
+  a.download = "museo-" + Date.now() + ".png";
+  a.click();
+}
+function siguienteVideo() {
+  const pv = pantallaVideo;
+  if (!pv.video || pv.lista.length < 2) return estadoPro("Solo hay un video en la pantalla");
+  pv.indice = (pv.indice + 1) % pv.lista.length;
+  pv.pausado = false;
+  pv.video.src = pv.lista[pv.indice];
+  pv.video.load();
+  reproducirVideo();
+  estadoPro("Video: " + pv.lista[pv.indice]);
+}
+function alternarConos(on) {
+  if (!helpersLuces.length) {
+    [...lamparas, ...reflectoresLuz.map((r) => r.luz), ...postesLuz.map((p) => p.luz), ...lucesAuditorio].forEach((l) => {
+      const h = new THREE.SpotLightHelper(l); h.material.depthTest = false; escena.add(h); helpersLuces.push(h);
+    });
+  }
+  helpersLuces.forEach((h) => { h.visible = on; });
+}
+function construirLuces() {
+  const cont = document.getElementById("ppLuces");
+  cont.innerHTML = "";
+  [].concat(
+    lamparas.map((l, i) => ["Lámpara " + (i + 1), l]),
+    reflectoresLuz.map((r, i) => ["Reflector " + (i + 1), r.luz]),
+    postesLuz.map((p, i) => ["Poste " + (i + 1), p.luz]),
+    lucesAuditorio.map((l, i) => ["Auditorio " + (i + 1), l])
+  ).forEach(([n, l]) => {
+    const lb = document.createElement("label"); lb.className = "pp-chk";
+    const cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = l.visible;
+    cb.addEventListener("change", () => { l.visible = cb.checked; });
+    lb.append(cb, " " + n); cont.appendChild(lb);
+  });
+}
+function pintarParadas() {
+  const cont = document.getElementById("ppParadas");
+  cont.innerHTML = "";
+  paradasGuardadas.forEach((p) => {
+    const f = document.createElement("div"); f.className = "pp-item";
+    const t = document.createElement("span"); t.textContent = p.etiqueta;
+    const ir = document.createElement("button"); ir.type = "button"; ir.textContent = "Ir"; ir.onclick = () => irA(p);
+    const del = document.createElement("button"); del.type = "button"; del.textContent = "Borrar"; del.onclick = () => FD.deleteDoc(FD.doc(dbI, "paradas", p.id));
+    f.append(t, ir, del); cont.appendChild(f);
+  });
+}
+function guardarParada() {
+  const p = camara.position;
+  FD.addDoc(FD.collection(dbI, "paradas"), { etiqueta: "Parada " + (paradasGuardadas.length + 1), x: +p.x.toFixed(2), y: +(p.y - CONFIG.alturaOjos).toFixed(2), z: +p.z.toFixed(2), yaw: +yaw.toFixed(4) });
+}
+function exportarParadas() {
+  copiarTexto(paradasGuardadas.map((p) => `{ etiqueta: "${p.etiqueta}", x: ${p.x}, y: ${p.y}, z: ${p.z}, yaw: ${p.yaw} },`).join("\n"));
+  estadoPro("Lista copiada en formato puntos.js");
+}
+function exportarLuz() { copiarTexto(JSON.stringify(AMBIENTES)); estadoPro("Preset copiado"); }
+function importarLuz() {
+  try {
+    Object.assign(AMBIENTES, JSON.parse(document.getElementById("ppJson").value));
+    aplicarAmbiente(ambienteActual);
+    estadoPro("Preset importado");
+  } catch (e) { estadoPro("JSON no válido"); }
+}
+async function publicarLuz() {
+  await cargarFirebase();
+  await FD.setDoc(FD.doc(dbI, "config", "iluminacion"), { ambientes: JSON.parse(JSON.stringify(AMBIENTES)), intensidades: { l: CONFIG.intensidadLamparas, r: CONFIG.intensidadReflectores, p: CONFIG.intensidadPostes } });
+  estadoPro("Iluminación publicada para todos");
+}
+function abrirHerr() {
+  if (!puedeVolar || !visor.classList.contains("inmersivo")) return;
+  document.getElementById("panelPro").classList.remove("oculto");
+  herrCursor(true);
+}
+function cerrarHerr() {
+  document.getElementById("panelPro").classList.add("oculto");
+  modoAdmin = null;
+  document.querySelectorAll("[data-modo-admin]").forEach((b) => b.classList.remove("activo"));
+  if (ghost) ghost.visible = false;
+  if (herramientasAbiertas) herrCursor(false);
+}
+function herrCursor(on) {
+  herramientasAbiertas = on;
+  ui.modal = on;
+  if (on) {
+    teclas.clear(); soltarJoystick();
+    if (document.pointerLockElement) document.exitPointerLock();
+    sugerencia.classList.add("oculto"); botonSentar.classList.add("oculto");
+  } else if (activo && !esTactil) {
+    try { renderer.domElement.requestPointerLock(); } catch (e) {}
+  }
+}
+async function activarAdmin() {
+  puedeVolar = true;
+  botonVuelo.style.display = "";
+  document.getElementById("botonHerr").classList.remove("oculto");
+  document.getElementById("botonAcceso").classList.add("oculto");
+  if (!iniciadoAdmin) { iniciadoAdmin = true; iniciarAdmin(); }
+  await tcInit();
+  try {
+    const s = localStorage.getItem("museoAdminLuz"); if (s) Object.assign(AMBIENTES, JSON.parse(s));
+    const h = localStorage.getItem("museoAdminHora"); if (h) { document.getElementById("ppHora").value = h; horaAmbiente(parseFloat(h)); }
+  } catch (e) {}
+  aplicarAmbiente(ambienteActual);
+  construirLuces();
+  FD.onSnapshot(FD.collection(dbI, "paradas"), (s) => {
+    paradasGuardadas = [];
+    s.forEach((d) => paradasGuardadas.push({ id: d.id, ...d.data() }));
+    pintarParadas();
+  }, (e) => console.warn(e));
+}
+async function cerrarSesion() {
+  await FA.signOut(authI);
+  location.reload();
+}
+function vincularPanel() {
+  const $ = (id) => document.getElementById(id);
+  $("botonHerr").addEventListener("click", () => herramientasAbiertas ? cerrarHerr() : abrirHerr());
+  $("ppCerrar").addEventListener("click", cerrarHerr);
+  document.querySelectorAll("[data-modo-admin]").forEach((b) => b.addEventListener("click", () => {
+    if (b.dataset.modoAdmin === "regla") reglaPts = [];
+    fijarModo(b.dataset.modoAdmin);
+  }));
+  document.querySelectorAll("[data-gizmo]").forEach((b) => b.addEventListener("click", () => { if (tcAdmin) tcAdmin.setMode(b.dataset.gizmo); }));
+  $("ppOcultar").addEventListener("click", () => {
+    if (!seleccionada) return;
+    const v = !seleccionada.visible;
+    aplicarAjuste(seleccionada.name, { vis: v });
+    mergeAjuste(seleccionada.name, { vis: v });
+  });
+  $("ppAislar").addEventListener("click", alternarAislar);
+  $("ppRestablecer").addEventListener("click", restablecer);
+  $("ppGuardarMat").addEventListener("click", guardarMaterial);
+  $("ppColis").addEventListener("change", (e) => alternarColisiones(e.target.checked));
+  $("ppFoto").addEventListener("click", tomarFoto);
+  $("ppVideoSig").addEventListener("click", siguienteVideo);
+  document.querySelectorAll("[data-fx]").forEach((c) => c.addEventListener("change", () => fx[c.dataset.fx](c.checked)));
+  $("ppRes").addEventListener("change", (e) => {
+    resolucionForzada = e.target.value === "auto" ? null : parseFloat(e.target.value);
+    renderer.setPixelRatio(resolucionForzada ?? Math.min(window.devicePixelRatio, esTactil ? 1.5 : 2));
+    ajustarTamano();
+  });
+  $("ppHora").addEventListener("input", (e) => {
+    horaAmbiente(parseFloat(e.target.value));
+    try { localStorage.setItem("museoAdminHora", e.target.value); } catch (err) {}
+  });
+  $("ppExp").addEventListener("click", exportarLuz);
+  $("ppImp").addEventListener("click", importarLuz);
+  $("ppPub").addEventListener("click", publicarLuz);
+  $("ppParada").addEventListener("click", guardarParada);
+  $("ppExportPts").addEventListener("click", exportarParadas);
+  $("ppConos").addEventListener("change", (e) => alternarConos(e.target.checked));
+  $("ppSalirSesion").addEventListener("click", cerrarSesion);
+  renderer.domElement.addEventListener("click", (e) => {
+    if (!herramientasAbiertas || !puedeVolar) return;
+    const p = puntoRaton(e);
+    if (modoAdmin === "colocar") { const h = golpeSuelo(p); if (h) colocarVitrina(h.point); return; }
+    if (modoAdmin === "regla") { const h = golpe(p); if (h) medir(h.point); return; }
+    const h = golpe(p); if (h) seleccionar(h.object);
+  });
+  renderer.domElement.addEventListener("mousemove", (e) => {
+    if (!herramientasAbiertas || modoAdmin !== "colocar") { if (ghost) ghost.visible = false; return; }
+    const h = golpeSuelo(puntoRaton(e));
+    if (!h) { if (ghost) ghost.visible = false; return; }
+    const g = asegurarGhost();
+    g.visible = true; g.position.set(h.point.x, h.point.y + 2.4, h.point.z); g.rotation.y = ghostGiro;
+  });
+  renderer.domElement.addEventListener("wheel", (e) => {
+    if (!herramientasAbiertas || modoAdmin !== "colocar") return;
+    e.preventDefault();
+    ghostGiro += e.deltaY > 0 ? 0.087 : -0.087;
+    if (ghost) ghost.rotation.y = ghostGiro;
+  }, { passive: false });
+  window.addEventListener("keydown", (e) => {
+    if (e.code === "Escape" && herramientasAbiertas) { cerrarHerr(); return; }
+    if (e.code === "KeyO" && !e.repeat && puedeVolar && visor.classList.contains("inmersivo") && !(e.target && e.target.matches && e.target.matches("input,textarea,select"))) {
+      herramientasAbiertas ? cerrarHerr() : abrirHerr();
+    }
+  });
+  new MutationObserver(() => { if (herramientasAbiertas && !visor.classList.contains("inmersivo")) cerrarHerr(); }).observe(visor, { attributes: true, attributeFilter: ["class"] });
+  setInterval(() => {
+    if (!puedeVolar) return;
+    const s = JSON.stringify(AMBIENTES);
+    if (s !== ultimoLocal) { ultimoLocal = s; try { localStorage.setItem("museoAdminLuz", s); } catch (e) {} }
+  }, 1500);
+}
+function prepararAcceso() {
+  botonVuelo.style.display = "none";
+  vincularPanel();
+  sincronizarPublico().catch((e) => console.warn("Firebase no disponible", e));
+  if (!ADMIN_ACTIVO) return;
+  const bAcc = document.getElementById("botonAcceso");
+  bAcc.classList.remove("oculto");
+  bAcc.addEventListener("click", () => abrirModal(document.getElementById("loginAdmin")));
+  document.getElementById("cerrarLogin").addEventListener("click", () => cerrarModal(document.getElementById("loginAdmin")));
+  document.getElementById("loginEntrar").addEventListener("click", entrarAdmin);
+  document.getElementById("loginClave").addEventListener("keydown", (e) => { if (e.key === "Enter") entrarAdmin(); });
+}
+prepararAcceso();

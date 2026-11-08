@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#7a122e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icono-192.png">
+<link rel="apple-touch-icon" href="icono-180.png">
+<meta name="description" content="Recorre el Museo Digital del CETIS 69 en primera persona desde tu computadora o tu celular.">
+<meta property="og:title" content="Recorrido Virtual | Museo Digital CETIS 69">
+<meta property="og:description" content="Camina por el museo del CETIS 69 en Ciudad Obregón.">
+<meta property="og:type" content="website">
+<title>Recorrido Virtual | Museo Digital CETIS 69</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>
+<link rel="stylesheet" href="estilos.css">
+<link rel="stylesheet" href="museo.css">
+</head>
+<body data-menu="recorrido" data-carga="900" data-reveal="inmediato" data-umbral=".12">
+<a href="#recorrido" class="skip">Saltar al contenido</a>
+
+<div id="loader"><div class="ld"><h2>CETIS 69</h2><p>MUSEO DIGITAL</p><div class="bar"><i></i></div></div></div>
+
+<nav id="nav"></nav>
+
+<section id="recorrido">
+ <div class="rv">
+  <div class="eyebrow">Recorrido virtual</div>
+  <h1 class="title">Camina por el <b>museo</b></h1>
+  <p class="lead">Explora las salas del Museo Digital CETIS 69 en primera persona, desde tu computadora o tu celular.</p>
+ </div>
+
+ <div class="visor" id="visor">
+  <div id="escena"></div>
+  <div class="mira"></div>
+  <canvas class="mapa" id="mapa" width="300" height="300"></canvas>
+  <div class="joystick" id="joystick"><div class="perilla" id="perilla"></div></div>
+
+  <div class="hud">
+   <button type="button" class="pausa" id="pausar"><i class="fa-solid fa-pause"></i> Pausa</button>
+   <div class="derecha">
+    <button type="button" id="botonHerr" class="oculto"><i class="fa-solid fa-screwdriver-wrench"></i> Admin</button>
+    <button type="button" id="botonMapa"><i class="fa-solid fa-map"></i> Mapa<span class="solo-pc"> · Tab</span></button>
+    <button type="button" id="botonGuia" aria-label="Guía rápida">?<span class="solo-pc"> · H</span></button>
+    <button type="button" id="botonVuelo"><i class="fa-solid fa-dove"></i> Vuelo<span class="solo-pc"> · F</span></button>
+    <button type="button" id="sonido">Sonido</button>
+    <div class="ambientes" id="ambientes" role="group" aria-label="Iluminación">
+     <button type="button" data-a="dia">Día</button>
+     <button type="button" data-a="galeria">Atardecer</button>
+     <button type="button" data-a="noche">Noche</button>
+    </div>
+   </div>
+  </div>
+
+  <div class="cargando" id="cargando">
+   <div class="motas" id="motas"></div>
+   <div class="tarjeta-carga">
+     <div class="orbe">
+      <svg viewBox="0 0 200 200" aria-hidden="true">
+       <circle class="a1" cx="100" cy="100" r="94" fill="none" stroke="#e8a5b4" stroke-width="2.5" stroke-dasharray="60 40 8 40" stroke-linecap="round"/>
+       <circle class="a2" cx="100" cy="100" r="78" fill="none" stroke="#ffffff" stroke-opacity=".6" stroke-width="1.5" stroke-dasharray="3 9"/>
+       <circle class="a3" cx="100" cy="100" r="62" fill="none" stroke="#c0304f" stroke-width="4" stroke-dasharray="90 300" stroke-linecap="round"/>
+      </svg>
+      <b id="porcentaje">0%</b>
+     </div>
+     <div class="info-carga">
+       <h3>CETIS 69</h3>
+       <p id="estado">Cargando el museo</p>
+       <div class="barra"><i id="progreso"></i></div>
+       <small id="consejo"></small>
+     </div>
+   </div>
+  </div>
+
+  <div class="cubierta oculto" id="cubierta">
+   <div class="eyebrow">Museo Digital</div>
+   <h2 class="title">Recorrido <b>virtual</b></h2>
+   <p class="lead">Camina libremente por el museo y cambia la iluminación para verlo de día, al atardecer o de noche.</p>
+   <p class="lead">Dentro encontrarás una guía rápida y un mapa para ir directo a cualquier lugar.</p>
+   <div class="acciones">
+    <button type="button" class="btn sec oculto" id="botonAcceso">Acceso admin</button>
+    <button type="button" class="btn" id="entrar"><span id="textoEntrar">Entrar al museo</span> <i class="fa-solid fa-arrow-right-long"></i></button>
+    <button type="button" class="btn sec oculto" id="salir">Salir</button>
+   </div>
+  </div>
+
+  <div id="badgeVuelo" class="oculto"></div>
+  <div id="controlesVuelo">
+   <button type="button" id="botonSubir" aria-label="Subir"><i class="fa-solid fa-arrow-up"></i></button>
+   <button type="button" id="botonBajar" aria-label="Bajar"><i class="fa-solid fa-arrow-down"></i></button>
+  </div>
+  <div id="sugerencia" class="oculto"></div>
+  <button type="button" class="btn sec oculto" id="botonSentar"></button>
+
+  <div class="mv-modal oculto" id="panelInfo" role="dialog" aria-modal="true" aria-labelledby="infoTitulo">
+   <div class="mv-tarjeta">
+    <button type="button" class="mv-cerrar" id="cerrarInfo" aria-label="Cerrar">&#10005;</button>
+    <small id="infoEtiqueta"></small>
+    <h3 id="infoTitulo"></h3>
+    <div id="infoCuerpo"></div>
+   </div>
+  </div>
+
+  <div class="mv-modal oculto" id="mapaGrande" role="dialog" aria-modal="true" aria-label="Mapa del museo">
+   <div class="mv-mapa-caja">
+    <canvas id="mapaCanvas" width="900" height="900"></canvas>
+    <div class="mv-tarjeta mv-lateral">
+     <button type="button" class="mv-cerrar" id="cerrarMapa" aria-label="Cerrar">&#10005;</button>
+     <small>Mapa del museo</small>
+     <h3>¿A dónde quieres ir?</h3>
+     <div class="paradas-bloque oculto" id="paradasBloque">
+      <div class="paradas" id="paradas"></div>
+     </div>
+     <p class="nota">Toca un punto del mapa o un botón de la lista.</p>
+    </div>
+   </div>
+  </div>
+
+  <div class="mv-modal oculto" id="guia" role="dialog" aria-modal="true" aria-labelledby="guiaTitulo">
+   <div class="mv-tarjeta">
+    <button type="button" class="mv-cerrar" id="cerrarGuia" aria-label="Cerrar">&#10005;</button>
+    <small>Guía rápida</small>
+    <h3 id="guiaTitulo">Cómo recorrer el museo</h3>
+    <div class="mv-guia-grid" id="guiaGrid"></div>
+    <button type="button" class="btn" id="guiaOk" style="margin-top:1.1rem">Entendido</button>
+   </div>
+  </div>
+
+  <div class="mv-modal oculto" id="loginAdmin" role="dialog" aria-modal="true" aria-labelledby="loginTitulo">
+   <div class="mv-tarjeta">
+    <button type="button" class="mv-cerrar" id="cerrarLogin" aria-label="Cerrar">&#10005;</button>
+    <small>Acceso administrador</small>
+    <h3 id="loginTitulo">Iniciar sesión</h3>
+    <div class="pp-col">
+     <input type="email" id="loginCorreo" placeholder="Correo" autocomplete="username">
+     <input type="password" id="loginClave" placeholder="Contraseña" autocomplete="current-password">
+    </div>
+    <p class="pp-txt" id="loginMsg"></p>
+    <button type="button" class="btn" id="loginEntrar">Entrar</button>
+   </div>
+  </div>
+
+  <div id="panelPro" class="oculto">
+   <div class="pp-fila"><b style="letter-spacing:.2em">HERRAMIENTAS</b><span style="flex:1"></span><button type="button" id="ppCerrar">&#10005;</button></div>
+   <p class="pp-txt" id="ppEstado"></p>
+   <details open><summary>Colocar vitrina</summary>
+    <div class="pp-fila"><button type="button" data-modo-admin="colocar">Activar colocación</button></div>
+    <p class="pp-txt">Mueve el mouse sobre el piso, gira con la rueda y haz clic para colocarla. Queda guardada y visible para todos. El JSON se copia para pegarlo en puntos.js si lo necesitas.</p>
+   </details>
+   <details open><summary>Seleccionar y mover</summary>
+    <p class="pp-txt" id="ppSel">Haz clic en un objeto del museo para seleccionarlo.</p>
+    <div class="pp-fila">
+     <button type="button" data-gizmo="translate">Mover</button>
+     <button type="button" data-gizmo="rotate">Girar</button>
+     <button type="button" data-gizmo="scale">Escalar</button>
+    </div>
+    <div class="pp-fila">
+     <button type="button" id="ppOcultar">Ocultar / Mostrar</button>
+     <button type="button" id="ppAislar">Aislar</button>
+     <button type="button" id="ppRestablecer">Restablecer</button>
+    </div>
+    <label class="pp-ctl">Color <input type="color" id="ppColor"></label>
+    <label class="pp-ctl">Rugosidad <input type="range" id="ppRug" min="0" max="1" step="0.01" value="0.5"></label>
+    <div class="pp-fila"><button type="button" id="ppGuardarMat">Guardar material</button></div>
+   </details>
+   <details><summary>Colisiones, medidas y foto</summary>
+    <label class="pp-chk"><input type="checkbox" id="ppColis"> Ver colisiones</label>
+    <div class="pp-fila">
+     <button type="button" data-modo-admin="regla" id="ppRegla">Medir distancia</button>
+     <span id="ppReglaOut"></span>
+    </div>
+    <div class="pp-fila"><button type="button" id="ppFoto">Tomar foto</button><button type="button" id="ppVideoSig">Siguiente video</button></div>
+   </details>
+   <details><summary>Rendimiento</summary>
+    <label class="pp-chk"><input type="checkbox" data-fx="sombras" checked> Sombras</label>
+    <label class="pp-chk"><input type="checkbox" data-fx="halos" checked> Halos de luz</label>
+    <label class="pp-chk"><input type="checkbox" data-fx="arboles" checked> Árboles</label>
+    <label class="pp-chk"><input type="checkbox" data-fx="pasto" checked> Pasto</label>
+    <label class="pp-chk"><input type="checkbox" data-fx="video" checked> Video de la pantalla</label>
+    <label class="pp-chk"><input type="checkbox" data-fx="auditorio" checked> Luces del auditorio</label>
+    <label class="pp-chk"><input type="checkbox" data-fx="chorros" checked> Chorros de fuente</label>
+    <label class="pp-ctl">Resolución
+     <select id="ppRes">
+      <option value="auto">Automática</option>
+      <option value="0.5">0.5</option>
+      <option value="0.75">0.75</option>
+      <option value="1">1</option>
+      <option value="1.5">1.5</option>
+      <option value="2">2</option>
+     </select>
+    </label>
+   </details>
+   <details open><summary>Iluminación</summary>
+    <label class="pp-ctl">Hora <output id="ppHoraOut">14:00</output>
+     <input type="range" id="ppHora" min="0" max="24" step="0.1" value="14">
+    </label>
+    <div class="pp-fila">
+     <button type="button" id="ppExp">Exportar JSON</button>
+     <button type="button" id="ppImp">Importar JSON</button>
+     <button type="button" id="ppPub">Publicar a todos</button>
+    </div>
+    <textarea id="ppJson" class="pp-area" placeholder="Pega aquí un preset JSON"></textarea>
+   </details>
+   <details><summary>Lugares guardados</summary>
+    <div class="pp-fila"><button type="button" id="ppParada">Guardar posición</button><button type="button" id="ppExportPts">Exportar puntos.js</button></div>
+    <div id="ppParadas"></div>
+   </details>
+   <details><summary>Luces</summary>
+    <label class="pp-chk"><input type="checkbox" id="ppConos"> Mostrar conos de luz</label>
+    <div id="ppLuces"></div>
+   </details>
+   <div class="pp-fila"><button type="button" id="ppSalirSesion">Cerrar sesión</button></div>
+  </div>
+ </div>
+</section>
+
+<footer></footer>
+
+<script src="comun.js"></script>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/","three-mesh-bvh":"https://cdn.jsdelivr.net/npm/three-mesh-bvh@0.7.3/src/index.js"}}
+</script>
+<script type="module" src="museo.js"></script>
+</body>
+</html>
