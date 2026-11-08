@@ -4088,7 +4088,7 @@ function mezclar(a, b, t) {
 }
 function horaAmbiente(h) {
   const f = THREE.MathUtils.clamp(Math.sin(Math.PI * (h - 5) / 14), 0, 1);
-  const w = THREE.MathUtils.clamp(Math.max(Math.exp(-((h - 19) / 1.6) ** 2), Math.exp(-((h - 6) / 1.4) ** 2)) * 0.8, 0, 1);
+  const w = THREE.MathUtils.clamp(Math.max(Math.exp(-Math.pow((h-19)/1.6,2)),Math.exp(-Math.pow((h-6)/1.4,2)))*0.8,0,1);
   const r = mezclar(mezclar(AMBIENTES.noche, AMBIENTES.dia, f), AMBIENTES.galeria, w);
   const sE = 65 * Math.sin(Math.PI * (h - 6) / 12), sA = 90 + (h - 6) * 15, lE = 50 * Math.sin(Math.PI * (h - 18) / 12), lA = sA + 180;
   Object.assign(r.cielo.sol, { elevacion: sE, azimut: sA, brillo: sE > 0 ? 1 : 0 });
