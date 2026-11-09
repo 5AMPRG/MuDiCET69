@@ -16,80 +16,28 @@
 <link rel="stylesheet" href="estilos.css">
 <link rel="stylesheet" href="paginas.css">
 <style>
-:root{--mt-spot-x:50%;--mt-spot-y:30%}
-body{background:#fbf8f8}
-
-/* Hero oscuro con resplandor que sigue al cursor */
-.hero{position:relative;overflow:hidden;background:radial-gradient(120% 90% at 0% 0%,#4a0d1e 0%,transparent 60%),#16060b;color:#fff;padding:clamp(7rem,14vw,9.5rem) var(--pad) clamp(4rem,8vw,6rem);isolation:isolate}
-.hero::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(520px circle at var(--mt-spot-x) var(--mt-spot-y),rgba(232,165,180,.22),transparent 60%);transition:background-position .2s}
-.hero::after{content:"";position:absolute;inset:0;z-index:-1;opacity:.12;background-image:linear-gradient(rgba(255,255,255,.6) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.6) 1px,transparent 1px);background-size:48px 48px;mask-image:radial-gradient(ellipse at center,#000 30%,transparent 75%)}
-.hero-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:clamp(2rem,5vw,4rem);align-items:center;max-width:1180px;margin:0 auto}
-.hero .eyebrow{color:#f0c9d2}.hero .eyebrow::before{background:#f0c9d2}
-.hero .title{color:#fff}.hero .title b{color:#e8a5b4}
-.hero .lead{color:rgba(255,255,255,.8);max-width:36ch;margin:1.2rem 0 2rem;font-size:1rem;line-height:1.7}
-.estado-chip{display:inline-flex;align-items:center;gap:.6rem;padding:.5rem .9rem;border:1px solid rgba(232,165,180,.5);font-size:.64rem;letter-spacing:.18em;text-transform:uppercase;color:#f0c9d2;margin-bottom:1.4rem}
-.pulso{width:8px;height:8px;border-radius:50%;background:#e8a5b4;box-shadow:0 0 0 0 rgba(232,165,180,.7);animation:pulso 1.8s infinite}
-@keyframes pulso{70%{box-shadow:0 0 0 10px rgba(232,165,180,0)}100%{box-shadow:0 0 0 0 rgba(232,165,180,0)}}
-.hero .btn{background:#fff;color:var(--guinda);border-color:#fff}
-.hero .btn:hover{background:transparent;color:#fff}
-
-/* Engranes */
-.maq{position:relative;aspect-ratio:1;width:100%;max-width:440px;justify-self:center}
-.maq svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 20px 40px rgba(0,0,0,.45))}
-.engrane{transform-box:fill-box;transform-origin:center;cursor:pointer;animation:giro 14s linear infinite}
-.engrane.rapido{animation-duration:3s}
-.engrane.inverso{animation-direction:reverse}
-.engrane .dientes{stroke:#e8a5b4}
-.engrane .cuerpo{fill:#2a0b14;stroke:#e8a5b4;stroke-width:2}
-.engrane .centro{fill:#7a122e}
-.engrane:focus-visible{outline:none}
-.engrane:focus-visible .cuerpo{stroke:#fff;stroke-width:3}
-.etiqueta-maq{position:absolute;font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:#f0c9d2;white-space:nowrap}
-.llave{position:absolute;right:4%;bottom:6%;width:34%;opacity:.9;animation:golpe 2.4s ease-in-out infinite;transform-origin:80% 80%}
+.mt{max-width:980px}
+.mt-estado{display:flex;align-items:center;gap:.8rem;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--guinda);font-weight:600;margin-bottom:1.6rem}
+.mt-estado i{animation:giro 3s linear infinite}
+.mt-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.2rem;margin:2.4rem 0}
+.mt-card{background:#fff;border:1px solid var(--linea);padding:1.6rem 1.4rem;display:grid;gap:.7rem;justify-items:start;position:relative;overflow:hidden}
+.mt-card::before{content:"";position:absolute;left:0;top:0;height:3px;width:100%;background:linear-gradient(90deg,var(--guinda),#e8a5b4);transform:scaleX(0);transform-origin:left;animation:llenar 4s ease-in-out infinite}
+.mt-card:nth-child(2)::before{animation-delay:1.3s}
+.mt-card:nth-child(3)::before{animation-delay:2.6s}
+.mt-ico{width:3.2rem;height:3.2rem;display:grid;place-items:center;border:1px solid var(--guinda);color:var(--guinda);font-size:1.3rem}
+.mt-card h3{font-size:.95rem;font-weight:600;letter-spacing:.06em}
+.mt-card p{font-size:.82rem;color:var(--gris)}
+.mt-barra{height:4px;background:var(--gris-c);overflow:hidden;margin:.4rem 0 1.8rem}
+.mt-barra i{display:block;width:35%;height:100%;background:linear-gradient(90deg,var(--guinda),#e8a5b4);animation:desliza 1.6s ease-in-out infinite}
+.mt-acciones{display:flex;flex-wrap:wrap;gap:.8rem;align-items:center}
+.mt-nota{font-size:.82rem;color:var(--gris);margin-top:1.2rem}
 @keyframes giro{to{transform:rotate(360deg)}}
-@keyframes golpe{0%,100%{transform:rotate(0)}50%{transform:rotate(-18deg)}}
-
-/* Sección: plano + bitácora */
-.bit{padding:clamp(3.5rem,7vw,5.5rem) var(--pad);background:#fbf8f8}
-.bit-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:2.5rem;max-width:1180px;margin:0 auto;align-items:stretch}
-.plano{background:#fff;border:1px solid var(--linea);padding:1.6rem;position:relative}
-.plano-head{display:flex;justify-content:space-between;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gris);margin-bottom:1rem}
-.plano svg{width:100%;height:auto;display:block}
-.trazo{fill:none;stroke:var(--guinda);stroke-width:2;stroke-linejoin:round;pathLength:1;stroke-dasharray:1;stroke-dashoffset:1;animation:dibujar 2.6s ease forwards}
-.trazo.fino{stroke:#c9a9b2;stroke-width:1}
-.sala{fill:rgba(122,18,46,.06);opacity:0;animation:aparecer .6s ease forwards}
-.sala-txt{font-family:Montserrat,system-ui,sans-serif;font-size:11px;letter-spacing:.14em;fill:var(--gris);text-transform:uppercase;opacity:0;animation:aparecer .6s ease forwards}
-.reparando{fill:var(--guinda);opacity:.85;animation:parpadeo 1.6s ease-in-out infinite}
-@keyframes dibujar{to{stroke-dashoffset:0}}
-@keyframes aparecer{to{opacity:1}}
-@keyframes parpadeo{50%{opacity:.25}}
-
-.bitacora{background:#16060b;color:#f5dbe2;padding:1.4rem 1.5rem;font-family:"Courier New",ui-monospace,monospace;font-size:.82rem;line-height:1.9;min-height:19rem;position:relative;border:1px solid #3a0f1c}
-.bitacora-head{display:flex;gap:.45rem;margin-bottom:1rem;padding-bottom:.8rem;border-bottom:1px solid rgba(255,255,255,.12)}
-.bitacora-head i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.25)}
-.bitacora-head i:first-child{background:#e8a5b4}
-.bitacora ol{list-style:none;margin:0;padding:0}
-.bitacora li{display:flex;gap:.6rem;opacity:.9}
-.bitacora li .ok{color:#8fd3a6}
-.bitacora li .hace{color:#e8a5b4}
-.cursor{display:inline-block;width:.55em;height:1em;background:#e8a5b4;vertical-align:-.15em;animation:cursor 1s steps(1) infinite}
-@keyframes cursor{50%{opacity:0}}
-
-/* Pie de la sección: acciones y nota */
-.acciones{display:flex;flex-wrap:wrap;gap:.8rem;align-items:center;margin-top:2.2rem}
-.acciones .nota{font-size:.82rem;color:var(--gris);margin-left:.4rem}
-
-.hero .rv,.bit .rv{will-change:auto}
-
-@media (max-width:900px){
- .hero-grid,.bit-grid{grid-template-columns:1fr}
- .maq{max-width:320px}
-}
+@keyframes llenar{0%{transform:scaleX(0)}50%{transform:scaleX(1)}100%{transform:scaleX(1);opacity:0}}
+@keyframes desliza{0%{transform:translateX(-100%)}100%{transform:translateX(300%)}}
 @media (prefers-reduced-motion:reduce){
- .engrane,.llave,.pulso,.cursor,.reparando,.trazo,.sala,.sala-txt{animation:none!important}
- .trazo{stroke-dashoffset:0}
- .sala,.sala-txt{opacity:1}
- .hero::before{transition:none}
+ .mt-estado i,.mt-card::before,.mt-barra i{animation:none}
+ .mt-card::before{transform:scaleX(1)}
+ .mt-barra i{width:100%;opacity:.5}
 }
 </style>
 </head>
@@ -97,153 +45,45 @@ body{background:#fbf8f8}
 <div id="loader"><div class="ld"><h2>CETIS 69</h2><p>MUSEO DIGITAL</p><div class="bar"><i></i></div></div></div>
 <nav id="nav" class="solid"></nav>
 
-<header class="hero" id="hero">
- <div class="hero-grid">
-  <div class="rv">
-   <div class="estado-chip"><span class="pulso" aria-hidden="true"></span> Obra en curso</div>
-   <div class="eyebrow">Mantenimiento</div>
-   <h1 class="title">Estamos <b>reconstruyendo</b> el museo</h1>
-   <p class="lead">Reparamos, actualizamos y mejoramos el Museo Digital CETIS 69. Dentro de poco regresan las salas, la línea del tiempo y el archivo de la comunidad, con más contenido y mejor funcionamiento en celular.</p>
-   <div class="acciones">
-    <button type="button" class="btn" id="reintentar">Intentar de nuevo <i class="fa-solid fa-rotate-right" aria-hidden="true"></i></button>
-   </div>
-  </div>
+<header class="phead"><div class="rv">
+ <div class="eyebrow">Mantenimiento</div>
+ <h1 class="title">Estamos <b>actualizando</b> el museo</h1>
+ <p>Estamos reparando y mejorando el sitio del Museo Digital CETIS 69. Volvemos muy pronto, con las salas, la línea del tiempo y el archivo listos para ti.</p>
+</div></header>
 
-  <div class="maq rv" aria-hidden="true">
-   <svg viewBox="0 0 400 400">
-    <g class="engrane" id="g1">
-     <circle class="dientes" cx="150" cy="170" r="110" fill="none" stroke-width="26" stroke-dasharray="14 14"/>
-     <circle class="cuerpo" cx="150" cy="170" r="92"/>
-     <circle class="centro" cx="150" cy="170" r="26"/>
-    </g>
-    <g class="engrane rapido inverso" id="g2">
-     <circle class="dientes" cx="300" cy="105" r="62" fill="none" stroke-width="16" stroke-dasharray="10 10"/>
-     <circle class="cuerpo" cx="300" cy="105" r="52"/>
-     <circle class="centro" cx="300" cy="105" r="14"/>
-    </g>
-    <g class="engrane" id="g3" style="animation-duration:9s">
-     <circle class="dientes" cx="302" cy="285" r="50" fill="none" stroke-width="14" stroke-dasharray="9 9"/>
-     <circle class="cuerpo" cx="302" cy="285" r="41"/>
-     <circle class="centro" cx="302" cy="285" r="11"/>
-    </g>
-   </svg>
-   <span class="etiqueta-maq" style="left:22%;top:44%">Reparando</span>
-   <span class="etiqueta-maq" style="right:4%;top:10%">Actualizando</span>
-   <span class="etiqueta-maq" style="right:4%;bottom:6%">Mejorando</span>
-   <i class="fa-solid fa-screwdriver-wrench llave" style="color:#e8a5b4;font-size:3.2rem" aria-hidden="true"></i>
-  </div>
- </div>
-</header>
+<section><div class="mt">
+ <div class="mt-estado"><i class="fa-solid fa-gears" aria-hidden="true"></i> Trabajos en curso</div>
 
-<section class="bit"><div class="bit-grid">
- <div class="plano rv">
-  <div class="plano-head"><span>Plano del plantel</span><span>En reconstrucción</span></div>
-  <svg viewBox="0 0 400 260" role="img" aria-label="Plano esquemático del plantel con salas en reconstrucción">
-   <rect class="trazo" x="20" y="20" width="360" height="220" style="animation-delay:0s"/>
-   <line class="trazo fino" x1="200" y1="20" x2="200" y2="240" style="animation-delay:.6s"/>
-   <line class="trazo fino" x1="20" y1="130" x2="200" y2="130" style="animation-delay:.9s"/>
-   <line class="trazo fino" x1="200" y1="150" x2="380" y2="150" style="animation-delay:1.1s"/>
-   <rect class="sala" x="34" y="34" width="150" height="82" style="animation-delay:1.3s"/>
-   <rect class="sala" x="214" y="34" width="150" height="82" style="animation-delay:1.5s"/>
-   <rect class="sala" x="34" y="144" width="150" height="82" style="animation-delay:1.7s"/>
-   <rect class="sala" x="214" y="164" width="150" height="62" style="animation-delay:1.9s"/>
-   <text class="sala-txt" x="44" y="60" style="animation-delay:1.4s">Línea del tiempo</text>
-   <text class="sala-txt" x="224" y="60" style="animation-delay:1.6s">Archivo</text>
-   <text class="sala-txt" x="44" y="170" style="animation-delay:1.8s">Recorrido 360°</text>
-   <text class="sala-txt" x="224" y="190" style="animation-delay:2s">Salón de la fama</text>
-   <circle class="reparando" cx="180" cy="200" r="6"/>
-   <circle class="reparando" cx="330" cy="82" r="6" style="animation-delay:.6s"/>
-  </svg>
+ <div class="mt-grid">
+  <article class="mt-card rv">
+   <span class="mt-ico"><i class="fa-solid fa-screwdriver-wrench" aria-hidden="true"></i></span>
+   <h3>Reparando</h3>
+   <p>Corregimos enlaces, imágenes y detalles que no funcionaban bien.</p>
+  </article>
+  <article class="mt-card rv">
+   <span class="mt-ico"><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i></span>
+   <h3>Actualizando</h3>
+   <p>Incorporamos nuevos contenidos, fotografías y recuerdos de la comunidad.</p>
+  </article>
+  <article class="mt-card rv">
+   <span class="mt-ico"><i class="fa-solid fa-person-digging" aria-hidden="true"></i></span>
+   <h3>Mejorando</h3>
+   <p>Preparamos el sitio para que funcione mejor en celulares y pantallas del plantel.</p>
+  </article>
  </div>
 
- <div class="bitacora rv" role="status" aria-live="off">
-  <div class="bitacora-head" aria-hidden="true"><i></i><i></i><i></i></div>
-  <ol id="log"></ol>
- </div>
-</div>
+ <div class="mt-barra" role="presentation"><i></i></div>
 
-<div class="bit-grid" style="margin-top:2.4rem;grid-template-columns:1fr">
- <p class="nota" style="font-size:.85rem;color:var(--gris);max-width:60ch">Gracias por tu paciencia. Si necesitas comunicarte con el plantel mientras tanto, usa los datos de contacto del pie de página. Toca un engrane para acelerar la obra.</p>
-</div>
-</section>
+ <div class="mt-acciones">
+  <button type="button" class="btn" id="reintentar">Intentar de nuevo <i class="fa-solid fa-rotate-right" aria-hidden="true"></i></button>
+ </div>
+ <p class="mt-nota">Gracias por tu paciencia. Si necesitas comunicarte con el plantel mientras tanto, usa los datos de contacto del pie de página.</p>
+</div></section>
 
 <footer></footer>
 <script src="comun.js"></script>
 <script>
-(function(){
- const hero=document.getElementById('hero');
- const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
-
- // Resplandor que sigue al cursor
- if(!reduce&&matchMedia('(hover:hover)').matches){
-  hero.addEventListener('pointermove',e=>{
-   const r=hero.getBoundingClientRect();
-   hero.style.setProperty('--mt-spot-x',(e.clientX-r.left)+'px');
-   hero.style.setProperty('--mt-spot-y',(e.clientY-r.top)+'px');
-  });
- }
-
- // Engranes: clic o Enter para acelerar y invertir el sentido
- document.querySelectorAll('.engrane').forEach(g=>{
-  g.setAttribute('tabindex','-1');
-  g.style.pointerEvents='auto';
-  g.addEventListener('click',()=>{
-   g.style.animationDuration=(parseFloat(getComputedStyle(g).animationDuration)>4?'1.2s':'');
-   setTimeout(()=>{g.style.animationDuration=''},2400);
-  });
- });
- document.getElementById('reintentar').addEventListener('click',()=>location.reload());
-
- // Bitácora de obra: escribe tareas en bucle (sin porcentajes falsos)
- const tareas=[
-  'Verificando las salas del recorrido 360°',
-  'Organizando el archivo fotográfico por década',
-  'Revisando los enlaces del menú',
-  'Optimizando imágenes para celulares',
-  'Sincronizando la línea del tiempo',
-  'Comprobando los créditos y las fuentes'
- ];
- const log=document.getElementById('log');
- const MAX=5;
-
- function agregar(texto,estado){
-  const li=document.createElement('li');
-  const marca=document.createElement('span');
-  marca.className=estado==='ok'?'ok':'hace';
-  marca.textContent=estado==='ok'?'✓':'›';
-  const t=document.createElement('span');
-  t.textContent=texto;
-  li.append(marca,t);
-  log.append(li);
-  while(log.children.length>MAX)log.firstElementChild.remove();
-  return t;
- }
-
- if(reduce){
-  tareas.slice(0,MAX).forEach(t=>agregar(t,'ok'));
-  return;
- }
-
- let i=0;
- function escribir(){
-  const texto=tareas[i%tareas.length];i++;
-  const span=agregar('',"hace");
-  const cur=document.createElement('span');cur.className='cursor';
-  span.after(cur);
-  let k=0;
-  const tick=setInterval(()=>{
-   span.textContent=texto.slice(0,++k);
-   if(k>=texto.length){
-    clearInterval(tick);
-    cur.remove();
-    const ok=log.lastElementChild.firstElementChild;
-    ok.className='ok';ok.textContent='✓';
-    setTimeout(escribir,900);
-   }
-  },28);
- }
- escribir();
-})();
+document.getElementById('reintentar').addEventListener('click',()=>location.reload());
 </script>
 </body>
 </html>
