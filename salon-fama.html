@@ -4,32 +4,86 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#7a122e">
+<meta name="robots" content="noindex, nofollow">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icono-192.png">
 <link rel="apple-touch-icon" href="icono-180.png">
-<title>Salón de la fama · Museo Digital CETIS 69</title>
+<title>En mantenimiento · Museo Digital CETIS 69</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>
 <link rel="stylesheet" href="estilos.css">
 <link rel="stylesheet" href="paginas.css">
+<style>
+.mt{max-width:980px}
+.mt-estado{display:flex;align-items:center;gap:.8rem;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--guinda);font-weight:600;margin-bottom:1.6rem}
+.mt-estado i{animation:giro 3s linear infinite}
+.mt-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.2rem;margin:2.4rem 0}
+.mt-card{background:#fff;border:1px solid var(--linea);padding:1.6rem 1.4rem;display:grid;gap:.7rem;justify-items:start;position:relative;overflow:hidden}
+.mt-card::before{content:"";position:absolute;left:0;top:0;height:3px;width:100%;background:linear-gradient(90deg,var(--guinda),#e8a5b4);transform:scaleX(0);transform-origin:left;animation:llenar 4s ease-in-out infinite}
+.mt-card:nth-child(2)::before{animation-delay:1.3s}
+.mt-card:nth-child(3)::before{animation-delay:2.6s}
+.mt-ico{width:3.2rem;height:3.2rem;display:grid;place-items:center;border:1px solid var(--guinda);color:var(--guinda);font-size:1.3rem}
+.mt-card h3{font-size:.95rem;font-weight:600;letter-spacing:.06em}
+.mt-card p{font-size:.82rem;color:var(--gris)}
+.mt-barra{height:4px;background:var(--gris-c);overflow:hidden;margin:.4rem 0 1.8rem}
+.mt-barra i{display:block;width:35%;height:100%;background:linear-gradient(90deg,var(--guinda),#e8a5b4);animation:desliza 1.6s ease-in-out infinite}
+.mt-acciones{display:flex;flex-wrap:wrap;gap:.8rem;align-items:center}
+.mt-nota{font-size:.82rem;color:var(--gris);margin-top:1.2rem}
+@keyframes giro{to{transform:rotate(360deg)}}
+@keyframes llenar{0%{transform:scaleX(0)}50%{transform:scaleX(1)}100%{transform:scaleX(1);opacity:0}}
+@keyframes desliza{0%{transform:translateX(-100%)}100%{transform:translateX(300%)}}
+@media (prefers-reduced-motion:reduce){
+ .mt-estado i,.mt-card::before,.mt-barra i{animation:none}
+ .mt-card::before{transform:scaleX(1)}
+ .mt-barra i{width:100%;opacity:.5}
+}
+</style>
 </head>
-<body>
+<body data-menu="mantenimiento" data-carga="600" data-reveal="inmediato">
 <div id="loader"><div class="ld"><h2>CETIS 69</h2><p>MUSEO DIGITAL</p><div class="bar"><i></i></div></div></div>
 <nav id="nav" class="solid"></nav>
-<header class="phead"><div class="rv"><div class="eyebrow">Reconocimientos</div><h1 class="title">Salón de la <b>fama</b></h1><p>Trofeos, medallas y reconocimientos de los equipos representativos del plantel en torneos locales, estatales y nacionales.</p></div></header>
-<section><div class="tabs"><button class="on" data-f="all">Todos</button><button data-f="d">Deportivo</button><button data-f="c">Cultural</button></div><div class="grid" id="grid"></div></section>
+
+<header class="phead"><div class="rv">
+ <div class="eyebrow">Mantenimiento</div>
+ <h1 class="title">Estamos <b>actualizando</b> el museo</h1>
+ <p>Estamos reparando y mejorando el sitio del Museo Digital CETIS 69. Volvemos muy pronto, con las salas, la línea del tiempo y el archivo listos para ti.</p>
+</div></header>
+
+<section><div class="mt">
+ <div class="mt-estado"><i class="fa-solid fa-gears" aria-hidden="true"></i> Trabajos en curso</div>
+
+ <div class="mt-grid">
+  <article class="mt-card rv">
+   <span class="mt-ico"><i class="fa-solid fa-screwdriver-wrench" aria-hidden="true"></i></span>
+   <h3>Reparando</h3>
+   <p>Corregimos enlaces, imágenes y detalles que no funcionaban bien.</p>
+  </article>
+  <article class="mt-card rv">
+   <span class="mt-ico"><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i></span>
+   <h3>Actualizando</h3>
+   <p>Incorporamos nuevos contenidos, fotografías y recuerdos de la comunidad.</p>
+  </article>
+  <article class="mt-card rv">
+   <span class="mt-ico"><i class="fa-solid fa-person-digging" aria-hidden="true"></i></span>
+   <h3>Mejorando</h3>
+   <p>Preparamos el sitio para que funcione mejor en celulares y pantallas del plantel.</p>
+  </article>
+ </div>
+
+ <div class="mt-barra" role="presentation"><i></i></div>
+
+ <div class="mt-acciones">
+  <button type="button" class="btn" id="reintentar">Intentar de nuevo <i class="fa-solid fa-rotate-right" aria-hidden="true"></i></button>
+ </div>
+ <p class="mt-nota">Gracias por tu paciencia. Si necesitas comunicarte con el plantel mientras tanto, usa los datos de contacto del pie de página.</p>
+</div></section>
+
 <footer></footer>
 <script src="comun.js"></script>
 <script>
-DATOS.then(D=>{
-const it=D.premios;
-let f='all';const g=$('#grid');
-function draw(){g.innerHTML='';it.forEach((o,i)=>{if(f!=='all'&&o.c!==f)return;const b=document.createElement('button');b.className='gc';b.innerHTML=`<figure class="slot" data-slot="salon-${i+1}"><i class="fa-solid fa-${o.c==='d'?'trophy':'music'}"></i></figure><div class="gb"><span class="badge">${o.l} · ${o.y}</span><h3>${o.n}</h3><p>${o.p}</p></div>`;b.onclick=()=>openM({n:o.n,r:o.l+' · '+o.y+' · '+o.p,d:o.d,k:'salon-'+(i+1)});g.append(b)})}
-document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{f=b.dataset.f;document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));draw()});
-draw();
-});
+document.getElementById('reintentar').addEventListener('click',()=>location.reload());
 </script>
 </body>
 </html>
