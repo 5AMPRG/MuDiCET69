@@ -1,7 +1,8 @@
-const VERSION='museo-cetis69-v1';
+const VERSION='museo-cetis69-v2';
 const NUCLEO=['index.html','salon-fama.html','libro-visitas.html','mapa-360.html','archivo-fotografico.html','creditos.html','qr-zonas.html','estilos.css','paginas.css','comun.js','qrcode.js','datos.json','manifest.webmanifest','icono-180.png','icono-192.png','icono-512.png'];
 const EXTERNOS=['https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js','https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500;600;700;800&display=swap'];
 const ESPERA_RED=4000;
+const NO_CACHEAR=/^(firestore|identitytoolkit|securetoken)\.googleapis\.com$|firebaseapp\.com$/;
 
 const guardar=async(cache,url,opciones)=>{
  try{
@@ -44,7 +45,7 @@ const redPrimero=async req=>{
   const guardado=await cache.match(req,{ignoreSearch:true});
   if(guardado)return guardado;
   if(req.mode==='navigate'){
-   const inicio=await cache.match('museo-cetis69.html');
+   const inicio=await cache.match('index.html');
    if(inicio)return inicio;
   }
   return Response.error();
@@ -66,6 +67,9 @@ self.addEventListener('fetch',e=>{
  if(req.method!=='GET'||req.headers.has('range'))return;
  const url=new URL(req.url);
  if(url.protocol!=='http:'&&url.protocol!=='https:')return;
+ if(NO_CACHEAR.test(url.hostname))return;
+ if(url.origin===location.origin&&url.pathname.endsWith('/admin.html'))return;
+
  const propio=url.origin===location.origin;
  const codigo=propio&&(req.mode==='navigate'||/\.(html|css|js|json|webmanifest)$/i.test(url.pathname)||url.pathname.endsWith('/'));
  e.respondWith(codigo?redPrimero(req):guardadoPrimero(req));
