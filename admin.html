@@ -28,7 +28,7 @@ img{max-width:100%;display:block}
 :focus-visible{outline:2px solid var(--guinda);outline-offset:3px}
 h1,h2,h3{text-transform:uppercase;letter-spacing:.14em;font-weight:200;line-height:1.15}
 
-/* ---------- Botones (mismo estilo que el sitio) ---------- */
+/* Botones */
 .btn{display:inline-flex;align-items:center;gap:.7rem;justify-content:center;padding:.85rem 1.4rem;font-size:.7rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;background:var(--guinda);color:#fff;border:1px solid var(--guinda);transition:.35s;white-space:nowrap}
 .btn:hover:not(:disabled){background:var(--guinda-d);border-color:var(--guinda-d);gap:.9rem}
 .btn:disabled{opacity:.45;cursor:default}
@@ -40,7 +40,7 @@ h1,h2,h3{text-transform:uppercase;letter-spacing:.14em;font-weight:200;line-heig
 .btn.sm{padding:.55rem .95rem;font-size:.62rem;letter-spacing:.16em}
 .btn.grande{width:100%;padding:1rem}
 
-/* ---------- Acceso ---------- */
+/* Acceso */
 .login{min-height:100vh;display:grid;place-items:center;padding:1.2rem;background:radial-gradient(900px 520px at 12% -8%,rgba(232,165,180,.28),transparent 60%),radial-gradient(800px 520px at 110% 115%,rgba(122,18,46,.6),transparent 60%),linear-gradient(160deg,#3a0a18,#140609)}
 .caja{background:#fff;width:min(420px,100%);padding:clamp(2rem,5vw,2.8rem);text-align:center;border-top:3px solid var(--guinda);box-shadow:0 30px 80px rgba(0,0,0,.45)}
 .caja img{width:72px;height:72px;margin:0 auto 1.2rem}
@@ -50,7 +50,7 @@ h1,h2,h3{text-transform:uppercase;letter-spacing:.14em;font-weight:200;line-heig
 .caja h1{font-size:1.35rem;color:var(--guinda);margin-bottom:.4rem}
 .caja .sub{color:var(--gris);font-size:.82rem;margin-bottom:2rem;letter-spacing:.04em}
 
-/* ---------- Estructura ---------- */
+/* Estructura */
 #panel{display:grid;grid-template-columns:250px minmax(0,1fr);min-height:100vh}
 .side{background:var(--guinda-d);color:#fff;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;padding:1.6rem 0 1.2rem;overflow-y:auto}
 .brand{display:flex;align-items:center;gap:.9rem;padding:0 1.5rem 1.8rem;border-bottom:1px solid rgba(255,255,255,.14);margin-bottom:1rem}
@@ -82,7 +82,7 @@ main{min-width:0;display:flex;flex-direction:column}
 .phead p{color:#e6cfd5;margin-top:.7rem;font-size:.85rem;max-width:60ch}
 .cont{padding:clamp(1.6rem,3vw,2.6rem) var(--pad) 3rem;flex:1}
 
-/* ---------- Componentes ---------- */
+/* Componentes */
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:1px;background:var(--linea);border:1px solid var(--linea);margin-bottom:1.6rem}
 .stats.mini{grid-template-columns:repeat(auto-fit,minmax(170px,1fr));margin:0}
 .stat{background:#fff;padding:1.4rem 1.5rem;position:relative}
@@ -119,6 +119,7 @@ select:focus,input:focus,textarea:focus{outline:2px solid var(--guinda);outline-
 .etiqueta{font-size:.62rem;padding:.25rem .55rem;letter-spacing:.14em;text-transform:uppercase;font-weight:600}
 .etiqueta.si{background:#e7f6ec;color:var(--ok)}
 .etiqueta.no{background:var(--gris-c);color:var(--gris)}
+.etiqueta.aviso{background:#fdf3e4;color:var(--warn)}
 .vacio{grid-column:1/-1;text-align:center;padding:3rem 1rem;border:1px dashed #cdbfc3;color:var(--gris);background:#fff}
 .vacio i{font-size:1.6rem;display:block;margin-bottom:.7rem;color:var(--guinda);opacity:.6}
 
@@ -152,6 +153,7 @@ select:focus,input:focus,textarea:focus{outline:2px solid var(--guinda);outline-
 /* Editor */
 textarea.json{width:100%;min-height:24rem;padding:1rem;border:1px solid var(--linea);background:#fff;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;line-height:1.6;resize:vertical}
 .ayuda{font-size:.82rem;color:var(--gris);background:#fff;border-left:2px solid var(--guinda);padding:.9rem 1.1rem;margin-bottom:1rem}
+.ayuda code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.78rem;color:var(--guinda)}
 .estado-json{font-size:.66rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase}
 .estado-json.ok{color:var(--ok)}
 .estado-json.err{color:var(--err)}
@@ -169,7 +171,7 @@ dialog::backdrop{background:rgba(20,6,10,.7);backdrop-filter:blur(3px)}
 .lb-x{position:absolute;top:.6rem;right:.6rem;width:40px;height:40px;background:#fff;border:1px solid var(--linea);z-index:2;display:grid;place-items:center;color:var(--guinda)}
 .lb-x:hover{background:var(--guinda);color:#fff}
 
-/* Aviso tipo toast (igual al del sitio) */
+/* Aviso tipo toast */
 #flash{position:fixed;left:50%;bottom:calc(1.5rem + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--guinda-d);color:#fff;padding:.9rem 1.4rem;font-size:.72rem;letter-spacing:.14em;opacity:0;visibility:hidden;transition:.35s;z-index:400;max-width:90vw;text-align:center;pointer-events:none}
 #flash.on{opacity:1;visibility:visible;transform:translate(-50%,0)}
 #flash[data-tipo=error]{background:var(--rojo)}
@@ -259,6 +261,10 @@ dialog::backdrop{background:rgba(20,6,10,.7);backdrop-filter:blur(3px)}
           <h3>Secciones del contenido</h3>
           <div class="stats mini" id="tarjetas"></div>
         </div>
+        <div class="panel-card">
+          <h3>Imágenes por sección</h3>
+          <ul class="lista" id="listaImg"></ul>
+        </div>
       </section>
 
       <!-- Solicitudes -->
@@ -285,6 +291,7 @@ dialog::backdrop{background:rgba(20,6,10,.7);backdrop-filter:blur(3px)}
           <span class="muted" id="sucioC"></span>
         </div>
         <p class="ayuda" id="ayuda"></p>
+        <p class="ayuda">Las imágenes (<code>u</code> e <code>imgs</code>) pueden ser enlaces https, por ejemplo de imgBB, o rutas locales como <code>images/archivo/foto.jpg</code>. Deja <code>""</code> o <code>[]</code> si aún no hay foto.</p>
         <textarea class="json" id="json" spellcheck="false" aria-label="Contenido de la sección en formato JSON"></textarea>
         <p class="error" id="err" role="alert"></p>
         <div class="fila">
@@ -300,6 +307,10 @@ dialog::backdrop{background:rgba(20,6,10,.7);backdrop-filter:blur(3px)}
         <div class="panel-card">
           <h3>Cambios pendientes</h3>
           <ul class="lista" id="listaCambios"></ul>
+        </div>
+        <div class="panel-card">
+          <h3>Avisos antes de publicar</h3>
+          <ul class="lista" id="listaAvisos"></ul>
         </div>
         <div class="panel-card">
           <h3>Acciones</h3>
@@ -391,6 +402,16 @@ function h(tag, attrs = {}, ...kids) {
   return e;
 }
 
+/* Recorre cualquier estructura y devuelve todos los objetos que tienen campo "u" (foto) */
+function recolectar(v, out = []) {
+  if (Array.isArray(v)) v.forEach(x => recolectar(x, out));
+  else if (v && typeof v === 'object') {
+    if ('u' in v) out.push(v);
+    Object.values(v).forEach(x => recolectar(x, out));
+  }
+  return out;
+}
+
 function avisar(t, tipo = 'ok') {
   const f = $('#flash');
   f.textContent = t;
@@ -425,22 +446,33 @@ async function conBoton(btn, fn) {
 /* ---------- Estado ---------- */
 const COL = { archivo: 'solicitudes_archivo', libro: 'solicitudes_libro' };
 const SECCIONES = {
-  sitio: 'Sitio (menú, pie, páginas)', hitos: 'Línea del tiempo', eventos: 'Eventos',
-  proyectos: 'Proyectos de estudiantes', exalumnos: 'Exalumnos', ciencia: 'Ciencia',
-  premios: 'Salón de la fama', archivo: 'Archivo fotográfico', creditos: 'Créditos',
-  ajustes: 'Ajustes técnicos', offline: 'Archivos sin conexión'
+  sitio: 'Sitio (menú, pie, páginas)',
+  hitos: 'Línea del tiempo',
+  hitoImagenes: 'Imágenes de la línea del tiempo',
+  eventos: 'Eventos',
+  proyectos: 'Proyectos de estudiantes',
+  exalumnos: 'Exalumnos',
+  ciencia: 'Ciencia',
+  premios: 'Salón de la fama',
+  archivo: 'Archivo fotográfico',
+  zonas: 'Zonas del museo (plano y 360°)',
+  creditos: 'Créditos',
+  ajustes: 'Ajustes técnicos',
+  offline: 'Archivos sin conexión'
 };
 const AYUDA = {
-  sitio: 'Objeto con: inicio (p. ej. "index.html"), menu y menuInicio (listas de {t, u}), paginas (lista de {t, x, u}) y pie ({descripcion, contacto: [{i, t}], enlaces: [{t, u}], redes: [{t, u, i}], copyright}).',
-  hitos: 'Lista de {y (año), t (título), d (descripción), s: [[…, "oferta"]], docentes: [{n, m}]}.',
-  eventos: 'Lista de {n (nombre), t (texto)}.',
-  proyectos: 'Lista de {n (nombre), t (texto)}.',
-  exalumnos: 'Lista de {n (nombre), r (rol), d (detalle)}.',
-  ciencia: 'Lista de {n (nombre), r (rol), d (detalle)}.',
-  premios: 'Lista de {n (nombre), l (lugar), y (año), p (puesto), c ("d" deportivo o "c" cultural), d (descripción)}.',
-  archivo: 'Lista de {c (texto), d (década: "198", "199", "200", "201" o "202"), r (proporción, p. ej. "4/3"), u (URL de la imagen), t (descripción), por (quien aportó)}.',
+  sitio: 'Objeto con: inicio (p. ej. "index.html"), menu y menuInicio (listas de {t, u}), paginas (lista de {t, x, u}) y pie: {descripcion, contacto: [{i, t}], enlaces: [{t, u}], redes: [{t, u, i}], copyright}.',
+  hitos: 'Lista de {y (año), t (título), d (texto), s: [[icono, especialidad]], docentes: [{n (nombre), m (materia), u (foto), imgs (fotos extra)}]}. Los iconos son clases de Font Awesome, p. ej. "fa-bolt".',
+  hitoImagenes: 'Objeto que asocia cada año de "hitos" con la URL de su imagen, p. ej. {"1986": "https://…/hito-1986.jpg"}. Si un año no tiene imagen, déjalo sin campo o con "".',
+  eventos: 'Lista de {d (día), m (mes), n (nombre), t (texto), u (foto, opcional), imgs (fotos extra, opcional)}.',
+  proyectos: 'Lista de {i (icono de Font Awesome), n (nombre), t (texto), u (foto), imgs (fotos extra)}.',
+  exalumnos: 'Lista de {n (nombre), r (rol · generación), d (descripción), u (foto principal), imgs (hasta 3 fotos extra)}.',
+  ciencia: 'Lista de {n (nombre), r (proyecto · año), d (descripción), u (foto principal), imgs (hasta 3 fotos extra)}.',
+  premios: 'Lista de {n (nombre), l (lugar), y (año), p (puesto), c ("d" deportivo o "c" cultural), d (descripción), u (foto principal), imgs (hasta 3 fotos extra)}.',
+  archivo: 'Lista de {d (década: "198", "199", "200", "201" o "202"), c (título), r (proporción, p. ej. "4/3"), t (descripción), por (quien aportó), u (foto), imgs (fotos extra)}.',
+  zonas: 'Lista de {id (sin espacios), n (nombre), ic (icono), pts: [[x, y]] (posición en % del plano), etiquetas: [texto…], iconos: [icono…] (opcional), pano (imagen 360° o ""), d (descripción), u (foto), imgs (fotos extra)}.',
   creditos: 'Objeto con: equipo (lista de {rol, nombre, detalle}), agradecimientos (texto), fuentes (lista de {tipo, fuente}) e imagenes (lista de [tipo, descripción]).',
-  ajustes: 'Objeto con: archivoEndpoint, libroEndpoint (URLs o "") y kiosco: {segundosInactividad}.',
+  ajustes: 'Objeto con: archivoEndpoint y libroEndpoint (URLs o ""), recorridoSegundos, geoMapa: {referencias: [{lat, lng, x, y}]}, caminos: {nodos, aristas}, kiosco: {segundosInactividad}, bloqueos: {"museo-3d": {activo, etiqueta, titulo, destacado, mensaje, items, fecha, avance}} y museo3d: {visor, modelo, info}.',
   offline: 'Lista de rutas de archivos que se guardan para uso sin conexión, p. ej. "imagenes/portada.jpg".'
 };
 const VISTAS = {
@@ -559,6 +591,7 @@ async function guardarBorrador() {
   }
 }
 
+/* Validación del contenido antes de guardar o publicar */
 function validar(d) {
   if (!d || typeof d !== 'object' || Array.isArray(d)) return 'El contenido debe ser un objeto { }.';
   const req = { sitio: 'object', hitos: 'array', premios: 'array', archivo: 'array', creditos: 'object', ajustes: 'object' };
@@ -568,6 +601,19 @@ function validar(d) {
     if (t === 'object' && (d[k] === null || typeof d[k] !== 'object' || Array.isArray(d[k]))) return `"${k}" debe ser un objeto { }.`;
   }
   if (!d.sitio.inicio) return 'Falta sitio.inicio (p. ej. "index.html").';
+
+  if (d.hitoImagenes !== undefined && (!d.hitoImagenes || typeof d.hitoImagenes !== 'object' || Array.isArray(d.hitoImagenes)))
+    return '"hitoImagenes" debe ser un objeto { "año": "imagen" }.';
+  if (d.zonas !== undefined) {
+    if (!Array.isArray(d.zonas)) return '"zonas" debe ser una lista [ ].';
+    const mala = d.zonas.find(z => !z || !Array.isArray(z.pts));
+    if (mala) return `Cada zona necesita "pts" (lista de [x, y]). Revisa "${mala?.n || mala?.id || 'una zona'}".`;
+  }
+
+  const fotoMala = recolectar(d).find(o =>
+    typeof o.u !== 'string' ||
+    (o.imgs !== undefined && !(Array.isArray(o.imgs) && o.imgs.every(x => typeof x === 'string'))));
+  if (fotoMala) return 'Revisa los campos de imagen: "u" debe ser texto e "imgs" una lista de textos.';
   return '';
 }
 
@@ -615,6 +661,22 @@ function renderResumen() {
       h('b', { text: n }),
       h('span', { text: (SECCIONES[k] || k) + (editado ? ' · editado' : '') }));
   }));
+
+  renderImagenes();
+}
+
+/* Cuántos elementos de cada sección ya tienen foto */
+function renderImagenes() {
+  const filas = Object.keys(S.borrador).map(k => {
+    const items = recolectar(S.borrador[k]);
+    return items.length ? { k, total: items.length, con: items.filter(o => o.u).length } : null;
+  }).filter(Boolean);
+
+  $('#listaImg').replaceChildren(...(filas.length
+    ? filas.map(f => h('li', {},
+        h('div', { class: 'correo' }, h('strong', { text: SECCIONES[f.k] || f.k })),
+        h('span', { class: 'etiqueta ' + (f.con === f.total ? 'si' : 'aviso'), text: `${f.con} de ${f.total} con foto` })))
+    : [h('li', {}, h('span', { class: 'muted', text: 'Ninguna sección tiene campos de imagen.' }))]));
 }
 
 /* ---------- Contenido ---------- */
@@ -630,6 +692,7 @@ function cargarEditor() {
   const k = S.secActual;
   $('#sec').value = k;
   $('#json').value = JSON.stringify(S.borrador[k], null, 2);
+  $('#ayuda').innerHTML = '';
   $('#ayuda').textContent = AYUDA[k] || 'Edita el contenido en formato JSON respetando comillas y comas.';
   validarEditor();
   actualizarSucioEditor();
@@ -674,7 +737,10 @@ $('#btnAplicar').onclick = async () => {
   let v;
   try { v = JSON.parse($('#json').value); }
   catch (e) { $('#err').textContent = 'JSON no válido: ' + e.message; return; }
-  S.borrador[S.secActual] = v;
+  const copia = { ...S.borrador, [S.secActual]: v };
+  const err = validar(copia);
+  if (err) { $('#err').textContent = err; return; }
+  S.borrador = copia;
   if (await guardarBorrador()) {
     renderTodo(true);
     avisar('Cambios aplicados al borrador.');
@@ -742,7 +808,8 @@ async function aprobar(s, tipo) {
         t: s.descripcion,
         por: s.nombre,
         r: s.r,
-        u: s.url
+        u: s.url,
+        imgs: []
       }, ...(S.borrador.archivo || [])];
       await updateDoc(doc(db, COL.archivo, s.id), { estado: 'aprobada', revisado: serverTimestamp(), por: S.correo });
       if (await guardarBorrador()) {
@@ -821,6 +888,19 @@ async function borrarLibro(o) {
 $('#busLib').addEventListener('input', renderLibro);
 
 /* ---------- Publicar ---------- */
+function avisosImagenes() {
+  const out = [];
+  Object.keys(S.borrador).forEach(k => {
+    const items = recolectar(S.borrador[k]);
+    if (!items.length) return;
+    const sin = items.filter(o => !o.u).length;
+    if (sin) out.push(`${SECCIONES[k] || k}: ${sin} de ${items.length} elemento(s) sin foto principal.`);
+    const muchas = items.filter(o => Array.isArray(o.imgs) && o.imgs.length > 3).length;
+    if (muchas) out.push(`${SECCIONES[k] || k}: ${muchas} elemento(s) tienen más de 3 fotos extra. El visor solo muestra 3.`);
+  });
+  return out;
+}
+
 function renderPublicar() {
   const ch = cambiosPor();
   $('#listaCambios').replaceChildren(...(ch.length
@@ -828,6 +908,14 @@ function renderPublicar() {
         h('i', { class: 'fa-solid fa-pen' }),
         h('div', { class: 'correo' }, h('strong', { text: SECCIONES[k] || k }))))
     : [h('li', {}, h('span', { class: 'muted', text: 'No hay cambios pendientes.' }))]));
+
+  const avisos = avisosImagenes();
+  $('#listaAvisos').replaceChildren(...(avisos.length
+    ? avisos.map(t => h('li', {},
+        h('i', { class: 'fa-solid fa-triangle-exclamation' }),
+        h('div', { class: 'correo', text: t })))
+    : [h('li', {}, h('span', { class: 'muted', text: 'Sin avisos. Todo el contenido tiene imágenes.' }))]));
+
   $('#btnPublicar').disabled = !ch.length;
 }
 
