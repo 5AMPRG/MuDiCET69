@@ -165,11 +165,7 @@
   <h2 class="title">Imágenes con <b>información</b></h2>
   <p class="lead">Selecciona cada imagen para conocer más sobre ella.</p>
  </div>
- <div class="info-grid">
-  <article class="ic rv"><figure class="slot" data-slot="archivo-1"><i class="fa-regular fa-image"></i></figure><div class="ic-b"><h3>Título de la imagen</h3><p>Breve descripción del registro histórico.</p><div class="more"><p>Información ampliada: fecha, lugar, personas y contexto del registro.</p></div><button class="tgl">Ver más <i class="fa-solid fa-plus"></i></button></div></article>
-  <article class="ic rv"><figure class="slot" data-slot="archivo-2"><i class="fa-regular fa-image"></i></figure><div class="ic-b"><h3>Título de la imagen</h3><p>Breve descripción del registro histórico.</p><div class="more"><p>Información ampliada: fecha, lugar, personas y contexto del registro.</p></div><button class="tgl">Ver más <i class="fa-solid fa-plus"></i></button></div></article>
-  <article class="ic rv"><figure class="slot" data-slot="archivo-3"><i class="fa-regular fa-image"></i></figure><div class="ic-b"><h3>Título de la imagen</h3><p>Breve descripción del registro histórico.</p><div class="more"><p>Información ampliada: fecha, lugar, personas y contexto del registro.</p></div><button class="tgl">Ver más <i class="fa-solid fa-plus"></i></button></div></article>
- </div>
+ <div class="info-grid" id="archGrid"></div>
 </section>
 
 <div class="two" id="eventos">
@@ -238,10 +234,12 @@
 <script>
 DATOS.then(D=>{
 const eras = D.hitos;
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const imgTag = (src, alt='') => `<img src="${esc(src)}" alt="${esc(alt)}" loading="lazy">`;
 
- 
-
- 
+const estilo = document.createElement('style');
+estilo.textContent = '.clic{cursor:pointer}.clic:focus-visible{outline:2px solid var(--guinda);outline-offset:3px}.li-foto{display:block;width:100%;max-width:260px;aspect-ratio:4/3;object-fit:cover;margin-top:.7rem;border:1px solid var(--linea)}';
+document.head.append(estilo);
 
 class MuseoController {
   constructor(eras) {
@@ -252,17 +250,15 @@ class MuseoController {
     this.trackEl = $('#track');
     this.init();
   }
- 
+
   init() {
     this.renderYears();
     this.setEra(this.currentEraIndex);
     this.attachTrackControls();
   }
- 
 
   renderYears() {
     this.yearsEl.innerHTML = '';
-    
     this.eras.forEach((era, index) => {
       const button = document.createElement('button');
       button.textContent = era.y;
@@ -271,7 +267,6 @@ class MuseoController {
       button.setAttribute('aria-pressed', index === this.currentEraIndex ? 'true' : 'false');
       button.setAttribute('data-year', era.y);
       button.setAttribute('data-index', index);
-      
       button.addEventListener('click', () => this.setEra(index));
       button.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowRight') {
@@ -284,90 +279,80 @@ class MuseoController {
           $$('#years button')[prevIndex]?.focus();
         }
       });
-      
       this.yearsEl.appendChild(button);
     });
   }
- 
- 
+
   setEra(index) {
     if (index < 0 || index >= this.eras.length) return;
-    
     this.currentEraIndex = index;
     const era = this.eras[index];
- 
-   
     $$('#years button').forEach((btn, i) => {
       const isActive = i === index;
       btn.classList.toggle('on', isActive);
       btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
     });
- 
-    
     $('#tlTitle').textContent = era.t;
     $('#tlText').textContent = era.d;
-    
-    
     const ofYear = $('#ofYear');
     if (ofYear) ofYear.textContent = era.y;
- 
-    
     this.renderSpecialties(era);
- 
-   
     this.renderTeachers(era);
- 
     document.dispatchEvent(new CustomEvent('eraChanged', { detail: { era, index } }));
   }
 
   renderSpecialties(era) {
-    this.specsEl.innerHTML = era.s.map((specialty, i) => `
-      <div class="spec" role="article" aria-label="Especialidad: ${specialty[1]}">
-        <i class="fa-solid ${specialty[0]}" aria-hidden="true"></i>
-        <h3>${specialty[1]}</h3>
+    this.specsEl.innerHTML = era.s.map((specialty) => `
+      <div class="spec" role="article" aria-label="Especialidad: ${esc(specialty[1])}">
+        <i class="fa-solid ${esc(specialty[0])}" aria-hidden="true"></i>
+        <h3>${esc(specialty[1])}</h3>
         <p>Descripción de la especialidad.</p>
       </div>
     `).join('');
   }
- 
 
   renderTeachers(era) {
     this.trackEl.innerHTML = era.docentes.map((docente, k) => {
-      const slotId = `docente-${era.y}-${k + 1}`;
+      const tieneFoto = docente.u || (docente.imgs && docente.imgs.length);
       return `
-        <div class="card" role="article" aria-label="Docente ${k + 1} de ${era.y}">
-          <figure class="slot" data-slot="${slotId}">
-            
-            <i class="fa-regular fa-user" aria-hidden="true"></i>
+        <div class="card${tieneFoto ? ' clic' : ''}" role="article" data-k="${k}" aria-label="Docente ${k + 1} de ${esc(era.y)}"${tieneFoto ? ' tabindex="0"' : ''}>
+          <figure class="slot" data-slot="docente-${esc(era.y)}-${k + 1}">
+            ${docente.u ? imgTag(docente.u, docente.n) : '<i class="fa-regular fa-user" aria-hidden="true"></i>'}
           </figure>
-          <h3>${docente.n}</h3>
-          <p>${docente.m} · Generación ${era.y}</p>
-        </div>
-      `;
+          <h3>${esc(docente.n)}</h3>
+          <p>${esc(docente.m)} · Generación ${esc(era.y)}</p>
+        </div>`;
     }).join('');
+    this.trackEl.querySelectorAll('.card.clic').forEach(c => {
+      const abrir = () => {
+        const o = era.docentes[c.dataset.k];
+        openM({
+          n: o.n,
+          r: o.m + ' · Generación ' + era.y,
+          d: o.d || 'Docente del CETIS 69 durante esta generación.',
+          k: 'docente-' + era.y + '-' + (+c.dataset.k + 1),
+          u: o.u,
+          imgs: o.imgs
+        });
+      };
+      c.onclick = abrir;
+      c.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); abrir(); } });
+    });
   }
- 
- 
+
   attachTrackControls() {
     const nextBtn = $('#next');
     const prevBtn = $('#prev');
-    
     if (nextBtn) {
-      nextBtn.addEventListener('click', () => {
-        this.trackEl.scrollBy({ left: 320, behavior: 'smooth' });
-      });
+      nextBtn.addEventListener('click', () => this.trackEl.scrollBy({ left: 320, behavior: 'smooth' }));
       nextBtn.setAttribute('aria-label', 'Mostrar más docentes');
     }
-    
     if (prevBtn) {
-      prevBtn.addEventListener('click', () => {
-        this.trackEl.scrollBy({ left: -320, behavior: 'smooth' });
-      });
+      prevBtn.addEventListener('click', () => this.trackEl.scrollBy({ left: -320, behavior: 'smooth' }));
       prevBtn.setAttribute('aria-label', 'Mostrar docentes anteriores');
     }
   }
 }
- 
 
 function initToggleButtons() {
   $$('.tgl').forEach(button => {
@@ -376,84 +361,152 @@ function initToggleButtons() {
       const isOpen = container.classList.toggle('open');
       this.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
     });
-    
-
     const isOpen = button.closest('.ic')?.classList.contains('open');
     button.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
   });
 }
- 
+
 function initApp() {
   new MuseoController(eras);
   initToggleButtons();
 }
 
-const ex=D.exalumnos;
-const ci=D.ciencia;
-function cards(el,arr,k,ic){
- $(el).innerHTML=arr.map((o,i)=>`<div class="pcard" data-i="${i}" role="button" tabindex="0"><figure class="slot" data-slot="${k}-${i+1}"><i class="fa-regular fa-${ic}"></i></figure><span class="plus"><i class="fa-solid fa-plus"></i></span><div class="cap"><h3>${o.n}</h3><p>${o.r}</p></div></div>`).join('');
- $(el).querySelectorAll('.pcard').forEach(b=>b.onclick=()=>openM({...arr[b.dataset.i],k:k+'-'+(+b.dataset.i+1)}));
+/* ---------- Tarjetas con carrusel: exalumnos y ciencia ---------- */
+const ex = D.exalumnos || [];
+const ci = D.ciencia || [];
+function cards(el, arr, k, ic) {
+  $(el).innerHTML = arr.map((o, i) => `
+    <div class="pcard" data-i="${i}" role="button" tabindex="0">
+      <figure class="slot" data-slot="${k}-${i + 1}">
+        ${o.u ? imgTag(o.u, o.n) : `<i class="fa-regular fa-${ic}"></i>`}
+      </figure>
+      <span class="plus"><i class="fa-solid fa-plus"></i></span>
+      <div class="cap"><h3>${esc(o.n)}</h3><p>${esc(o.r)}</p></div>
+    </div>`).join('');
+  $(el).querySelectorAll('.pcard').forEach(b => {
+    const abrir = () => {
+      const o = arr[b.dataset.i];
+      openM({ ...o, k: k + '-' + (+b.dataset.i + 1) });
+    };
+    b.onclick = abrir;
+    b.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); abrir(); } });
+  });
 }
-cards('#trkEx',ex,'exalumno','user');
-cards('#trkCi',ci,'ciencia','lightbulb');
-document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>$('#'+b.dataset.t).scrollBy({left:b.dataset.d*320,behavior:'smooth'}));
+cards('#trkEx', ex, 'exalumno', 'user');
+cards('#trkCi', ci, 'ciencia', 'lightbulb');
+document.querySelectorAll('[data-t]').forEach(b => b.onclick = () => $('#' + b.dataset.t).scrollBy({ left: b.dataset.d * 320, behavior: 'smooth' }));
 
-
-const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
-const prog=document.createElement('div');prog.id='prog';document.body.prepend(prog);
-
-const hitoImg=D.hitoImagenes;
-const hi=$('#hito-imagen');
-hi.onerror=()=>{hi.hidden=true};
-const archivoLead=$('#archivo .lead');
-const leadBase=archivoLead.textContent;
-
-
-document.addEventListener('eraChanged',e=>{
- const era=e.detail.era;
- const src=hitoImg[era.y];
- if(src){hi.alt=era.t;hi.hidden=false;hi.src=src}else{hi.hidden=true}
- $('#carreras-inline').innerHTML='<strong>Especialidades</strong>'+era.s.map(s=>`<span class="chip"><i class="fa-solid ${s[0]}" aria-hidden="true"></i>${s[1]}</span>`).join('');
- archivoLead.textContent=leadBase+' · Época activa: '+era.y;
+/* ---------- Archivo visual: fotos de datos.json ---------- */
+const archivoDatos = D.archivo || [];
+const archivoDestacado = [...archivoDatos.filter(a => a.u), ...archivoDatos.filter(a => !a.u)].slice(0, 3);
+const archGrid = $('#archGrid');
+archGrid.innerHTML = archivoDestacado.map((a, i) => `
+  <article class="ic">
+    <figure class="slot clic" data-slot="archivo-${i + 1}" data-i="${i}" tabindex="0" role="button" aria-label="Ver ${esc(a.c)}">
+      ${a.u ? imgTag(a.u, a.c) : '<i class="fa-regular fa-image"></i>'}
+    </figure>
+    <div class="ic-b">
+      <h3>${esc(a.c)}</h3>
+      <p>Década de los ${esc(a.d)}0s</p>
+      <div class="more"><p>${esc(a.t || 'Información ampliada: fecha, lugar, personas y contexto del registro.')}${a.por ? ' Aportado por ' + esc(a.por) + '.' : ''}</p></div>
+      <button class="tgl">Ver más <i class="fa-solid fa-plus"></i></button>
+    </div>
+  </article>`).join('');
+const verArchivo = i => {
+  const a = archivoDestacado[i];
+  openM({ n: a.c, r: a.d + '0s', d: a.t || 'Describe aquí el evento, la fecha y las personas que aparecen en la imagen.', k: 'archivo-' + (i + 1), u: a.u, imgs: a.imgs });
+};
+archGrid.querySelectorAll('.clic').forEach(f => {
+  f.addEventListener('click', () => verArchivo(+f.dataset.i));
+  f.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); verArchivo(+f.dataset.i); } });
 });
 
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const prog = document.createElement('div');
+prog.id = 'prog';
+document.body.prepend(prog);
 
-const heroImg=$('.hero .slot>img');
-let tick=false;
-addEventListener('scroll',()=>{
- if(tick)return;tick=true;
- requestAnimationFrame(()=>{
-  const max=document.documentElement.scrollHeight-innerHeight||1;
-  prog.style.width=(scrollY/max*100)+'%';
-  if(heroImg&&!reduce)heroImg.style.transform=`translateY(${Math.min(scrollY,innerHeight)*.25}px) scale(1.08)`;
-  tick=false;
- });
-},{passive:true});
+const hitoImg = D.hitoImagenes || {};
+const hi = $('#hito-imagen');
+hi.onerror = () => { hi.hidden = true };
+const archivoLead = $('#archivo .lead');
+const leadBase = archivoLead.textContent;
 
-document.querySelectorAll('.pcard').forEach(b=>b.addEventListener('keydown',e=>{
- if(e.key==='Enter'||e.key===' '){e.preventDefault();b.click()}
-}));
-
-
-document.querySelectorAll('[data-count]').forEach(el=>{
- const to=+el.dataset.count,suf=el.dataset.suffix||'';
- if(reduce){el.textContent=to+suf;return}
- const io2=new IntersectionObserver(([en])=>{
-  if(!en.isIntersecting)return;
-  io2.disconnect();
-  const t0=performance.now();
-  const step=t=>{
-   const k=Math.min((t-t0)/1600,1),v=Math.round(to*(1-Math.pow(1-k,3)));
-   el.textContent=v+suf;
-   if(k<1)requestAnimationFrame(step);
-  };
-  requestAnimationFrame(step);
- },{threshold:.5});
- io2.observe(el);
+document.addEventListener('eraChanged', e => {
+  const era = e.detail.era;
+  const src = hitoImg[era.y];
+  if (src) { hi.alt = era.t; hi.hidden = false; hi.src = src; }
+  else hi.hidden = true;
+  $('#carreras-inline').innerHTML = '<strong>Especialidades</strong>' + era.s.map(s => `<span class="chip"><i class="fa-solid ${esc(s[0])}" aria-hidden="true"></i>${esc(s[1])}</span>`).join('');
+  archivoLead.textContent = leadBase + ' · Época activa: ' + era.y;
 });
 
-$('#evLista').innerHTML=D.eventos.map(e=>`<li><div class="d">${e.d}<small>${e.m}</small></div><div><h3>${e.n}</h3><p>${e.t}</p></div></li>`).join('');
-$('#pyLista').innerHTML=D.proyectos.map(p=>`<li><div class="d"><i class="fa-solid ${p.i}"></i></div><div><h3>${p.n}</h3><p>${p.t}</p></div></li>`).join('');
+const heroImg = $('.hero .slot>img');
+let tick = false;
+addEventListener('scroll', () => {
+  if (tick) return;
+  tick = true;
+  requestAnimationFrame(() => {
+    const max = document.documentElement.scrollHeight - innerHeight || 1;
+    prog.style.width = (scrollY / max * 100) + '%';
+    if (heroImg && !reduce) heroImg.style.transform = `translateY(${Math.min(scrollY, innerHeight) * .25}px) scale(1.08)`;
+    tick = false;
+  });
+}, { passive: true });
+
+document.querySelectorAll('[data-count]').forEach(el => {
+  const to = +el.dataset.count, suf = el.dataset.suffix || '';
+  if (reduce) { el.textContent = to + suf; return; }
+  const io2 = new IntersectionObserver(([en]) => {
+    if (!en.isIntersecting) return;
+    io2.disconnect();
+    const t0 = performance.now();
+    const step = t => {
+      const k = Math.min((t - t0) / 1600, 1), v = Math.round(to * (1 - Math.pow(1 - k, 3)));
+      el.textContent = v + suf;
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, { threshold: .5 });
+  io2.observe(el);
+});
+
+/* ---------- Eventos y proyectos (con foto opcional) ---------- */
+const eventos = D.eventos || [];
+const proyectos = D.proyectos || [];
+const tieneFotoItem = o => o.u || (o.imgs && o.imgs.length);
+
+$('#evLista').innerHTML = eventos.map((e, i) => `
+  <li${tieneFotoItem(e) ? ` class="clic" data-i="${i}" tabindex="0" role="button"` : ''}>
+    <div class="d">${esc(e.d)}<small>${esc(e.m)}</small></div>
+    <div>
+      <h3>${esc(e.n)}</h3>
+      <p>${esc(e.t)}</p>
+      ${e.u ? `<img class="li-foto" src="${esc(e.u)}" alt="${esc(e.n)}" loading="lazy">` : ''}
+    </div>
+  </li>`).join('');
+
+$('#pyLista').innerHTML = proyectos.map((p, i) => `
+  <li${tieneFotoItem(p) ? ` class="clic" data-i="${i}" tabindex="0" role="button"` : ''}>
+    <div class="d"><i class="fa-solid ${esc(p.i)}"></i></div>
+    <div>
+      <h3>${esc(p.n)}</h3>
+      <p>${esc(p.t)}</p>
+      ${p.u ? `<img class="li-foto" src="${esc(p.u)}" alt="${esc(p.n)}" loading="lazy">` : ''}
+    </div>
+  </li>`).join('');
+
+function listaClic(sel, arr, aModal) {
+  const el = $(sel);
+  const abrir = li => openM(aModal(arr[+li.dataset.i]));
+  el.addEventListener('click', e => { const li = e.target.closest('li.clic'); if (li) abrir(li); });
+  el.addEventListener('keydown', e => {
+    const li = e.target.closest?.('li.clic');
+    if (li && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); abrir(li); }
+  });
+}
+listaClic('#evLista', eventos, e => ({ n: e.n, r: 'Evento del CETIS 69', d: e.t, u: e.u, imgs: e.imgs }));
+listaClic('#pyLista', proyectos, p => ({ n: p.n, r: 'Proyecto de estudiantes', d: p.t, u: p.u, imgs: p.imgs }));
 
 initApp();
 });
