@@ -3,7 +3,33 @@ const w=window,d=document,cuerpo=d.body;
 w.$=s=>d.querySelector(s);
 w.$$=s=>d.querySelectorAll(s);
 w.alCargar=fn=>d.readyState==='complete'?fn():addEventListener('load',fn);
-w.DATOS=fetch('datos.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()});
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAZ3EV-CTyH3bdPeMTcPAexWLmRLmoCSEg",
+  authDomain: "amprg-28da9.firebaseapp.com",
+  projectId: "amprg-28da9",
+  storageBucket: "amprg-28da9.firebasestorage.app",
+  messagingSenderId: "425308243013",
+  appId: "1:425308243013:web:40661cf1b6fccb1ed50f2c",
+  measurementId: "G-5RKJ08NNWW"
+};
+
+w.DATOS=(async()=>{
+ try{
+  const [{initializeApp},{getFirestore,doc,getDoc}]=await Promise.all([
+   import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),
+   import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js')
+  ]);
+  const app=initializeApp(FIREBASE_CONFIG,'publico');
+  const snap=await Promise.race([
+   getDoc(doc(getFirestore(app),'sitio','datos')),
+   new Promise((_,no)=>setTimeout(()=>no(new Error('timeout')),4000))
+  ]);
+  if(snap.exists())return JSON.parse(snap.data().json);
+ }catch(e){}
+ const r=await fetch('datos.json',{cache:'no-cache'});
+ if(!r.ok)throw new Error(r.status);
+ return r.json();
+})();
 
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
