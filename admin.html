@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Administración · Museo Digital CETIS 69</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--guinda:#7a122e;--guinda-d:#4e0b1d;--linea:#e2d6d9;--gris:#6b5a5d;--fondo:#faf7f7}
+*{box-sizing:border-box}
+body{margin:0;font-family:Montserrat,system-ui,sans-serif;background:var(--fondo);color:#222;font-size:15px}
+button,input,select,textarea{font:inherit}
+.btn{background:var(--guinda);color:#fff;border:1px solid var(--guinda);padding:.6rem 1rem;cursor:pointer;font-size:.8rem;font-weight:600;letter-spacing:.04em}
+.btn:hover{background:var(--guinda-d)}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.sec{background:#fff;color:var(--guinda)}
+.btn.sec:hover{background:#fbeff2}
+.btn.peligro{background:#fff;color:#a00;border-color:#a00}
+.login{min-height:100vh;display:grid;place-items:center;padding:1rem}
+.caja{background:#fff;border:1px solid var(--linea);padding:2rem;width:min(26rem,100%);text-align:center}
+.caja h1{color:var(--guinda);font-weight:300;letter-spacing:.2em;margin:0 0 .3rem;font-size:1.3rem;text-transform:uppercase}
+.caja p{color:var(--gris);margin:.2rem 0 1.4rem;font-size:.85rem}
+.top{background:var(--guinda);color:#fff;display:flex;align-items:center;gap:1rem;padding:.8rem 1.2rem;flex-wrap:wrap}
+.top strong{margin-right:auto;letter-spacing:.06em}
+.top span{font-size:.8rem;opacity:.85}
+.top .btn{background:transparent;border-color:#fff;color:#fff}
+.cuerpo{display:grid;grid-template-columns:200px 1fr;min-height:calc(100vh - 3.4rem)}
+.menu{background:#fff;border-right:1px solid var(--linea);padding:1rem 0;display:flex;flex-direction:column}
+.menu button{background:none;border:0;text-align:left;padding:.7rem 1.2rem;cursor:pointer;color:var(--gris);font-size:.85rem}
+.menu button.on,.menu button:hover{color:var(--guinda);background:#fbeff2;font-weight:600}
+main{padding:1.5rem;min-width:0}
+main h2{color:var(--guinda);font-weight:600;font-size:1.1rem;margin:0 0 1rem}
+.fila{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.fila label{display:flex;gap:.5rem;align-items:center;font-size:.85rem}
+select,input[type=email]{padding:.55rem .7rem;border:1px solid var(--linea);background:#fff;min-width:14rem}
+textarea{width:100%;min-height:26rem;padding:.9rem;border:1px solid var(--linea);background:#fff;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;line-height:1.5;resize:vertical}
+.ayuda{font-size:.82rem;color:var(--gris);background:#fff;border-left:3px solid var(--guinda);padding:.7rem .9rem;margin:.6rem 0}
+.error{color:#a00;font-size:.85rem;min-height:1.2em}
+.aviso{font-size:.85rem;color:var(--gris)}
+.sucio{color:#b45309;font-size:.8rem;font-weight:600}
+.tarjetas{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.8rem;margin-bottom:1rem}
+.tarjeta{background:#fff;border:1px solid var(--linea);padding:1rem}
+.tarjeta b{display:block;font-size:1.6rem;color:var(--guinda);font-weight:300}
+.tarjeta span{font-size:.75rem;color:var(--gris);letter-spacing:.04em}
+.lista{list-style:none;padding:0;margin:1rem 0;background:#fff;border:1px solid var(--linea)}
+.lista li{display:flex;align-items:center;gap:.8rem;padding:.8rem 1rem;border-top:1px solid var(--linea);flex-wrap:wrap}
+.lista li:first-child{border-top:0}
+.lista .correo{flex:1;min-width:12rem;word-break:break-all}
+.etiqueta{font-size:.7rem;padding:.2rem .5rem;letter-spacing:.06em;text-transform:uppercase}
+.etiqueta.si{background:#e7f6ec;color:#166534}
+.etiqueta.no{background:#f3f4f6;color:#6b7280}
+#flash{position:fixed;bottom:1rem;right:1rem;background:#222;color:#fff;padding:.7rem 1rem;font-size:.85rem;opacity:0;transition:opacity .3s;pointer-events:none;max-width:24rem}
+#flash.on{opacity:1}
+@media (max-width:760px){.cuerpo{grid-template-columns:1fr}.menu{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--linea)}.menu button{white-space:nowrap}}
+</style>
+</head>
+<body>
+
+<!-- Pantalla de acceso -->
+<div class="login" id="login">
+  <div class="caja">
+    <h1>Administración</h1>
+    <p>Museo Digital CETIS 69</p>
+    <button class="btn" id="btnEntrar" style="width:100%">Entrar con Google</button>
+    <p class="aviso" id="msgLogin" style="margin-top:1rem" role="status"></p>
+  </div>
+</div>
+
+<!-- Panel -->
+<div id="panel" hidden>
+  <header class="top">
+    <strong>Administración · CETIS 69</strong>
+    <span id="usuario"></span>
+    <button class="btn" id="btnSalir">Salir</button>
+  </header>
+  <div class="cuerpo">
+    <nav class="menu">
+      <button class="on" data-v="resumen">Resumen</button>
+      <button data-v="contenido">Contenido</button>
+      <button data-v="publicar">Publicar</button>
+      <button data-v="admins">Administradores</button>
+    </nav>
+    <main>
+      <section id="v-resumen">
+        <h2>Resumen del sitio</h2>
+        <div class="tarjetas" id="tarjetas"></div>
+        <p class="aviso" id="estado"></p>
+      </section>
+
+      <section id="v-contenido" hidden>
+        <h2>Editar contenido</h2>
+        <div class="fila">
+          <label>Sección <select id="sec"></select></label>
+          <span class="sucio" id="sucioC"></span>
+        </div>
+        <p class="ayuda" id="ayuda"></p>
+        <textarea id="json" spellcheck="false" aria-label="Contenido de la sección en formato JSON"></textarea>
+        <p class="error" id="err" role="alert"></p>
+        <div class="fila">
+          <button class="btn" id="btnAplicar">Aplicar a borrador</button>
+          <button class="btn sec" id="btnDescartarSec">Descartar cambios de esta sección</button>
+        </div>
+        <p class="aviso">Los cambios se aplican primero al borrador. Para que el sitio público los vea, publícalos en la pestaña «Publicar».</p>
+      </section>
+
+      <section id="v-publicar" hidden>
+        <h2>Publicar</h2>
+        <p class="aviso">Publicar reemplaza el contenido que ven los visitantes del sitio.</p>
+        <div class="fila">
+          <button class="btn" id="btnPublicar">Publicar en el sitio</button>
+          <button class="btn sec" id="btnDescargar">Descargar datos.json</button>
+          <label class="btn sec" style="cursor:pointer">Importar datos.json
+            <input type="file" id="archivo" accept="application/json,.json" hidden>
+          </label>
+          <button class="btn sec" id="btnRevertir">Revertir al publicado</button>
+        </div>
+      </section>
+
+      <section id="v-admins" hidden>
+        <h2>Administradores</h2>
+        <form class="fila" id="formAdmin">
+          <input type="email" id="nuevoAdmin" required placeholder="correo@gmail.com" aria-label="Correo del nuevo administrador">
+          <button class="btn" type="submit">Agregar administrador</button>
+        </form>
+        <ul class="lista" id="listaAdmins"></ul>
+        <p class="aviso">Un administrador debe iniciar sesión con Google usando exactamente ese correo.</p>
+      </section>
+    </main>
+  </div>
+</div>
+
+<div id="flash" role="status" aria-live="polite"></div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, collection, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAZ3EV-CTyH3bdPeMTcPAexWLmRLmoCSEg",
+  authDomain: "amprg-28da9.firebaseapp.com",
+  projectId: "amprg-28da9",
+  storageBucket: "amprg-28da9.firebasestorage.app",
+  messagingSenderId: "425308243013",
+  appId: "1:425308243013:web:40661cf1b6fccb1ed50f2c",
+  measurementId: "G-5RKJ08NNWW"
+};
+
+const app = initializeApp(FIREBASE_CONFIG);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+
+const SECCIONES = {
+  sitio: 'Sitio (menú, pie, páginas)', hitos: 'Línea del tiempo', eventos: 'Eventos',
+  proyectos: 'Proyectos de estudiantes', exalumnos: 'Exalumnos', ciencia: 'Ciencia',
+  premios: 'Salón de la fama', archivo: 'Archivo fotográfico', creditos: 'Créditos',
+  ajustes: 'Ajustes técnicos', offline: 'Archivos sin conexión'
+};
+const AYUDA = {
+  sitio: 'Objeto con: inicio (p. ej. "index.html"), menu y menuInicio (listas de {t, u}), paginas (lista de {t, x, u}) y pie ({descripcion, contacto: [{i, t}], enlaces: [{t, u}], redes: [{t, u, i}], copyright}).',
+  hitos: 'Lista de {y (año), t (título), d (descripción), s: [[…, "oferta"]], docentes: [{n, m}]}.',
+  eventos: 'Lista de {n (nombre), t (texto)}.',
+  proyectos: 'Lista de {n (nombre), t (texto)}.',
+  exalumnos: 'Lista de {n (nombre), r (rol), d (detalle)}.',
+  ciencia: 'Lista de {n (nombre), r (rol), d (detalle)}.',
+  premios: 'Lista de {n (nombre), l (lugar), y (año), p (puesto), c ("d" deportivo o "c" cultural), d (descripción)}.',
+  archivo: 'Lista de {c (texto), d (década: "198", "199", "200", "201" o "202"), r (proporción, p. ej. "4/3"), u (URL de la imagen, opcional)}.',
+  creditos: 'Objeto con: equipo (lista de {rol, nombre, detalle}), agradecimientos (texto), fuentes (lista de {tipo, fuente}) e imagenes (lista de [tipo, descripción]).',
+  ajustes: 'Objeto con: archivoEndpoint, libroEndpoint (URLs o "") y kiosco: {segundosInactividad}.',
+  offline: 'Lista de rutas de archivos que se guardan para uso sin conexión, p. ej. "imagenes/portada.jpg".'
+};
+
+let publicado = null, borrador = null, secActual = null, correo = '';
+
+const sucio = () => JSON.stringify(borrador) !== JSON.stringify(publicado);
+const avisar = t => { const f = $('#flash'); f.textContent = t; f.classList.add('on'); clearTimeout(avisar.t); avisar.t = setTimeout(() => f.classList.remove('on'), 2600); };
+const mostrar = v => { $('#login').hidden = v !== 'login'; $('#panel').hidden = v !== 'panel'; };
+
+/* ---------- Acceso ---------- */
+$('#btnEntrar').onclick = async () => {
+  $('#msgLogin').textContent = '';
+  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+  catch (e) { $('#msgLogin').textContent = 'No se pudo iniciar sesión: ' + e.code; }
+};
+$('#btnSalir').onclick = () => signOut(auth);
+
+onAuthStateChanged(auth, async user => {
+  if (!user) { mostrar('login'); return; }
+  correo = (user.email || '').toLowerCase();
+  let activo = false;
+  try {
+    const s = await getDoc(doc(db, 'admins', correo));
+    activo = s.exists() && String(s.data().activo) === 'true';
+  } catch (e) {}
+  if (!activo) {
+    $('#msgLogin').textContent = `La cuenta ${correo} no tiene permiso de administración.`;
+    await signOut(auth);
+    mostrar('login');
+    return;
+  }
+  $('#usuario').textContent = correo;
+  mostrar('panel');
+  await cargar();
+});
+
+/* ---------- Carga y validación ---------- */
+async function cargar() {
+  let fuente = 'datos.json (aún no publicado en Firestore)';
+  try {
+    const s = await getDoc(doc(db, 'sitio', 'datos'));
+    if (s.exists()) { publicado = JSON.parse(s.data().json); fuente = 'Publicado en Firestore'; }
+  } catch (e) {}
+  if (!publicado) {
+    const r = await fetch('datos.json', { cache: 'no-cache' });
+    publicado = await r.json();
+  }
+  borrador = structuredClone(publicado);
+  $('#estado').textContent = 'Fuente actual: ' + fuente + '.';
+  pintarResumen();
+  pintarSecciones();
+  pintarSucio();
+}
+
+function validar(d) {
+  if (!d || typeof d !== 'object' || Array.isArray(d)) return 'El contenido debe ser un objeto { }.';
+  const req = { sitio: 'object', hitos: 'array', premios: 'array', archivo: 'array', creditos: 'object', ajustes: 'object' };
+  for (const [k, t] of Object.entries(req)) {
+    if (d[k] === undefined) return `Falta la sección "${k}".`;
+    if (t === 'array' && !Array.isArray(d[k])) return `"${k}" debe ser una lista [ ].`;
+    if (t === 'object' && (d[k] === null || typeof d[k] !== 'object' || Array.isArray(d[k]))) return `"${k}" debe ser un objeto { }.`;
+  }
+  if (!d.sitio.inicio) return 'Falta sitio.inicio (p. ej. "index.html").';
+  return '';
+}
+
+/* ---------- Resumen ---------- */
+function pintarResumen() {
+  const cont = $('#tarjetas');
+  cont.innerHTML = '';
+  Object.entries(borrador).forEach(([k, v]) => {
+    const t = document.createElement('div');
+    t.className = 'tarjeta';
+    const n = Array.isArray(v) ? v.length : Object.keys(v || {}).length;
+    t.innerHTML = `<b>${n}</b><span></span>`;
+    t.querySelector('span').textContent = (SECCIONES[k] || k) + (Array.isArray(v) ? ' (elementos)' : ' (campos)');
+    cont.append(t);
+  });
+}
+
+/* ---------- Contenido ---------- */
+function pintarSecciones() {
+  const sel = $('#sec');
+  sel.innerHTML = '';
+  Object.keys(borrador).forEach(k => {
+    const o = document.createElement('option');
+    o.value = k; o.textContent = SECCIONES[k] || k;
+    sel.append(o);
+  });
+  cambiarSeccion(secActual && borrador[secActual] !== undefined ? secActual : Object.keys(borrador)[0]);
+}
+
+function cambiarSeccion(k) {
+  secActual = k;
+  $('#sec').value = k;
+  $('#json').value = JSON.stringify(borrador[k], null, 2);
+  $('#ayuda').textContent = AYUDA[k] || 'Edite el contenido en formato JSON respetando comillas y comas.';
+  $('#err').textContent = '';
+}
+
+$('#sec').onchange = e => {
+  const actual = JSON.parse(JSON.stringify(borrador[secActual]));
+  let hayCambios = false;
+  try { hayCambios = JSON.stringify(JSON.parse($('#json').value)) !== JSON.stringify(actual); } catch (x) { hayCambios = true; }
+  if (hayCambios && !confirm('Hay cambios sin aplicar en esta sección. ¿Cambiar de sección y perderlos?')) {
+    $('#sec').value = secActual;
+    return;
+  }
+  cambiarSeccion(e.target.value);
+};
+
+$('#btnAplicar').onclick = () => {
+  try {
+    const v = JSON.parse($('#json').value);
+    borrador[secActual] = v;
+    $('#err').textContent = '';
+    pintarResumen();
+    pintarSucio();
+    avisar('Cambios aplicados al borrador.');
+  } catch (e) {
+    $('#err').textContent = 'JSON no válido: ' + e.message;
+  }
+};
+
+$('#btnDescartarSec').onclick = () => {
+  if (!confirm('¿Descartar los cambios de esta sección y volver a lo publicado?')) return;
+  borrador[secActual] = structuredClone(publicado[secActual]);
+  cambiarSeccion(secActual);
+  pintarResumen();
+  pintarSucio();
+};
+
+function pintarSucio() {
+  const s = sucio();
+  $('#sucioC').textContent = s ? 'Cambios sin publicar' : '';
+}
+
+/* ---------- Publicar ---------- */
+$('#btnPublicar').onclick = async () => {
+  const err = validar(borrador);
+  if (err) { alert(err); return; }
+  if (!sucio()) { avisar('No hay cambios que publicar.'); return; }
+  if (!confirm('¿Publicar estos cambios? El sitio público se actualizará de inmediato.')) return;
+  try {
+    await setDoc(doc(db, 'sitio', 'datos'), {
+      json: JSON.stringify(borrador),
+      actualizado: serverTimestamp(),
+      por: correo
+    });
+    publicado = structuredClone(borrador);
+    $('#estado').textContent = 'Fuente actual: Publicado en Firestore.';
+    pintarSucio();
+    avisar('Contenido publicado.');
+  } catch (e) {
+    alert('No se pudo publicar: ' + e.message);
+  }
+};
+
+$('#btnDescargar').onclick = () => {
+  const blob = new Blob([JSON.stringify(borrador, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'datos.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+
+$('#archivo').onchange = async e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  try {
+    const v = JSON.parse(await f.text());
+    const err = validar(v);
+    if (err) { alert(err); return; }
+    borrador = v;
+    pintarResumen(); pintarSecciones(); pintarSucio();
+    avisar('Archivo importado al borrador. Revísalo y publícalo.');
+  } catch (x) { alert('El archivo no es un JSON válido.'); }
+  e.target.value = '';
+};
+
+$('#btnRevertir').onclick = () => {
+  if (!sucio()) return;
+  if (!confirm('¿Descartar todos los cambios no publicados?')) return;
+  borrador = structuredClone(publicado);
+  pintarResumen(); pintarSecciones(); pintarSucio();
+};
+
+window.addEventListener('beforeunload', e => {
+  if (borrador && sucio()) { e.preventDefault(); e.returnValue = ''; }
+});
+
+/* ---------- Administradores ---------- */
+async function pintarAdmins() {
+  const ul = $('#listaAdmins');
+  ul.innerHTML = '';
+  const snap = await getDocs(collection(db, 'admins'));
+  snap.forEach(d => {
+    const on = String(d.data().activo) === 'true';
+    const li = document.createElement('li');
+    const c = document.createElement('span');
+    c.className = 'correo';
+    c.textContent = d.id + (d.id === correo ? ' (tú)' : '');
+    const e = document.createElement('span');
+    e.className = 'etiqueta ' + (on ? 'si' : 'no');
+    e.textContent = on ? 'Activo' : 'Inactivo';
+    const bA = document.createElement('button');
+    bA.className = 'btn sec';
+    bA.textContent = on ? 'Desactivar' : 'Activar';
+    bA.onclick = async () => {
+      if (d.id === correo && on) { alert('No puedes desactivarte a ti mismo.'); return; }
+      await updateDoc(doc(db, 'admins', d.id), { activo: on ? 'false' : 'true' });
+      pintarAdmins();
+    };
+    const bB = document.createElement('button');
+    bB.className = 'btn peligro';
+    bB.textContent = 'Eliminar';
+    bB.onclick = async () => {
+      if (d.id === correo) { alert('No puedes eliminarte a ti mismo.'); return; }
+      if (!confirm('¿Eliminar a ' + d.id + ' de los administradores?')) return;
+      await deleteDoc(doc(db, 'admins', d.id));
+      pintarAdmins();
+    };
+    li.append(c, e, bA, bB);
+    ul.append(li);
+  });
+}
+
+$('#formAdmin').onsubmit = async e => {
+  e.preventDefault();
+  const mail = $('#nuevoAdmin').value.trim().toLowerCase();
+  await setDoc(doc(db, 'admins', mail), { activo: 'true', agregado: serverTimestamp(), por: correo });
+  $('#nuevoAdmin').value = '';
+  avisar('Administrador agregado.');
+  pintarAdmins();
+};
+
+/* ---------- Navegación ---------- */
+$$('.menu button').forEach(b => b.onclick = () => {
+  $$('.menu button').forEach(x => x.classList.toggle('on', x === b));
+  ['resumen', 'contenido', 'publicar', 'admins'].forEach(v => $('#v-' + v).hidden = v !== b.dataset.v);
+  if (b.dataset.v === 'admins') pintarAdmins();
+});
+</script>
+</body>
+</html>
