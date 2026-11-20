@@ -5,137 +5,312 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>Administración · Museo Digital CETIS 69</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <style>
-:root{--guinda:#7a122e;--guinda-d:#4e0b1d;--linea:#e2d6d9;--gris:#6b5a5d;--fondo:#faf7f7}
+:root{--g:#7a122e;--g2:#4e0b1d;--g3:#b8142c;--rosa:#e8a5b4;--linea:#e7dcdf;--tinta:#241a1c;--gris:#6f5f62;--fondo:#f6f2f3;--ok:#166534;--warn:#b45309;--err:#b91c1c}
+[hidden]{display:none!important}
 *{box-sizing:border-box}
-body{margin:0;font-family:Montserrat,system-ui,sans-serif;background:var(--fondo);color:#222;font-size:15px}
-button,input,select,textarea{font:inherit}
-.btn{background:var(--guinda);color:#fff;border:1px solid var(--guinda);padding:.6rem 1rem;cursor:pointer;font-size:.8rem;font-weight:600;letter-spacing:.04em}
-.btn:hover{background:var(--guinda-d)}
-.btn:disabled{opacity:.5;cursor:default}
-.btn.sec{background:#fff;color:var(--guinda)}
-.btn.sec:hover{background:#fbeff2}
-.btn.peligro{background:#fff;color:#a00;border-color:#a00}
-.login{min-height:100vh;display:grid;place-items:center;padding:1rem}
-.caja{background:#fff;border:1px solid var(--linea);padding:2rem;width:min(26rem,100%);text-align:center}
-.caja h1{color:var(--guinda);font-weight:300;letter-spacing:.2em;margin:0 0 .3rem;font-size:1.3rem;text-transform:uppercase}
-.caja p{color:var(--gris);margin:.2rem 0 1.4rem;font-size:.85rem}
-.top{background:var(--guinda);color:#fff;display:flex;align-items:center;gap:1rem;padding:.8rem 1.2rem;flex-wrap:wrap}
-.top strong{margin-right:auto;letter-spacing:.06em}
-.top span{font-size:.8rem;opacity:.85}
-.top .btn{background:transparent;border-color:#fff;color:#fff}
-.cuerpo{display:grid;grid-template-columns:200px 1fr;min-height:calc(100vh - 3.4rem)}
-.menu{background:#fff;border-right:1px solid var(--linea);padding:1rem 0;display:flex;flex-direction:column}
-.menu button{background:none;border:0;text-align:left;padding:.7rem 1.2rem;cursor:pointer;color:var(--gris);font-size:.85rem}
-.menu button.on,.menu button:hover{color:var(--guinda);background:#fbeff2;font-weight:600}
-main{padding:1.5rem;min-width:0}
-main h2{color:var(--guinda);font-weight:600;font-size:1.1rem;margin:0 0 1rem}
+body{margin:0;font-family:Montserrat,system-ui,sans-serif;background:var(--fondo);color:var(--tinta);font-size:14.5px;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--g3);outline-offset:2px}
+
+/* Botones */
+.btn{display:inline-flex;align-items:center;gap:.5rem;justify-content:center;background:linear-gradient(180deg,var(--g),var(--g2));color:#fff;border:1px solid var(--g);padding:.6rem 1.05rem;font-size:.78rem;font-weight:600;letter-spacing:.04em;border-radius:8px;transition:transform .15s,box-shadow .2s,background .2s;box-shadow:0 2px 6px rgba(122,18,46,.25)}
+.btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 14px rgba(122,18,46,.3)}
+.btn:disabled{opacity:.5;cursor:default;transform:none}
+.btn.sec{background:#fff;color:var(--g);border-color:#d9c5ca;box-shadow:none}
+.btn.sec:hover:not(:disabled){background:#fbf3f5;box-shadow:none}
+.btn.peligro{background:#fff;color:var(--err);border-color:#f0c4c4;box-shadow:none}
+.btn.peligro:hover:not(:disabled){background:#fdf1f1}
+.btn.rojo{background:var(--err);border-color:var(--err)}
+.btn.sm{padding:.4rem .7rem;font-size:.72rem}
+.btn.grande{width:100%;padding:.85rem;font-size:.85rem}
+
+/* Acceso */
+.login{min-height:100vh;display:grid;place-items:center;padding:1.2rem;background:radial-gradient(900px 500px at 15% -10%,rgba(232,165,180,.35),transparent 60%),radial-gradient(800px 500px at 110% 110%,rgba(122,18,46,.45),transparent 60%),linear-gradient(160deg,#3a0a18,#1a0609)}
+.caja{background:#fff;border-radius:18px;padding:2.4rem 2.2rem;width:min(400px,100%);text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.45)}
+.marca{width:64px;height:64px;margin:0 auto 1rem;border-radius:16px;background:linear-gradient(135deg,var(--g),var(--g2));display:grid;place-items:center;color:#fff;font-size:1.6rem;box-shadow:0 10px 24px rgba(122,18,46,.4)}
+.caja h1{font-weight:300;letter-spacing:.22em;text-transform:uppercase;color:var(--g);font-size:1.25rem;margin:0}
+.caja .sub{color:var(--gris);font-size:.8rem;margin:.35rem 0 1.8rem;letter-spacing:.04em}
+
+/* Estructura */
+#panel{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+.side{background:linear-gradient(180deg,var(--g2),#2a0610);color:#fff;display:flex;flex-direction:column;padding:1.2rem .8rem;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:.7rem;padding:.4rem .6rem 1.4rem}
+.brand .marca{width:38px;height:38px;margin:0;border-radius:10px;font-size:.95rem;background:linear-gradient(135deg,var(--rosa),var(--g3));box-shadow:none}
+.brand b{display:block;font-weight:600;letter-spacing:.08em;font-size:.85rem}
+.brand small{opacity:.6;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase}
+.nav{display:flex;flex-direction:column;gap:.2rem}
+.nav button{display:flex;align-items:center;gap:.7rem;width:100%;background:none;border:0;color:rgba(255,255,255,.72);padding:.7rem .8rem;border-radius:10px;text-align:left;font-size:.84rem;transition:background .2s,color .2s}
+.nav button i{width:1.1rem;text-align:center;opacity:.85}
+.nav button:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav button.on{background:rgba(232,165,180,.16);color:#fff;font-weight:600;box-shadow:inset 3px 0 0 var(--rosa)}
+.nav .n{margin-left:auto;background:var(--rosa);color:var(--g2);font-size:.68rem;font-weight:700;padding:.12rem .5rem;border-radius:99px;min-width:1.5rem;text-align:center}
+.pie{margin-top:auto;border-top:1px solid rgba(255,255,255,.12);padding-top:1rem;display:flex;align-items:center;gap:.6rem}
+.avatar{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.15);object-fit:cover;flex:none}
+.pie .quien{min-width:0;flex:1}
+.pie .quien span{display:block;font-size:.72rem;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pie button{background:none;border:0;color:#fff;opacity:.8;padding:.4rem;font-size:1rem}
+.pie button:hover{opacity:1}
+main{min-width:0;padding-bottom:3rem}
+.encab{background:#fff;border-bottom:1px solid var(--linea);padding:1.3rem 2rem;position:sticky;top:0;z-index:5}
+.encab h2{margin:0;font-size:1.2rem;font-weight:600;color:var(--g)}
+.encab p{margin:.2rem 0 0;color:var(--gris);font-size:.8rem}
+.cont{padding:1.6rem 2rem}
+
+/* Componentes */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:1rem;margin-bottom:1.4rem}
+.stats.mini{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin:0}
+.stat{background:#fff;border:1px solid var(--linea);border-radius:14px;padding:1.2rem 1.3rem;position:relative;overflow:hidden}
+.stat::after{content:"";position:absolute;inset:auto 0 0 0;height:3px;background:linear-gradient(90deg,var(--g),var(--rosa))}
+.stat i{font-size:1rem;color:var(--g);background:#fbeff2;width:2.2rem;height:2.2rem;display:grid;place-items:center;border-radius:10px}
+.stat b{display:block;font-size:2rem;font-weight:300;margin:.6rem 0 .1rem}
+.stat.mini b{font-size:1.3rem;margin:0}
+.stat span{font-size:.72rem;letter-spacing:.06em;color:var(--gris);text-transform:uppercase}
+.stat.mini span{text-transform:none;letter-spacing:0;font-size:.78rem}
+.panel-card{background:#fff;border:1px solid var(--linea);border-radius:14px;padding:1.3rem 1.4rem;margin-bottom:1.2rem}
+.panel-card h3{margin:0 0 .7rem;font-size:.95rem;color:var(--g)}
+.estado-pub{display:inline-flex;align-items:center;gap:.5rem;padding:.4rem .75rem;border-radius:99px;font-size:.78rem;font-weight:600}
+.estado-pub.ok{background:#e7f6ec;color:var(--ok)}
+.estado-pub.warn{background:#fdf1e3;color:var(--warn)}
+.muted{color:var(--gris);font-size:.8rem}
 .fila{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
 .fila label{display:flex;gap:.5rem;align-items:center;font-size:.85rem}
-select,input[type=email]{padding:.55rem .7rem;border:1px solid var(--linea);background:#fff;min-width:14rem}
-textarea{width:100%;min-height:26rem;padding:.9rem;border:1px solid var(--linea);background:#fff;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;line-height:1.5;resize:vertical}
-.ayuda{font-size:.82rem;color:var(--gris);background:#fff;border-left:3px solid var(--guinda);padding:.7rem .9rem;margin:.6rem 0}
-.error{color:#a00;font-size:.85rem;min-height:1.2em}
-.aviso{font-size:.85rem;color:var(--gris)}
-.sucio{color:#b45309;font-size:.8rem;font-weight:600}
-.tarjetas{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.8rem;margin-bottom:1rem}
-.tarjeta{background:#fff;border:1px solid var(--linea);padding:1rem}
-.tarjeta b{display:block;font-size:1.6rem;color:var(--guinda);font-weight:300}
-.tarjeta span{font-size:.75rem;color:var(--gris);letter-spacing:.04em}
-.lista{list-style:none;padding:0;margin:1rem 0;background:#fff;border:1px solid var(--linea)}
+select,input[type=email],input[type=search]{padding:.55rem .7rem;border:1px solid var(--linea);background:#fff;border-radius:8px;min-width:14rem}
+.buscar{width:100%;max-width:380px;padding:.6rem .8rem;border:1px solid var(--linea);border-radius:8px;background:#fff;margin-bottom:1rem}
+.seg{display:inline-flex;background:#fff;border:1px solid var(--linea);border-radius:10px;padding:3px;gap:3px;margin-bottom:1rem;flex-wrap:wrap}
+.seg button{background:none;border:0;padding:.5rem .9rem;border-radius:8px;font-size:.8rem;color:var(--gris);font-weight:600}
+.seg button.on{background:var(--g);color:#fff}
+.seg .n{margin-left:.35rem;font-weight:700}
+.chip{font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;background:#fbeff2;color:var(--g);padding:.2rem .55rem;border-radius:99px;white-space:nowrap;display:inline-flex;gap:.3rem;align-items:center}
+.etiqueta{font-size:.68rem;padding:.2rem .5rem;letter-spacing:.06em;text-transform:uppercase;border-radius:6px}
+.etiqueta.si{background:#e7f6ec;color:var(--ok)}
+.etiqueta.no{background:#f3f4f6;color:#6b7280}
+.vacio{grid-column:1/-1;text-align:center;padding:2.5rem 1rem;border:1px dashed #d9c5ca;border-radius:14px;color:var(--gris);background:#fff}
+.vacio i{font-size:1.6rem;display:block;margin-bottom:.5rem;color:var(--g);opacity:.7}
+
+/* Lista */
+.lista{list-style:none;padding:0;margin:0;background:#fff;border:1px solid var(--linea);border-radius:12px;overflow:hidden}
 .lista li{display:flex;align-items:center;gap:.8rem;padding:.8rem 1rem;border-top:1px solid var(--linea);flex-wrap:wrap}
 .lista li:first-child{border-top:0}
 .lista .correo{flex:1;min-width:12rem;word-break:break-all}
-.etiqueta{font-size:.7rem;padding:.2rem .5rem;letter-spacing:.06em;text-transform:uppercase}
-.etiqueta.si{background:#e7f6ec;color:#166534}
-.etiqueta.no{background:#f3f4f6;color:#6b7280}
-#flash{position:fixed;bottom:1rem;right:1rem;background:#222;color:#fff;padding:.7rem 1rem;font-size:.85rem;opacity:0;transition:opacity .3s;pointer-events:none;max-width:24rem}
-#flash.on{opacity:1}
-@media (max-width:760px){.cuerpo{grid-template-columns:1fr}.menu{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--linea)}.menu button{white-space:nowrap}}
+.lista i{color:var(--g)}
+
+/* Solicitudes */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:1rem}
+.card{background:#fff;border:1px solid var(--linea);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;transition:box-shadow .2s}
+.card:hover{box-shadow:0 12px 30px -18px rgba(92,13,34,.5)}
+.thumb{display:block;width:100%;aspect-ratio:4/3;border:0;padding:0;background:#f3eef0;cursor:zoom-in}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.card-body{padding:1rem 1.1rem;display:flex;flex-direction:column;gap:.5rem;flex:1}
+.card-top{display:flex;justify-content:space-between;gap:.6rem;align-items:flex-start;flex-wrap:wrap}
+.card-top strong{font-size:.9rem;word-break:break-word}
+.card-txt{margin:0;color:#4a3d40;line-height:1.55;font-size:.85rem;overflow-wrap:anywhere}
+.card-acc{margin-top:auto;display:flex;gap:.5rem;padding-top:.5rem;flex-wrap:wrap}
+
+/* Tabla libro */
+.tabla{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--linea);border-radius:14px;overflow:hidden}
+.tabla th,.tabla td{text-align:left;padding:.75rem .9rem;border-top:1px solid var(--linea);vertical-align:top;font-size:.83rem}
+.tabla th{background:#fbf7f8;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gris);border-top:0}
+.tabla td.texto{max-width:36rem;overflow-wrap:anywhere}
+@media (max-width:760px){.tabla thead{display:none}.tabla tr{display:block;border-top:1px solid var(--linea);padding:.4rem 0}.tabla td{display:block;border:0;padding:.3rem .9rem}}
+
+/* Editor */
+textarea.json{width:100%;min-height:24rem;padding:.9rem;border:1px solid var(--linea);border-radius:10px;background:#fff;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;line-height:1.55;resize:vertical}
+.ayuda{font-size:.8rem;color:var(--gris);background:#fff;border-left:3px solid var(--g);padding:.7rem .9rem;margin:0 0 .8rem;border-radius:0 8px 8px 0}
+.estado-json{font-size:.75rem;font-weight:600}
+.estado-json.ok{color:var(--ok)}
+.estado-json.err{color:var(--err)}
+.error{color:var(--err);font-size:.82rem;min-height:1.2em;margin:.3rem 0}
+
+/* Diálogos y avisos */
+dialog{border:0;border-radius:16px;padding:0;max-width:min(440px,calc(100vw - 2rem));box-shadow:0 30px 80px rgba(0,0,0,.4)}
+dialog::backdrop{background:rgba(20,6,10,.6);backdrop-filter:blur(3px)}
+.dlg{padding:1.6rem 1.6rem 1.3rem;margin:0}
+.dlg h3{margin:0 0 .5rem;color:var(--g);font-size:1.05rem}
+.dlg p{margin:0 0 1.3rem;color:#4a3d40;line-height:1.55}
+.dlg .acc{display:flex;gap:.6rem;justify-content:flex-end;flex-wrap:wrap}
+#lightbox{background:#111;max-width:min(94vw,1100px)}
+#lightbox img{display:block;max-width:94vw;max-height:88vh;margin:auto}
+.lb-x{position:fixed;top:.8rem;right:.8rem;width:2.4rem;height:2.4rem;border-radius:50%;border:1px solid rgba(255,255,255,.4);background:rgba(0,0,0,.5);color:#fff;z-index:2}
+#flash{position:fixed;bottom:1.2rem;right:1.2rem;z-index:50;background:var(--tinta);color:#fff;padding:.8rem 1.1rem;border-radius:10px;font-size:.84rem;box-shadow:0 12px 30px rgba(0,0,0,.3);transform:translateY(20px);opacity:0;transition:.3s;pointer-events:none;max-width:24rem;border-left:4px solid var(--rosa)}
+#flash.on{transform:none;opacity:1}
+#flash[data-tipo=error]{border-left-color:#f87171}
+
+@media (max-width:860px){
+  #panel{grid-template-columns:1fr}
+  .side{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;padding:.6rem}
+  .brand{padding:0 .4rem;margin-right:auto}
+  .brand{padding-bottom:0}
+  .nav{flex-direction:row;overflow-x:auto;width:100%;order:3;padding-bottom:.3rem}
+  .nav button{width:auto;white-space:nowrap}
+  .pie{display:none}
+  .encab,.cont{padding-left:1.1rem;padding-right:1.1rem}
+}
 </style>
 </head>
 <body>
 
-<!-- Pantalla de acceso -->
+<!-- Acceso -->
 <div class="login" id="login">
   <div class="caja">
+    <div class="marca"><i class="fa-solid fa-landmark" aria-hidden="true"></i></div>
     <h1>Administración</h1>
-    <p>Museo Digital CETIS 69</p>
-    <button class="btn" id="btnEntrar" style="width:100%">Entrar con Google</button>
-    <p class="aviso" id="msgLogin" style="margin-top:1rem" role="status"></p>
+    <p class="sub">Museo Digital CETIS 69</p>
+    <button class="btn grande" id="btnEntrar"><i class="fa-brands fa-google" aria-hidden="true"></i> Entrar con Google</button>
+    <p class="muted" id="msgLogin" role="status" style="margin:1rem 0 0;min-height:1.2em"></p>
   </div>
 </div>
 
 <!-- Panel -->
 <div id="panel" hidden>
-  <header class="top">
-    <strong>Administración · CETIS 69</strong>
-    <span id="usuario"></span>
-    <button class="btn" id="btnSalir">Salir</button>
-  </header>
-  <div class="cuerpo">
-    <nav class="menu">
-      <button class="on" data-v="resumen">Resumen</button>
-      <button data-v="contenido">Contenido</button>
-      <button data-v="publicar">Publicar</button>
-      <button data-v="admins">Administradores</button>
+  <aside class="side">
+    <div class="brand">
+      <div class="marca"><i class="fa-solid fa-landmark" aria-hidden="true"></i></div>
+      <div><b>CETIS 69</b><small>Museo digital</small></div>
+    </div>
+    <nav class="nav" aria-label="Secciones del panel">
+      <button data-v="resumen" class="on"><i class="fa-solid fa-gauge-high"></i>Resumen</button>
+      <button data-v="solicitudes"><i class="fa-solid fa-inbox"></i>Solicitudes<span class="n" id="badgeSol" hidden></span></button>
+      <button data-v="libro"><i class="fa-solid fa-book-open"></i>Libro publicado</button>
+      <button data-v="contenido"><i class="fa-solid fa-pen-to-square"></i>Contenido</button>
+      <button data-v="publicar"><i class="fa-solid fa-cloud-arrow-up"></i>Publicar<span class="n" id="badgePub" hidden></span></button>
+      <button data-v="admins"><i class="fa-solid fa-user-shield"></i>Administradores</button>
     </nav>
-    <main>
-      <section id="v-resumen">
-        <h2>Resumen del sitio</h2>
-        <div class="tarjetas" id="tarjetas"></div>
-        <p class="aviso" id="estado"></p>
+    <div class="pie">
+      <img class="avatar" id="avatar" alt="" hidden>
+      <div class="quien"><span id="usuario"></span></div>
+      <button id="btnSalir" title="Cerrar sesión" aria-label="Cerrar sesión"><i class="fa-solid fa-right-from-bracket"></i></button>
+    </div>
+  </aside>
+
+  <main>
+    <header class="encab">
+      <h2 id="tit"></h2>
+      <p id="sub"></p>
+    </header>
+
+    <div class="cont">
+
+      <!-- Resumen -->
+      <section class="vista" id="v-resumen">
+        <div class="stats">
+          <div class="stat"><i class="fa-solid fa-image" aria-hidden="true"></i><b id="stPendArch">0</b><span>Fotos por revisar</span></div>
+          <div class="stat"><i class="fa-solid fa-comment-dots" aria-hidden="true"></i><b id="stPendLib">0</b><span>Mensajes por revisar</span></div>
+          <div class="stat"><i class="fa-solid fa-book-open" aria-hidden="true"></i><b id="stLibro">0</b><span>Mensajes publicados</span></div>
+          <div class="stat"><i class="fa-solid fa-camera-retro" aria-hidden="true"></i><b id="stArch">0</b><span>Fotos en el archivo</span></div>
+        </div>
+        <div class="panel-card">
+          <h3>Estado del sitio</h3>
+          <p id="estadoPub" style="margin:0 0 .8rem"></p>
+          <div class="fila" style="margin:0">
+            <button class="btn" data-ir="publicar"><i class="fa-solid fa-cloud-arrow-up"></i> Ir a publicar</button>
+            <button class="btn sec" data-ir="solicitudes"><i class="fa-solid fa-inbox"></i> Revisar solicitudes</button>
+          </div>
+          <p class="muted" id="fuente" style="margin:.9rem 0 0"></p>
+        </div>
+        <div class="panel-card">
+          <h3>Secciones del contenido</h3>
+          <div class="stats mini" id="tarjetas"></div>
+        </div>
       </section>
 
-      <section id="v-contenido" hidden>
-        <h2>Editar contenido</h2>
+      <!-- Solicitudes -->
+      <section class="vista" id="v-solicitudes" hidden>
+        <div class="seg" role="tablist" id="subTabs">
+          <button class="on" data-sub="archivo" role="tab">Archivo fotográfico <span class="n" id="nArch">0</span></button>
+          <button data-sub="libro" role="tab">Libro de visitas <span class="n" id="nLib">0</span></button>
+        </div>
+        <input type="search" class="buscar" id="busSol" placeholder="Buscar por nombre o texto…" aria-label="Buscar solicitudes">
+        <div class="grid" id="gridSol"></div>
+      </section>
+
+      <!-- Libro publicado -->
+      <section class="vista" id="v-libro" hidden>
+        <input type="search" class="buscar" id="busLib" placeholder="Buscar en el libro…" aria-label="Buscar en el libro">
+        <div id="tablaLib"></div>
+      </section>
+
+      <!-- Contenido -->
+      <section class="vista" id="v-contenido" hidden>
         <div class="fila">
-          <label>Sección <select id="sec"></select></label>
-          <span class="sucio" id="sucioC"></span>
+          <label>Sección <select id="sec" aria-label="Sección a editar"></select></label>
+          <span class="estado-json" id="estJson"></span>
+          <span class="muted" id="sucioC"></span>
         </div>
         <p class="ayuda" id="ayuda"></p>
-        <textarea id="json" spellcheck="false" aria-label="Contenido de la sección en formato JSON"></textarea>
+        <textarea class="json" id="json" spellcheck="false" aria-label="Contenido de la sección en formato JSON"></textarea>
         <p class="error" id="err" role="alert"></p>
         <div class="fila">
-          <button class="btn" id="btnAplicar">Aplicar a borrador</button>
-          <button class="btn sec" id="btnDescartarSec">Descartar cambios de esta sección</button>
+          <button class="btn" id="btnAplicar"><i class="fa-solid fa-check"></i> Aplicar a borrador</button>
+          <button class="btn sec" id="btnFormatear"><i class="fa-solid fa-indent"></i> Dar formato</button>
+          <button class="btn sec peligro" id="btnDescartarSec"><i class="fa-solid fa-rotate-left"></i> Descartar sección</button>
         </div>
-        <p class="aviso">Los cambios se aplican primero al borrador. Para que el sitio público los vea, publícalos en la pestaña «Publicar».</p>
+        <p class="muted">Los cambios se guardan como borrador. Para que el sitio público los vea, publícalos desde «Publicar».</p>
       </section>
 
-      <section id="v-publicar" hidden>
-        <h2>Publicar</h2>
-        <p class="aviso">Publicar reemplaza el contenido que ven los visitantes del sitio.</p>
-        <div class="fila">
-          <button class="btn" id="btnPublicar">Publicar en el sitio</button>
-          <button class="btn sec" id="btnDescargar">Descargar datos.json</button>
-          <label class="btn sec" style="cursor:pointer">Importar datos.json
-            <input type="file" id="archivo" accept="application/json,.json" hidden>
-          </label>
-          <button class="btn sec" id="btnRevertir">Revertir al publicado</button>
+      <!-- Publicar -->
+      <section class="vista" id="v-publicar" hidden>
+        <div class="panel-card">
+          <h3>Cambios pendientes</h3>
+          <ul class="lista" id="listaCambios"></ul>
+        </div>
+        <div class="panel-card">
+          <h3>Acciones</h3>
+          <div class="fila" style="margin-top:0">
+            <button class="btn" id="btnPublicar"><i class="fa-solid fa-cloud-arrow-up"></i> Publicar en el sitio</button>
+            <button class="btn sec" id="btnDescargar"><i class="fa-solid fa-file-arrow-down"></i> Descargar datos.json</button>
+            <label class="btn sec" style="cursor:pointer"><i class="fa-solid fa-file-import"></i> Importar datos.json
+              <input type="file" id="archivo" accept="application/json,.json" hidden>
+            </label>
+            <button class="btn sec peligro" id="btnRevertir"><i class="fa-solid fa-trash-can-arrow-up"></i> Descartar borrador</button>
+          </div>
+          <p class="muted" style="margin:.4rem 0 0">Atajo: Ctrl+S (o ⌘S) publica los cambios.</p>
         </div>
       </section>
 
-      <section id="v-admins" hidden>
-        <h2>Administradores</h2>
-        <form class="fila" id="formAdmin">
+      <!-- Administradores -->
+      <section class="vista" id="v-admins" hidden>
+        <form class="fila" id="formAdmin" style="margin-top:0">
           <input type="email" id="nuevoAdmin" required placeholder="correo@gmail.com" aria-label="Correo del nuevo administrador">
-          <button class="btn" type="submit">Agregar administrador</button>
+          <button class="btn" type="submit"><i class="fa-solid fa-user-plus"></i> Agregar</button>
         </form>
         <ul class="lista" id="listaAdmins"></ul>
-        <p class="aviso">Un administrador debe iniciar sesión con Google usando exactamente ese correo.</p>
+        <p class="muted" style="margin-top:.8rem">Un administrador debe iniciar sesión con Google usando exactamente ese correo.</p>
       </section>
-    </main>
-  </div>
+
+    </div>
+  </main>
 </div>
+
+<!-- Diálogo de confirmación -->
+<dialog id="dlg" aria-labelledby="dlgTit">
+  <form method="dialog" class="dlg">
+    <h3 id="dlgTit"></h3>
+    <p id="dlgTxt"></p>
+    <div class="acc">
+      <button class="btn sec" value="cancel">Cancelar</button>
+      <button class="btn" id="dlgOk" value="ok">Aceptar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Visor de fotos -->
+<dialog id="lightbox" aria-label="Vista de la foto">
+  <form method="dialog"><button class="lb-x" aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button></form>
+  <img id="lbImg" alt="">
+</dialog>
 
 <div id="flash" role="status" aria-live="polite"></div>
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import { getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, collection, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, collection, query, where, orderBy, limit, onSnapshot, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyAZ3EV-CTyH3bdPeMTcPAexWLmRLmoCSEg",
@@ -150,9 +325,64 @@ const FIREBASE_CONFIG = {
 const app = initializeApp(FIREBASE_CONFIG);
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+/* ---------- Utilidades ---------- */
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
+const norm = s => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+const ts = t => t?.seconds ?? Date.now() / 1000;
+const fmt = t => t?.toDate ? t.toDate().toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' }) : '';
+const iguales = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
+// Crea elementos: h('button', { class, text, onclick, disabled, ... }, hijos...)
+function h(tag, attrs = {}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'class') e.className = v;
+    else if (k === 'text') e.textContent = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else if (v !== false && v != null) e.setAttribute(k, v === true ? '' : v);
+  }
+  for (const c of kids.flat()) {
+    if (c == null || c === false) continue;
+    e.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  }
+  return e;
+}
+
+function avisar(t, tipo = 'ok') {
+  const f = $('#flash');
+  f.textContent = t;
+  f.dataset.tipo = tipo;
+  f.classList.add('on');
+  clearTimeout(avisar.t);
+  avisar.t = setTimeout(() => f.classList.remove('on'), 3200);
+}
+
+function confirmar({ titulo, texto, aceptar = 'Aceptar', peligro = false }) {
+  const dlg = $('#dlg');
+  $('#dlgTit').textContent = titulo;
+  $('#dlgTxt').textContent = texto;
+  const ok = $('#dlgOk');
+  ok.textContent = aceptar;
+  ok.classList.toggle('rojo', peligro);
+  dlg.showModal();
+  return new Promise(res => dlg.addEventListener('close', () => res(dlg.returnValue === 'ok'), { once: true }));
+}
+
+function verFoto(src) {
+  $('#lbImg').src = src;
+  $('#lightbox').showModal();
+}
+$('#lightbox').addEventListener('click', e => { if (e.target === $('#lightbox')) $('#lightbox').close(); });
+
+async function conBoton(btn, fn) {
+  btn.disabled = true;
+  try { await fn(); } finally { btn.disabled = false; }
+}
+
+/* ---------- Estado ---------- */
+const COL = { archivo: 'solicitudes_archivo', libro: 'solicitudes_libro' };
 const SECCIONES = {
   sitio: 'Sitio (menú, pie, páginas)', hitos: 'Línea del tiempo', eventos: 'Eventos',
   proyectos: 'Proyectos de estudiantes', exalumnos: 'Exalumnos', ciencia: 'Ciencia',
@@ -167,61 +397,125 @@ const AYUDA = {
   exalumnos: 'Lista de {n (nombre), r (rol), d (detalle)}.',
   ciencia: 'Lista de {n (nombre), r (rol), d (detalle)}.',
   premios: 'Lista de {n (nombre), l (lugar), y (año), p (puesto), c ("d" deportivo o "c" cultural), d (descripción)}.',
-  archivo: 'Lista de {c (texto), d (década: "198", "199", "200", "201" o "202"), r (proporción, p. ej. "4/3"), u (URL de la imagen, opcional)}.',
+  archivo: 'Lista de {c (texto), d (década: "198", "199", "200", "201" o "202"), r (proporción, p. ej. "4/3"), u (URL de la imagen), t (descripción), por (quien aportó)}.',
   creditos: 'Objeto con: equipo (lista de {rol, nombre, detalle}), agradecimientos (texto), fuentes (lista de {tipo, fuente}) e imagenes (lista de [tipo, descripción]).',
   ajustes: 'Objeto con: archivoEndpoint, libroEndpoint (URLs o "") y kiosco: {segundosInactividad}.',
   offline: 'Lista de rutas de archivos que se guardan para uso sin conexión, p. ej. "imagenes/portada.jpg".'
 };
+const VISTAS = {
+  resumen: ['Resumen', 'Estado general del museo digital'],
+  solicitudes: ['Solicitudes', 'Revisa lo que envían los visitantes antes de publicarlo'],
+  libro: ['Libro publicado', 'Mensajes visibles en el libro de visitas'],
+  contenido: ['Contenido', 'Edita las secciones del sitio en formato JSON'],
+  publicar: ['Publicar', 'Lleva tus cambios al sitio público'],
+  admins: ['Administradores', 'Quién puede entrar a este panel']
+};
 
-let publicado = null, borrador = null, secActual = null, correo = '';
+const S = {
+  publicado: null, borrador: null, pubInfo: null, secActual: null,
+  correo: '', sub: 'archivo',
+  solArch: [], solLib: [], libro: [], unsubs: []
+};
 
-const sucio = () => JSON.stringify(borrador) !== JSON.stringify(publicado);
-const avisar = t => { const f = $('#flash'); f.textContent = t; f.classList.add('on'); clearTimeout(avisar.t); avisar.t = setTimeout(() => f.classList.remove('on'), 2600); };
-const mostrar = v => { $('#login').hidden = v !== 'login'; $('#panel').hidden = v !== 'panel'; };
+const cambiosPor = () => (S.borrador && S.publicado)
+  ? Object.keys({ ...S.publicado, ...S.borrador }).filter(k => !iguales(S.borrador[k], S.publicado[k]))
+  : [];
+const sucio = () => cambiosPor().length > 0;
 
 /* ---------- Acceso ---------- */
+const ERR_AUTH = {
+  'auth/popup-closed-by-user': 'Cerraste la ventana de inicio de sesión.',
+  'auth/popup-blocked': 'Tu navegador bloqueó la ventana emergente. Permítela e inténtalo de nuevo.',
+  'auth/unauthorized-domain': 'Este dominio no está autorizado en Firebase Authentication.'
+};
 $('#btnEntrar').onclick = async () => {
   $('#msgLogin').textContent = '';
   try { await signInWithPopup(auth, new GoogleAuthProvider()); }
-  catch (e) { $('#msgLogin').textContent = 'No se pudo iniciar sesión: ' + e.code; }
+  catch (e) { $('#msgLogin').textContent = ERR_AUTH[e.code] || 'No se pudo iniciar sesión (' + e.code + ').'; }
 };
-$('#btnSalir').onclick = () => signOut(auth);
+$('#btnSalir').onclick = async () => {
+  if (sucio() && !await confirmar({ titulo: 'Cerrar sesión', texto: 'Tienes cambios sin publicar. Sus borradores se conservan, pero no se publicarán hasta que vuelvas a publicar.', aceptar: 'Cerrar sesión' })) return;
+  signOut(auth);
+};
+
+function mostrar(v) {
+  $('#login').hidden = v !== 'login';
+  $('#panel').hidden = v === 'login';
+}
 
 onAuthStateChanged(auth, async user => {
+  S.unsubs.forEach(u => u()); S.unsubs = [];
   if (!user) { mostrar('login'); return; }
-  correo = (user.email || '').toLowerCase();
+
+  S.correo = (user.email || '').toLowerCase();
   let activo = false;
   try {
-    const s = await getDoc(doc(db, 'admins', correo));
+    const s = await getDoc(doc(db, 'admins', S.correo));
     activo = s.exists() && String(s.data().activo) === 'true';
   } catch (e) {}
   if (!activo) {
-    $('#msgLogin').textContent = `La cuenta ${correo} no tiene permiso de administración.`;
+    $('#msgLogin').textContent = `La cuenta ${S.correo} no tiene permiso de administración.`;
     await signOut(auth);
-    mostrar('login');
     return;
   }
-  $('#usuario').textContent = correo;
+
+  $('#usuario').textContent = S.correo;
+  $('#avatar').src = user.photoURL || '';
+  $('#avatar').hidden = !user.photoURL;
   mostrar('panel');
+  iniciarTiempoReal();
   await cargar();
+  ir(VISTAS[location.hash.slice(1)] ? location.hash.slice(1) : 'resumen');
 });
 
-/* ---------- Carga y validación ---------- */
+/* ---------- Tiempo real ---------- */
+function iniciarTiempoReal() {
+  const err = e => avisar('Error al leer datos: ' + e.code, 'error');
+  S.unsubs.push(onSnapshot(
+    query(collection(db, COL.archivo), where('estado', '==', 'pendiente')),
+    s => { S.solArch = s.docs.map(d => ({ id: d.id, ...d.data() })); renderSolicitudes(); renderResumen(); renderBadges(); }, err));
+  S.unsubs.push(onSnapshot(
+    query(collection(db, COL.libro), where('estado', '==', 'pendiente')),
+    s => { S.solLib = s.docs.map(d => ({ id: d.id, ...d.data() })); renderSolicitudes(); renderResumen(); renderBadges(); }, err));
+  S.unsubs.push(onSnapshot(
+    query(collection(db, 'libro'), orderBy('creado', 'desc'), limit(300)),
+    s => { S.libro = s.docs.map(d => ({ id: d.id, ...d.data() })); renderLibro(); renderResumen(); }, err));
+}
+
+/* ---------- Carga y borrador ---------- */
 async function cargar() {
-  let fuente = 'datos.json (aún no publicado en Firestore)';
   try {
     const s = await getDoc(doc(db, 'sitio', 'datos'));
-    if (s.exists()) { publicado = JSON.parse(s.data().json); fuente = 'Publicado en Firestore'; }
+    if (s.exists()) { S.publicado = JSON.parse(s.data().json); S.pubInfo = s.data(); }
   } catch (e) {}
-  if (!publicado) {
-    const r = await fetch('datos.json', { cache: 'no-cache' });
-    publicado = await r.json();
+  if (!S.publicado) {
+    try {
+      const r = await fetch('datos.json', { cache: 'no-cache' });
+      S.publicado = await r.json();
+    } catch (e) { avisar('No se pudo cargar el contenido del sitio.', 'error'); return; }
   }
-  borrador = structuredClone(publicado);
-  $('#estado').textContent = 'Fuente actual: ' + fuente + '.';
-  pintarResumen();
-  pintarSecciones();
-  pintarSucio();
+  let borrador = null;
+  try {
+    const s = await getDoc(doc(db, 'sitio', 'borrador'));
+    if (s.exists()) borrador = JSON.parse(s.data().json);
+  } catch (e) {}
+  S.borrador = borrador || structuredClone(S.publicado);
+  S.secActual = Object.keys(S.borrador)[0];
+  renderTodo(true);
+}
+
+async function guardarBorrador() {
+  try {
+    await setDoc(doc(db, 'sitio', 'borrador'), {
+      json: JSON.stringify(S.borrador),
+      actualizado: serverTimestamp(),
+      por: S.correo
+    });
+    return true;
+  } catch (e) {
+    avisar('No se pudo guardar el borrador: ' + e.message, 'error');
+    return false;
+  }
 }
 
 function validar(d) {
@@ -236,183 +530,402 @@ function validar(d) {
   return '';
 }
 
-/* ---------- Resumen ---------- */
-function pintarResumen() {
-  const cont = $('#tarjetas');
-  cont.innerHTML = '';
-  Object.entries(borrador).forEach(([k, v]) => {
-    const t = document.createElement('div');
-    t.className = 'tarjeta';
+/* ---------- Render general ---------- */
+function renderTodo(forzar = false) {
+  if (!S.borrador) return;
+  renderResumen();
+  renderSecciones(forzar);
+  renderPublicar();
+  renderSolicitudes();
+  renderLibro();
+  renderBadges();
+}
+
+function renderBadges() {
+  const p = S.solArch.length + S.solLib.length;
+  $('#badgeSol').textContent = p;
+  $('#badgeSol').hidden = !p;
+  const c = cambiosPor().length;
+  $('#badgePub').textContent = c;
+  $('#badgePub').hidden = !c;
+}
+
+function renderResumen() {
+  $('#stPendArch').textContent = S.solArch.length;
+  $('#stPendLib').textContent = S.solLib.length;
+  $('#stLibro').textContent = S.libro.length;
+  $('#stArch').textContent = (S.publicado?.archivo || []).length;
+
+  const ch = cambiosPor();
+  $('#estadoPub').replaceChildren(ch.length
+    ? h('span', { class: 'estado-pub warn' }, h('i', { class: 'fa-solid fa-triangle-exclamation' }),
+        ` ${ch.length} ${ch.length === 1 ? 'sección con cambios' : 'secciones con cambios'} sin publicar`)
+    : h('span', { class: 'estado-pub ok' }, h('i', { class: 'fa-solid fa-circle-check' }), ' El sitio público está al día'));
+
+  $('#fuente').textContent = S.pubInfo
+    ? `Última publicación: ${fmt(S.pubInfo.actualizado) || '—'} por ${S.pubInfo.por || '—'}`
+    : 'El sitio usa el archivo datos.json original. Aún no se ha publicado desde este panel.';
+
+  if (!S.borrador) return;
+  $('#tarjetas').replaceChildren(...Object.entries(S.borrador).map(([k, v]) => {
     const n = Array.isArray(v) ? v.length : Object.keys(v || {}).length;
-    t.innerHTML = `<b>${n}</b><span></span>`;
-    t.querySelector('span').textContent = (SECCIONES[k] || k) + (Array.isArray(v) ? ' (elementos)' : ' (campos)');
-    cont.append(t);
-  });
+    const editado = cambiosPor().includes(k);
+    return h('div', { class: 'stat mini' },
+      h('b', { text: n }),
+      h('span', { text: (SECCIONES[k] || k) + (editado ? ' · editado' : '') }));
+  }));
 }
 
 /* ---------- Contenido ---------- */
-function pintarSecciones() {
+function renderSecciones(forzar = false) {
   const sel = $('#sec');
-  sel.innerHTML = '';
-  Object.keys(borrador).forEach(k => {
-    const o = document.createElement('option');
-    o.value = k; o.textContent = SECCIONES[k] || k;
-    sel.append(o);
-  });
-  cambiarSeccion(secActual && borrador[secActual] !== undefined ? secActual : Object.keys(borrador)[0]);
+  sel.replaceChildren(...Object.keys(S.borrador).map(k => h('option', { value: k, text: SECCIONES[k] || k })));
+  if (!(S.secActual in S.borrador)) S.secActual = Object.keys(S.borrador)[0];
+  if (forzar || !editorCambiado()) cargarEditor();
+  else sel.value = S.secActual;
 }
 
-function cambiarSeccion(k) {
-  secActual = k;
+function cargarEditor() {
+  const k = S.secActual;
   $('#sec').value = k;
-  $('#json').value = JSON.stringify(borrador[k], null, 2);
-  $('#ayuda').textContent = AYUDA[k] || 'Edite el contenido en formato JSON respetando comillas y comas.';
-  $('#err').textContent = '';
+  $('#json').value = JSON.stringify(S.borrador[k], null, 2);
+  $('#ayuda').textContent = AYUDA[k] || 'Edita el contenido en formato JSON respetando comillas y comas.';
+  validarEditor();
+  actualizarSucioEditor();
 }
 
-$('#sec').onchange = e => {
-  const actual = JSON.parse(JSON.stringify(borrador[secActual]));
-  let hayCambios = false;
-  try { hayCambios = JSON.stringify(JSON.parse($('#json').value)) !== JSON.stringify(actual); } catch (x) { hayCambios = true; }
-  if (hayCambios && !confirm('Hay cambios sin aplicar en esta sección. ¿Cambiar de sección y perderlos?')) {
-    $('#sec').value = secActual;
+function validarEditor() {
+  const est = $('#estJson');
+  try {
+    JSON.parse($('#json').value);
+    est.textContent = 'JSON válido';
+    est.className = 'estado-json ok';
+    $('#err').textContent = '';
+    return true;
+  } catch (e) {
+    est.textContent = 'JSON no válido';
+    est.className = 'estado-json err';
+    return false;
+  }
+}
+
+function editorCambiado() {
+  try { return !iguales(JSON.parse($('#json').value), S.borrador[S.secActual]); }
+  catch (e) { return true; }
+}
+
+function actualizarSucioEditor() {
+  $('#sucioC').textContent = editorCambiado() ? 'Cambios sin aplicar' : '';
+}
+
+$('#json').addEventListener('input', () => { validarEditor(); actualizarSucioEditor(); });
+
+$('#sec').onchange = async e => {
+  if (editorCambiado() && !await confirmar({ titulo: 'Cambiar de sección', texto: 'Hay cambios sin aplicar en esta sección. ¿Cambiar y perderlos?', aceptar: 'Cambiar', peligro: true })) {
+    e.target.value = S.secActual;
     return;
   }
-  cambiarSeccion(e.target.value);
+  S.secActual = e.target.value;
+  cargarEditor();
 };
 
-$('#btnAplicar').onclick = () => {
-  try {
-    const v = JSON.parse($('#json').value);
-    borrador[secActual] = v;
-    $('#err').textContent = '';
-    pintarResumen();
-    pintarSucio();
+$('#btnAplicar').onclick = async () => {
+  let v;
+  try { v = JSON.parse($('#json').value); }
+  catch (e) { $('#err').textContent = 'JSON no válido: ' + e.message; return; }
+  S.borrador[S.secActual] = v;
+  if (await guardarBorrador()) {
+    renderTodo(true);
     avisar('Cambios aplicados al borrador.');
-  } catch (e) {
-    $('#err').textContent = 'JSON no válido: ' + e.message;
   }
 };
 
-$('#btnDescartarSec').onclick = () => {
-  if (!confirm('¿Descartar los cambios de esta sección y volver a lo publicado?')) return;
-  borrador[secActual] = structuredClone(publicado[secActual]);
-  cambiarSeccion(secActual);
-  pintarResumen();
-  pintarSucio();
+$('#btnFormatear').onclick = () => {
+  try {
+    $('#json').value = JSON.stringify(JSON.parse($('#json').value), null, 2);
+    validarEditor();
+  } catch (e) { $('#err').textContent = 'No se puede dar formato: ' + e.message; }
 };
 
-function pintarSucio() {
-  const s = sucio();
-  $('#sucioC').textContent = s ? 'Cambios sin publicar' : '';
+$('#btnDescartarSec').onclick = async () => {
+  const k = S.secActual;
+  if (!await confirmar({ titulo: 'Descartar sección', texto: `«${SECCIONES[k] || k}» volverá a la versión publicada.`, aceptar: 'Descartar', peligro: true })) return;
+  if (S.publicado[k] === undefined) delete S.borrador[k];
+  else S.borrador[k] = structuredClone(S.publicado[k]);
+  if (await guardarBorrador()) { renderTodo(true); avisar('Sección descartada.'); }
+};
+
+/* ---------- Solicitudes ---------- */
+function renderSolicitudes() {
+  $('#nArch').textContent = S.solArch.length;
+  $('#nLib').textContent = S.solLib.length;
+  const q = norm($('#busSol').value.trim());
+  const base = S.sub === 'archivo' ? S.solArch : S.solLib;
+  const lista = base
+    .filter(s => !q || norm(`${s.nombre} ${s.descripcion || ''} ${s.mensaje || ''}`).includes(q))
+    .sort((a, b) => ts(b.creado) - ts(a.creado));
+  const g = $('#gridSol');
+  if (!lista.length) {
+    g.replaceChildren(h('div', { class: 'vacio' },
+      h('i', { class: 'fa-regular fa-folder-open' }),
+      q ? 'Nada coincide con tu búsqueda.' : 'No hay solicitudes pendientes. ¡Todo al día!'));
+    return;
+  }
+  g.replaceChildren(...lista.map(s => tarjetaSol(s, S.sub)));
 }
 
+function tarjetaSol(s, tipo) {
+  const arch = tipo === 'archivo';
+  return h('article', { class: 'card' },
+    arch ? h('button', { class: 'thumb', type: 'button', title: 'Ver foto completa', 'aria-label': 'Ver foto completa', onclick: () => verFoto(s.url) },
+      h('img', { src: s.url, alt: 'Foto enviada por ' + s.nombre, loading: 'lazy' })) : null,
+    h('div', { class: 'card-body' },
+      h('div', { class: 'card-top' },
+        h('strong', { text: s.nombre }),
+        h('span', { class: 'chip', text: arch ? `Década ${s.decada}0s · ${s.anio}` : s.rol })),
+      h('p', { class: 'card-txt', text: arch ? s.descripcion : s.mensaje }),
+      h('small', { class: 'muted', text: arch ? fmt(s.creado) : s.fecha }),
+      h('div', { class: 'card-acc' },
+        h('button', { class: 'btn sm', onclick: e => conBoton(e.currentTarget, () => aprobar(s, tipo)) },
+          h('i', { class: 'fa-solid fa-check' }), ' Aprobar'),
+        h('button', { class: 'btn sec peligro sm', onclick: () => rechazar(s, tipo) },
+          h('i', { class: 'fa-solid fa-xmark' }), ' Rechazar'))));
+}
+
+async function aprobar(s, tipo) {
+  try {
+    if (tipo === 'archivo') {
+      S.borrador.archivo = [{
+        d: s.decada,
+        c: s.descripcion.slice(0, 60),
+        t: s.descripcion,
+        por: s.nombre,
+        r: s.r,
+        u: s.url
+      }, ...(S.borrador.archivo || [])];
+      await updateDoc(doc(db, COL.archivo, s.id), { estado: 'aprobada', revisado: serverTimestamp(), por: S.correo });
+      if (await guardarBorrador()) {
+        renderTodo();
+        avisar('Foto añadida al borrador. Publícala desde «Publicar».');
+      }
+    } else {
+      await setDoc(doc(db, 'libro', s.id), {
+        nombre: s.nombre,
+        rol: s.rol,
+        mensaje: s.mensaje,
+        fecha: s.fecha,
+        likes: 0,
+        creado: s.creado || serverTimestamp()
+      });
+      await updateDoc(doc(db, COL.libro, s.id), { estado: 'aprobada', revisado: serverTimestamp(), por: S.correo });
+      avisar('Mensaje publicado en el libro de visitas.');
+    }
+  } catch (e) {
+    avisar('No se pudo aprobar: ' + e.message, 'error');
+  }
+}
+
+async function rechazar(s, tipo) {
+  if (!await confirmar({ titulo: 'Rechazar solicitud', texto: `Se rechazará el envío de ${s.nombre}. No se publicará.`, aceptar: 'Rechazar', peligro: true })) return;
+  try {
+    await updateDoc(doc(db, COL[tipo], s.id), { estado: 'rechazada', revisado: serverTimestamp(), por: S.correo });
+    avisar('Solicitud rechazada.');
+  } catch (e) {
+    avisar('No se pudo rechazar: ' + e.message, 'error');
+  }
+}
+
+$$('#subTabs button').forEach(b => b.onclick = () => {
+  S.sub = b.dataset.sub;
+  $$('#subTabs button').forEach(x => {
+    x.classList.toggle('on', x === b);
+    x.setAttribute('aria-selected', String(x === b));
+  });
+  renderSolicitudes();
+});
+$('#busSol').addEventListener('input', renderSolicitudes);
+
+/* ---------- Libro publicado ---------- */
+function renderLibro() {
+  const q = norm($('#busLib').value.trim());
+  const lista = S.libro.filter(o => !q || norm(`${o.nombre} ${o.mensaje} ${o.rol}`).includes(q));
+  const cont = $('#tablaLib');
+  if (!lista.length) {
+    cont.replaceChildren(h('div', { class: 'vacio' },
+      h('i', { class: 'fa-regular fa-comments' }),
+      q ? 'Nada coincide con tu búsqueda.' : 'Aún no hay mensajes publicados.'));
+    return;
+  }
+  cont.replaceChildren(h('table', { class: 'tabla' },
+    h('thead', {}, h('tr', {},
+      h('th', { text: 'Autor' }), h('th', { text: 'Mensaje' }), h('th', { text: 'Me emociona' }), h('th', { text: '' }))),
+    h('tbody', {}, ...lista.map(o => h('tr', {},
+      h('td', {}, h('strong', { text: o.nombre }), h('div', { class: 'muted', text: o.rol + ' · ' + o.fecha })),
+      h('td', { class: 'texto', text: o.mensaje }),
+      h('td', {}, h('span', { class: 'chip' }, h('i', { class: 'fa-solid fa-heart' }), ' ' + (o.likes || 0))),
+      h('td', {}, h('button', { class: 'btn sec peligro sm', onclick: () => borrarLibro(o) },
+        h('i', { class: 'fa-solid fa-trash-can' }), ' Eliminar'))
+    )))));
+}
+
+async function borrarLibro(o) {
+  if (!await confirmar({ titulo: 'Eliminar mensaje', texto: `El mensaje de ${o.nombre} dejará de verse en el libro público.`, aceptar: 'Eliminar', peligro: true })) return;
+  try {
+    await deleteDoc(doc(db, 'libro', o.id));
+    avisar('Mensaje eliminado del libro.');
+  } catch (e) {
+    avisar('No se pudo eliminar: ' + e.message, 'error');
+  }
+}
+$('#busLib').addEventListener('input', renderLibro);
+
 /* ---------- Publicar ---------- */
-$('#btnPublicar').onclick = async () => {
-  const err = validar(borrador);
-  if (err) { alert(err); return; }
+function renderPublicar() {
+  const ch = cambiosPor();
+  $('#listaCambios').replaceChildren(...(ch.length
+    ? ch.map(k => h('li', {},
+        h('i', { class: 'fa-solid fa-pen' }),
+        h('div', { class: 'correo' }, h('strong', { text: SECCIONES[k] || k }))))
+    : [h('li', {}, h('span', { class: 'muted', text: 'No hay cambios pendientes.' }))]));
+  $('#btnPublicar').disabled = !ch.length;
+}
+
+async function publicar() {
+  if (editorCambiado()) { avisar('Aplica los cambios del editor antes de publicar.', 'error'); return; }
   if (!sucio()) { avisar('No hay cambios que publicar.'); return; }
-  if (!confirm('¿Publicar estos cambios? El sitio público se actualizará de inmediato.')) return;
+  const err = validar(S.borrador);
+  if (err) { avisar(err, 'error'); return; }
+  const n = cambiosPor().length;
+  if (!await confirmar({
+    titulo: 'Publicar cambios',
+    texto: `Se actualizarán ${n} ${n === 1 ? 'sección' : 'secciones'} del sitio público. Los visitantes verán los cambios de inmediato.`,
+    aceptar: 'Publicar'
+  })) return;
   try {
     await setDoc(doc(db, 'sitio', 'datos'), {
-      json: JSON.stringify(borrador),
+      json: JSON.stringify(S.borrador),
       actualizado: serverTimestamp(),
-      por: correo
+      por: S.correo
     });
-    publicado = structuredClone(borrador);
-    $('#estado').textContent = 'Fuente actual: Publicado en Firestore.';
-    pintarSucio();
-    avisar('Contenido publicado.');
+    await deleteDoc(doc(db, 'sitio', 'borrador')).catch(() => {});
+    S.publicado = structuredClone(S.borrador);
+    S.pubInfo = { por: S.correo, actualizado: { toDate: () => new Date() } };
+    renderTodo();
+    avisar('Contenido publicado en el sitio.');
   } catch (e) {
-    alert('No se pudo publicar: ' + e.message);
+    avisar('No se pudo publicar: ' + e.message, 'error');
   }
-};
+}
+$('#btnPublicar').onclick = publicar;
 
 $('#btnDescargar').onclick = () => {
-  const blob = new Blob([JSON.stringify(borrador, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'datos.json';
+  const blob = new Blob([JSON.stringify(S.borrador, null, 2)], { type: 'application/json' });
+  const a = h('a', { href: URL.createObjectURL(blob), download: 'datos.json' });
   a.click();
-  URL.revokeObjectURL(a.href);
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 };
 
 $('#archivo').onchange = async e => {
   const f = e.target.files[0];
-  if (!f) return;
-  try {
-    const v = JSON.parse(await f.text());
-    const err = validar(v);
-    if (err) { alert(err); return; }
-    borrador = v;
-    pintarResumen(); pintarSecciones(); pintarSucio();
-    avisar('Archivo importado al borrador. Revísalo y publícalo.');
-  } catch (x) { alert('El archivo no es un JSON válido.'); }
   e.target.value = '';
+  if (!f) return;
+  let v;
+  try { v = JSON.parse(await f.text()); }
+  catch (x) { avisar('El archivo no es un JSON válido.', 'error'); return; }
+  const err = validar(v);
+  if (err) { avisar(err, 'error'); return; }
+  if (!await confirmar({ titulo: 'Importar datos', texto: 'El archivo reemplazará el borrador actual. Después podrás revisarlo y publicarlo.', aceptar: 'Importar' })) return;
+  S.borrador = v;
+  if (await guardarBorrador()) { renderTodo(true); avisar('Archivo importado al borrador.'); }
 };
 
-$('#btnRevertir').onclick = () => {
-  if (!sucio()) return;
-  if (!confirm('¿Descartar todos los cambios no publicados?')) return;
-  borrador = structuredClone(publicado);
-  pintarResumen(); pintarSecciones(); pintarSucio();
+$('#btnRevertir').onclick = async () => {
+  if (!sucio()) { avisar('No hay cambios que descartar.'); return; }
+  if (!await confirmar({
+    titulo: 'Descartar borrador',
+    texto: 'Se perderán los cambios no publicados. Las fotos aprobadas que aún no están publicadas se quitarán del borrador; sus solicitudes quedan marcadas como aprobadas.',
+    aceptar: 'Descartar todo',
+    peligro: true
+  })) return;
+  S.borrador = structuredClone(S.publicado);
+  await deleteDoc(doc(db, 'sitio', 'borrador')).catch(() => {});
+  renderTodo(true);
+  avisar('Borrador descartado.');
 };
 
 window.addEventListener('beforeunload', e => {
-  if (borrador && sucio()) { e.preventDefault(); e.returnValue = ''; }
+  if (!$('#panel').hidden && S.borrador && editorCambiado()) { e.preventDefault(); e.returnValue = ''; }
+});
+addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's' && !$('#panel').hidden) {
+    e.preventDefault();
+    publicar();
+  }
 });
 
 /* ---------- Administradores ---------- */
-async function pintarAdmins() {
+async function renderAdmins() {
   const ul = $('#listaAdmins');
-  ul.innerHTML = '';
-  const snap = await getDocs(collection(db, 'admins'));
-  snap.forEach(d => {
-    const on = String(d.data().activo) === 'true';
-    const li = document.createElement('li');
-    const c = document.createElement('span');
-    c.className = 'correo';
-    c.textContent = d.id + (d.id === correo ? ' (tú)' : '');
-    const e = document.createElement('span');
-    e.className = 'etiqueta ' + (on ? 'si' : 'no');
-    e.textContent = on ? 'Activo' : 'Inactivo';
-    const bA = document.createElement('button');
-    bA.className = 'btn sec';
-    bA.textContent = on ? 'Desactivar' : 'Activar';
-    bA.onclick = async () => {
-      if (d.id === correo && on) { alert('No puedes desactivarte a ti mismo.'); return; }
-      await updateDoc(doc(db, 'admins', d.id), { activo: on ? 'false' : 'true' });
-      pintarAdmins();
-    };
-    const bB = document.createElement('button');
-    bB.className = 'btn peligro';
-    bB.textContent = 'Eliminar';
-    bB.onclick = async () => {
-      if (d.id === correo) { alert('No puedes eliminarte a ti mismo.'); return; }
-      if (!confirm('¿Eliminar a ' + d.id + ' de los administradores?')) return;
-      await deleteDoc(doc(db, 'admins', d.id));
-      pintarAdmins();
-    };
-    li.append(c, e, bA, bB);
-    ul.append(li);
-  });
+  let items = [];
+  try {
+    const snap = await getDocs(collection(db, 'admins'));
+    snap.forEach(d => items.push({ id: d.id, ...d.data() }));
+  } catch (e) {
+    avisar('No se pudo leer la lista de administradores.', 'error');
+    return;
+  }
+  items.sort((a, b) => a.id.localeCompare(b.id));
+  ul.replaceChildren(...items.map(a => {
+    const on = String(a.activo) === 'true';
+    const yo = a.id === S.correo;
+    return h('li', {},
+      h('div', { class: 'correo' }, h('strong', { text: a.id + (yo ? ' (tú)' : '') })),
+      h('span', { class: 'etiqueta ' + (on ? 'si' : 'no'), text: on ? 'Activo' : 'Inactivo' }),
+      h('button', { class: 'btn sec sm', disabled: yo && on, onclick: () => cambiarAdmin(a.id, !on) }, on ? 'Desactivar' : 'Activar'),
+      h('button', { class: 'btn peligro sm', disabled: yo, onclick: () => eliminarAdmin(a.id) }, 'Eliminar'));
+  }));
+}
+
+async function cambiarAdmin(id, activo) {
+  try {
+    await updateDoc(doc(db, 'admins', id), { activo: activo ? 'true' : 'false' });
+    avisar(activo ? 'Administrador activado.' : 'Administrador desactivado.');
+    renderAdmins();
+  } catch (e) { avisar('No se pudo cambiar: ' + e.message, 'error'); }
+}
+
+async function eliminarAdmin(id) {
+  if (!await confirmar({ titulo: 'Eliminar administrador', texto: `${id} dejará de tener acceso al panel.`, aceptar: 'Eliminar', peligro: true })) return;
+  try {
+    await deleteDoc(doc(db, 'admins', id));
+    avisar('Administrador eliminado.');
+    renderAdmins();
+  } catch (e) { avisar('No se pudo eliminar: ' + e.message, 'error'); }
 }
 
 $('#formAdmin').onsubmit = async e => {
   e.preventDefault();
   const mail = $('#nuevoAdmin').value.trim().toLowerCase();
-  await setDoc(doc(db, 'admins', mail), { activo: 'true', agregado: serverTimestamp(), por: correo });
-  $('#nuevoAdmin').value = '';
-  avisar('Administrador agregado.');
-  pintarAdmins();
+  try {
+    await setDoc(doc(db, 'admins', mail), { activo: 'true', agregado: serverTimestamp(), por: S.correo });
+    $('#nuevoAdmin').value = '';
+    avisar('Administrador agregado.');
+    renderAdmins();
+  } catch (err) { avisar('No se pudo agregar: ' + err.message, 'error'); }
 };
 
 /* ---------- Navegación ---------- */
-$$('.menu button').forEach(b => b.onclick = () => {
-  $$('.menu button').forEach(x => x.classList.toggle('on', x === b));
-  ['resumen', 'contenido', 'publicar', 'admins'].forEach(v => $('#v-' + v).hidden = v !== b.dataset.v);
-  if (b.dataset.v === 'admins') pintarAdmins();
-});
+function ir(v) {
+  $$('.nav button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  $$('.vista').forEach(s => s.hidden = s.id !== 'v-' + v);
+  $('#tit').textContent = VISTAS[v][0];
+  $('#sub').textContent = VISTAS[v][1];
+  if (v === 'admins') renderAdmins();
+  history.replaceState(null, '', '#' + v);
+  window.scrollTo(0, 0);
+}
+$$('.nav button').forEach(b => b.onclick = () => ir(b.dataset.v));
+$$('[data-ir]').forEach(b => b.onclick = () => ir(b.dataset.ir));
 </script>
 </body>
 </html>
