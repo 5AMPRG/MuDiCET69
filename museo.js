@@ -11,34 +11,6 @@ try {
   console.warn("No se pudo cargar puntos.js", error);
 }
 
-let DATOS_AJUSTES = {};
-try {
-  DATOS_AJUSTES = (await (await fetch("datos.json")).json()).ajustes || {};
-} catch (error) {
-  console.warn("No se pudo leer datos.json; se usan los valores por defecto", error);
-}
-
-// Respaldo si falta puntos.js: guía, consejos y volumen de las bocinas
-const GUIA_RESPALDO = [
-  { para: "todos", icono: "fa-person-walking", titulo: "Moverte", texto: "W A S D o flechas. En celular, usa el joystick de la esquina." },
-  { para: "todos", icono: "fa-eye", titulo: "Mirar", texto: "Haz clic en la escena y mueve el mouse, o desliza el dedo en la pantalla." },
-  { para: "todos", icono: "fa-bolt", titulo: "Correr y saltar", texto: "Mantén Shift para correr. Espacio para saltar." },
-  { para: "todos", icono: "fa-dove", titulo: "Vuelo", texto: "F activa el vuelo. Espacio sube y Ctrl baja." },
-  { para: "todos", icono: "fa-map", titulo: "Mapa", texto: "M o Tab. Toca un punto o un botón para viajar directo a cualquier lugar." },
-  { para: "todos", icono: "fa-route", titulo: "Tour y foto", texto: "Tour recorre las paradas solo; cualquier tecla de movimiento lo detiene. O toma una foto." },
-  { para: "todos", icono: "fa-lightbulb", titulo: "Iluminación", texto: "1 día, 2 atardecer, 3 noche. El cambio es gradual." },
-  { para: "todos", icono: "fa-volume-high", titulo: "Sonido", texto: "N silencia. Cada poste-bocina reproduce MUDICET69; se escucha más de cerca." },
-  { para: "todos", icono: "fa-pause", titulo: "Pausa", texto: "Esc pausa el recorrido. En celular usa el botón Pausa de la barra." }
-];
-const CONSEJOS_RESPALDO = [
-  "Consejo: mantén Shift para correr.",
-  "Consejo: pulsa M para ver el mapa y viajar a cualquier lugar.",
-  "Consejo: los postes-bocina se escuchan más cerca de ellos.",
-  "Consejo: pulsa O para tomar una foto del museo.",
-  "Consejo: el botón Tour te lleva solo por las paradas principales."
-];
-const VOLUMEN_BOCINAS = 0.45;   // MUDICET69 en cada poste-bocina: 45 de 100
-
 let bvhActivo = false;
 try {
   const bvh = await import("three-mesh-bvh");
@@ -60,7 +32,7 @@ function esTactilInicial() {
 const esTactil = esTactilInicial();
 
 const CONFIG = {
-  modelo: "museo3_1.glb",
+  modelo: "museo3.1.glb",
   alturaOjos: 4.5,
   alturaRayoColision: 0.45,
   alturaRayoBajo: 0.85,
@@ -303,7 +275,7 @@ const consejoEl = document.getElementById("consejo");
     motas.appendChild(m);
   }
 })();
-const consejos = DATOS.CONSEJOS || CONSEJOS_RESPALDO;
+const consejos = DATOS.CONSEJOS || [];
 let consejoIdx = 0;
 function mostrarConsejo() {
   if (!consejos.length) return;
@@ -2062,17 +2034,6 @@ function iniciarAudio() {
 
 function actualizarAudio() {
   if (!sonido.ctx) return;
-  if (bocinas.activo) {
-    actualizarOyente();
-    const encendido = sonido.encendido && activo;
-    bocinas.maestro.gain.setTargetAtTime(encendido ? VOLUMEN_BOCINAS : 0, sonido.ctx.currentTime, 0.15);
-    const seg = performance.now() / 1000;
-    bocinas.halos.forEach((h, i) => {
-      const pulso = 0.5 + 0.5 * Math.sin(seg * 3 + i * 0.9);
-      h.scale.setScalar(2.2 + pulso * 1.4);
-      h.material.opacity = encendido ? 0.2 + 0.35 * pulso : 0;
-    });
-  }
   let distancia = Infinity;
   posicionesFuentes.forEach((f) => {
     distancia = Math.min(distancia, Math.hypot(f.x - camara.position.x, f.z - camara.position.z));
@@ -2223,8 +2184,16 @@ function actualizarPantallaVideo() {
   const volumen = dentro ? 1 - 0.5 * Math.min(1, d / 90) : 0.12 * Math.max(0, 1 - d / alcance);
   conectarAudioVideo();
   if (bocinas.activo) {
-    bocinas.filtro.frequency.setTargetAtTime(dentro ? 20000 : 700, sonido.ctx.currentTime, 0.3);
-    if (!v.muted) v.muted = true;   // el audio de la pantalla no sale por las bocinas: suena MUDICET69
+    actualizarOyente();
+    const ganancia = ((DATOS.BOCINAS && DATOS.BOCINAS.ganancia) || 2.6) / Math.sqrt(bocinas.posiciones.length);
+    const nivel = !sonido.encendido || pv.sinSonido
+      ? 0
+      : (dentro ? 1 : 0.5 * Math.max(0, 1 - d / alcance)) * CONFIG.pantallaVideo.volumen * ganancia;
+    const t0 = sonido.ctx.currentTime;
+    bocinas.maestro.gain.setTargetAtTime(nivel, t0, 0.15);
+    bocinas.filtro.frequency.setTargetAtTime(dentro ? 20000 : 700, t0, 0.3);
+    if (v.volume !== 1) v.volume = 1;
+    if (v.muted !== pv.sinSonido) v.muted = pv.sinSonido;
   } else {
     const vol = Math.round(THREE.MathUtils.clamp(volumen * CONFIG.pantallaVideo.volumen, 0, 1) * 50) / 50;
     if (Math.abs(v.volume - vol) > 0.001) v.volume = vol;
@@ -2424,7 +2393,6 @@ function apuntar(punto) {
 }
 
 function abrirModal(el) {
-  detenerTour();
   ui.modal = true;
   teclas.clear();
   soltarJoystick();
@@ -2552,7 +2520,7 @@ function construirGuia() {
   const grid = document.getElementById("guiaGrid");
   if (grid.childElementCount) return;
   const tipo = esTactil ? "tactil" : "pc";
-  (DATOS.GUIA || GUIA_RESPALDO).filter((i) => i.para === "todos" || i.para === tipo).forEach((i) => {
+  (DATOS.GUIA || []).filter((i) => i.para === "todos" || i.para === tipo).forEach((i) => {
     const tarjeta = document.createElement("div");
     tarjeta.className = "mv-guia-card";
     tarjeta.innerHTML = '<i class="fa-solid ' + i.icono + '"></i><b></b><span></span>';
@@ -2840,23 +2808,13 @@ function actualizarSentado(dt) {
 }
 botonSentar.addEventListener("click", alternarAsiento);
 
-const bocinas = { posiciones: [], listo: false, activo: false, maestro: null, filtro: null, halos: [] };
-
-// MUDICET69.mp4 suena en los postes (no el video de la pantalla)
-const musica = document.createElement("video");
-musica.src = "MUDICET69.mp4";
-musica.loop = true;
-musica.preload = "auto";
-musica.playsInline = true;
-musica.setAttribute("playsinline", "");
-musica.style.cssText = "position:absolute;width:2px;height:2px;opacity:0;pointer-events:none";
-document.body.appendChild(musica);
+const bocinas = { posiciones: [], listo: false, activo: false, maestro: null, filtro: null };
 const vecFrente = new THREE.Vector3();
 const vecArriba = new THREE.Vector3();
 
 function prepararBocinas(raiz) {
   const cfg = DATOS.BOCINAS || {};
-  const patron = new RegExp(cfg.objeto || "^poste-bocina\\d+$", "i");
+  const patron = new RegExp(cfg.objeto || "bocina|altavoz|parlante|speaker", "i");
   const objetos = buscarObjetos(raiz, patron).filter((o) => !(o.parent && patron.test(o.parent.name)));
   const posiciones = [];
   objetos.forEach((o) => centrosDeLuminarias(o, 2).forEach((l) => posiciones.push(l.centro.clone())));
@@ -2870,25 +2828,14 @@ function prepararBocinas(raiz) {
     }
   }
   bocinas.posiciones = posiciones;
-  bocinas.halos = posiciones.map((p) => {
-    const s = new THREE.Sprite(new THREE.SpriteMaterial({
-      map: texturaHalo(), color: 0xffb070, transparent: true, opacity: 0,
-      depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false, fog: false
-    }));
-    s.position.copy(p);
-    s.scale.setScalar(2.2);
-    s.renderOrder = 4;
-    escena.add(s);
-    return s;
-  });
 }
 
 function conectarAudioVideo() {
-  if (bocinas.listo || !sonido.ctx || !bocinas.posiciones.length) return;
+  if (bocinas.listo || !sonido.ctx || !pantallaVideo.video || !bocinas.posiciones.length) return;
   bocinas.listo = true;
   try {
     const ctx = sonido.ctx;
-    const fuente = ctx.createMediaElementSource(musica);
+    const fuente = ctx.createMediaElementSource(pantallaVideo.video);
     const mono = ctx.createGain();
     mono.channelCount = 1;
     mono.channelCountMode = "explicit";
@@ -2915,11 +2862,7 @@ function conectarAudioVideo() {
       panner.connect(filtro);
     });
     filtro.connect(maestro);
-    const limitador = ctx.createDynamicsCompressor();
-    limitador.threshold.value = -8; limitador.knee.value = 4; limitador.ratio.value = 12;
-    limitador.attack.value = 0.005; limitador.release.value = 0.2;
-    maestro.connect(limitador);
-    limitador.connect(ctx.destination);
+    maestro.connect(ctx.destination);
     bocinas.maestro = maestro;
     bocinas.filtro = filtro;
     bocinas.activo = true;
@@ -3803,48 +3746,6 @@ function iniciarAdmin() {
 
 if (ADMIN_ACTIVO) iniciarAdmin();
 
-/* ---------- Tour automático entre paradas ---------- */
-const tour = { activo: false, indice: 0, temporizador: 0 };
-const TOUR_MS = (DATOS_AJUSTES.recorridoSegundos || 8) * 1000;
-let velo = null;
-
-function fundidoTour(alCubrir) {
-  if (!velo) {
-    velo = document.createElement("div");
-    velo.style.cssText = "position:absolute;inset:0;background:#000;opacity:0;transition:opacity .4s;z-index:40;pointer-events:none";
-    visor.appendChild(velo);
-  }
-  velo.style.opacity = "1";
-  setTimeout(() => { alCubrir(); velo.style.opacity = "0"; }, 420);
-}
-
-function iniciarTour() {
-  if (!activo || ui.modal || !paradas.length) return;
-  tour.activo = true;
-  tour.indice = 0;
-  document.getElementById("botonTour")?.classList.add("activo");
-  siguienteTour();
-}
-
-function siguienteTour() {
-  if (!tour.activo) return;
-  if (tour.indice >= paradas.length) { detenerTour(); return; }
-  const destino = paradas[tour.indice++];
-  fundidoTour(() => irA(destino));
-  clearTimeout(tour.temporizador);
-  tour.temporizador = setTimeout(siguienteTour, TOUR_MS);
-}
-
-function detenerTour() {
-  tour.activo = false;
-  clearTimeout(tour.temporizador);
-  document.getElementById("botonTour")?.classList.remove("activo");
-}
-
-renderer.domElement.addEventListener("pointerdown", detenerTour);
-document.getElementById("botonTour")?.addEventListener("click", () => (tour.activo ? detenerTour() : iniciarTour()));
-document.getElementById("botonFoto")?.addEventListener("click", tomarFoto);
-
 function girar(dx, dy, sensibilidad) {
   yaw -= dx * sensibilidad;
   pitch -= dy * sensibilidad;
@@ -3864,8 +3765,6 @@ function entrar() {
   cubierta.classList.add("oculto");
   activo = true;
   iniciarAudio();
-  conectarAudioVideo();
-  musica.play().catch(() => {});
   panelInfo.classList.add("oculto");
   mapaGrande.classList.add("oculto");
   ui.modal = false;
@@ -3879,8 +3778,6 @@ function entrar() {
 function pausar() {
   if (!activo) return;
   activo = false;
-  detenerTour();
-  musica.pause();
   teclas.clear();
   soltarJoystick();
   textoEntrar.textContent = "Continuar";
@@ -3890,8 +3787,6 @@ function pausar() {
 
 function salir() {
   activo = false;
-  detenerTour();
-  musica.pause();
   sentado = null;
   apagarVuelo();
   [panelInfo, mapaGrande, guia].forEach((el) => el.classList.add("oculto"));
@@ -3926,8 +3821,6 @@ const atajosAmbiente = { Digit1: "dia", Digit2: "galeria", Digit3: "noche" };
 window.addEventListener("keydown", (e) => {
   if (!visor.classList.contains("inmersivo")) return;
   if (atajosAmbiente[e.code]) aplicarAmbiente(atajosAmbiente[e.code]);
-  if (tour.activo && /^(Key[WASD]|Arrow|Space|Shift)/.test(e.code)) detenerTour();
-  if (e.code === "KeyO" && activo && !ui.modal && !e.repeat) tomarFoto();
   if (e.code === "KeyM") alternarSonido();
   if (e.code === "Tab") {
     e.preventDefault();
@@ -3947,7 +3840,7 @@ window.addEventListener("keydown", (e) => {
   if (e.code === "KeyF" && activo && !ui.modal && !e.repeat) alternarVuelo();
   if (e.code === "Space" && vuelo.activo) e.preventDefault();
   if (e.code === "KeyE" && activo && !ui.modal && !vuelo.activo) alternarAsiento();
-  if (e.code === "Escape" && activo && !ui.modal) pausar();
+  if (e.code === "Escape" && esTactil) pausar();
   if (activo && !ui.modal) teclas.add(e.code);
 });
 window.addEventListener("keyup", (e) => teclas.delete(e.code));
