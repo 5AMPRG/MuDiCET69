@@ -187,6 +187,8 @@ body.vuelo #verticales{display:flex}
   <div id="bottom">
     <button class="btn-hud" id="bPausa" type="button"><i class="fa-solid fa-pause"></i><span class="txt-ocultable"> Pausa</span></button>
     <button class="btn-hud" id="bVuelo" type="button"><i class="fa-solid fa-dove"></i><span class="txt-ocultable"> Vuelo</span><kbd class="solo-pc">F</kbd></button>
+    <button class="btn-hud" id="bTour" type="button" aria-label="Tour automático"><i class="fa-solid fa-route"></i><span class="txt-ocultable"> Tour</span></button>
+    <button class="btn-hud" id="bFoto" type="button" aria-label="Tomar foto"><i class="fa-solid fa-camera"></i><kbd class="solo-pc">P</kbd></button>
     <div class="seg" id="seg" role="group" aria-label="Iluminación">
       <button type="button" data-amb="dia">Día</button>
       <button type="button" data-amb="atardecer">Atardecer</button>
@@ -258,6 +260,7 @@ body.vuelo #verticales{display:flex}
         <div class="item"><strong><i class="fa-solid fa-lightbulb"></i>Iluminación</strong><p>1 día, 2 atardecer, 3 noche. El cambio es gradual.</p></div>
         <div class="item"><strong><i class="fa-solid fa-volume-high"></i>Sonido</strong><p>N silencia. Cada poste-bocina reproduce MUDICET69 y se escucha más de cerca.</p></div>
         <div class="item"><strong><i class="fa-solid fa-pause"></i>Pausa</strong><p>Esc pausa el recorrido. En celular usa el botón Pausa de la barra.</p></div>
+        <div class="item"><strong><i class="fa-solid fa-route"></i>Tour y foto</strong><p>Tour recorre los puntos solo; cualquier tecla lo detiene. P toma una foto.</p></div>
       </div>
       <div class="pie">
         <span class="nota">Consejo: mira un poste-bocina para ver su número.</span>
@@ -607,6 +610,18 @@ async function cargarAudio() {
 
 function crearAltavoces(buffer) {
   if (!buffer) return;
+  // Limitador de seguridad: varias bocinas juntas no se disparan en volumen
+  const ctxA = listener.context;
+  const salida = listener.getInput();
+  if (salida && !estado.limitador) {
+    estado.limitador = true;
+    const lim = ctxA.createDynamicsCompressor();
+    lim.threshold.value = -8; lim.knee.value = 4; lim.ratio.value = 12;
+    lim.attack.value = 0.005; lim.release.value = 0.2;
+    salida.disconnect();
+    salida.connect(lim);
+    lim.connect(ctxA.destination);
+  }
   for (let i = 1; i <= N_ALTAVOCES; i++) {
     const obj = escena.getObjectByName(`poste-bocina${i}`);
     if (!obj) continue;
@@ -626,7 +641,14 @@ function crearAltavoces(buffer) {
     sonido.setVolume(efectivo());
     ancla.add(sonido);
 
-    altavoces.push({ n: i, ancla, sonido, pos: ancla.position.clone() });
+    // Halo pulsante: marca de dónde sale el sonido
+    const halo = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: texturaHalo(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.3
+    }));
+    halo.scale.setScalar(2.2);
+    ancla.add(halo);
+
+    altavoces.push({ n: i, ancla, sonido, halo, pos: ancla.position.clone() });
   }
 }
 
@@ -649,6 +671,7 @@ function avisar(texto, ms = 2600) {
 }
 
 function abrirModal(m) {
+  detenerTour();
   if (estado.modal) cerrarModal();
   estado.modal = m;
   m.classList.remove('oculto');
@@ -675,6 +698,7 @@ function pedirPuntero() {
 
 function pausar(on) {
   estado.pausado = on;
+  if (on) detenerTour();
   $('pausaCapa').classList.toggle('oculto', !on);
   if (on) teclas.clear();
   const b = $('bPausa');
@@ -1005,7 +1029,9 @@ const CONSEJOS = [
   'Consejo: mantén Shift para correr.',
   'Consejo: pulsa M para ver el mapa y viajar a cualquier lugar.',
   'Consejo: los postes-bocina se escuchan más cerca de ellos.',
-  'Consejo: F activa el modo vuelo.'
+  'Consejo: F activa el modo vuelo.',
+  'Consejo: pulsa P para tomar una foto del museo.',
+  'Consejo: el botón Tour te lleva solo por los puntos principales.'
 ];
 let ci = 0;
 const consejoT = setInterval(() => { $('consejo').textContent = CONSEJOS[ci++ % CONSEJOS.length]; }, 2600);
@@ -1135,6 +1161,42 @@ async function arrancar() {
 }
 
 /* =========================================================
+   TOUR AUTOMÁTICO
+   ========================================================= */
+let tourActivo = false, tourIdx = 0, tourLista = [], tourT = 0, pedirFoto = false;
+
+function iniciarTour() {
+  if (!estado.entrado || estado.modal || estado.pausado) return;
+  tourLista = [...poisLista, ...paradasLista];
+  if (!tourLista.length) return;
+  tourActivo = true;
+  tourIdx = 0;
+  $('bTour').classList.add('on');
+  avisar('Tour automático: pulsa una tecla de movimiento para detenerlo', 3200);
+  siguienteTour();
+}
+
+function siguienteTour() {
+  if (!tourActivo) return;
+  if (tourIdx >= tourLista.length) {
+    detenerTour();
+    avisar('Tour terminado');
+    return;
+  }
+  const p = tourLista[tourIdx++];
+  avisar('Tour · ' + p.nombre, 2200);
+  irA(p.x, p.z, p.y);
+  clearTimeout(tourT);
+  tourT = setTimeout(siguienteTour, 9000);
+}
+
+function detenerTour() {
+  tourActivo = false;
+  clearTimeout(tourT);
+  $('bTour').classList.remove('on');
+}
+
+/* =========================================================
    ENTRAR, PAUSA Y ENTRADAS
    ========================================================= */
 async function entrar() {
@@ -1166,6 +1228,8 @@ $('bPausa').addEventListener('click', () => {
   if (!estado.pausado) pedirPuntero();
 });
 $('bVuelo').addEventListener('click', alternarVuelo);
+$('bTour').addEventListener('click', () => (tourActivo ? detenerTour() : iniciarTour()));
+$('bFoto').addEventListener('click', () => { pedirFoto = true; });
 $('bMapa').addEventListener('click', () => toggleModal('mMapa'));
 $('bGuia').addEventListener('click', () => toggleModal('mGuia'));
 $('bAjustes').addEventListener('click', () => toggleModal('mAjustes'));
@@ -1222,6 +1286,7 @@ $('mapaGrande').addEventListener('click', (e) => {
 
 // Mirar y tocar (mouse, táctil)
 escenaEl.addEventListener('pointerdown', (e) => {
+  detenerTour();
   if (!estado.cargado || !estado.entrado || estado.modal) return;
   if (listener.context.state === 'suspended') listener.context.resume().catch(() => {});
   if (e.pointerType === 'touch') {
@@ -1294,12 +1359,14 @@ document.addEventListener('pointerlockchange', () => {
 window.addEventListener('keydown', (e) => {
   if (e.target && e.target.matches && e.target.matches('input,select,textarea')) return;
   if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+  if (tourActivo && /^(Key[WASD]|Arrow|Space|Shift)/.test(e.code)) detenerTour();
   teclas.add(e.code);
   if (e.code === 'Tab') e.preventDefault();
   if (e.repeat || !estado.entrado) return;
 
   if (e.code === 'Escape') {
     if (estado.modal) cerrarModal();
+    else if (estado.entrado && !estado.pausado) pausar(true);
     return;
   }
   if (estado.modal) return;
@@ -1312,6 +1379,7 @@ window.addEventListener('keydown', (e) => {
     case 'KeyH': toggleModal('mGuia'); break;
     case 'KeyF': alternarVuelo(); break;
     case 'KeyN': alternarSonido(); break;
+    case 'KeyP': pedirFoto = true; break;
     case 'Digit1': setAmbiente('dia'); break;
     case 'Digit2': setAmbiente('atardecer'); break;
     case 'Digit3': setAmbiente('noche'); break;
@@ -1358,9 +1426,29 @@ function bucle() {
     actualizarSol();
     actualizarEtiquetas();
     dibujarMini();
+    for (let i = 0; i < altavoces.length; i++) {
+      const a = altavoces[i];
+      const pulso = 0.5 + 0.5 * Math.sin(tiempo * 3 + i * 0.9);
+      a.halo.scale.setScalar(2.2 + pulso * 1.4);
+      a.halo.material.opacity = cfg.sonido ? 0.2 + 0.35 * pulso : 0;
+    }
   }
 
   renderer.render(escena, camara);
+  if (pedirFoto) {
+    pedirFoto = false;
+    renderer.domElement.toBlob((blob) => {
+      if (!blob) return;
+      const enlace = document.createElement('a');
+      enlace.href = URL.createObjectURL(blob);
+      enlace.download = 'CETIS69-recorrido.png';
+      document.body.appendChild(enlace);
+      enlace.click();
+      enlace.remove();
+      setTimeout(() => URL.revokeObjectURL(enlace.href), 4000);
+      avisar('Foto guardada');
+    }, 'image/png');
+  }
 }
 
 onResize();
