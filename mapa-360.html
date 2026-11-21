@@ -4,9 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#7a122e">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" href="icono-192.png">
-<link rel="apple-touch-icon" href="icono-180.png">
 <meta name="description" content="Recorre el Museo Digital del CETIS 69 en primera persona desde tu computadora o tu celular.">
 <meta property="og:title" content="Recorrido Virtual | Museo Digital CETIS 69">
 <meta property="og:description" content="Camina por el museo del CETIS 69 en Ciudad Obregón.">
@@ -15,214 +12,1360 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>
-<link rel="stylesheet" href="estilos.css">
-<link rel="stylesheet" href="museo.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{
+  --vino:#7a122e; --rojo:#c0304f; --rosa:#e8a5b4;
+  --vidrio:rgba(18,7,12,.62); --borde:rgba(255,255,255,.14); --radio:16px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#0b0508;color:#fff;font-family:Montserrat,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+.oculto{display:none!important}
+kbd{font:600 .62rem Montserrat,sans-serif;opacity:.6;border:1px solid var(--borde);border-radius:6px;padding:0 .35rem;margin-left:.1rem}
+.eyebrow{font-size:.7rem;letter-spacing:.24em;text-transform:uppercase;color:var(--rosa);font-weight:700}
+
+/* ---------- Cargador ---------- */
+#cargador{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:#0b0508;transition:opacity .6s}
+#cargador.salir{opacity:0;pointer-events:none}
+.ld{text-align:center;width:min(320px,86vw)}
+.ld h2{margin:0 0 .2rem;font-weight:800;letter-spacing:.06em}
+.ld p{margin:0 0 1rem;color:rgba(255,255,255,.7);font-size:.9rem}
+.ld small{display:block;margin-top:.9rem;color:rgba(255,255,255,.55);font-size:.78rem;min-height:1.2em}
+.anillo{position:relative;width:118px;height:118px;margin:0 auto 1rem;border-radius:50%;background:conic-gradient(var(--rojo) calc(var(--p,0) * 1%),rgba(255,255,255,.08) 0)}
+.anillo::before{content:"";position:absolute;inset:9px;border-radius:50%;background:#0b0508}
+.anillo b{position:absolute;inset:0;display:grid;place-items:center;font-size:1.25rem;font-weight:700}
+.barra{height:6px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden}
+.barra i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--rosa),var(--rojo));transition:width .3s}
+
+/* ---------- Escena ---------- */
+#app{position:fixed;inset:0;overflow:hidden}
+#escena{position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 20%,#2a1020,#0b0508)}
+#escena canvas{display:block;width:100%;height:100%;touch-action:none}
+#etiquetas{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.etq{position:absolute;left:0;top:0;transform:translate(-50%,-120%);padding:.35rem .75rem;border-radius:999px;background:var(--vidrio);border:1px solid var(--borde);font-size:.72rem;font-weight:600;letter-spacing:.03em;white-space:nowrap;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);will-change:transform}
+.etq.altavoz{border-color:rgba(232,165,180,.6);color:var(--rosa)}
+.etq.altavoz i{margin-right:.35rem}
+#mira{position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:rgba(255,255,255,.85);box-shadow:0 0 0 2px rgba(0,0,0,.25);pointer-events:none;transition:transform .15s,background .15s}
+#mira.activa{transform:scale(1.8);background:var(--rosa)}
+#tip{position:absolute;left:50%;top:calc(50% + 26px);transform:translateX(-50%);padding:.5rem .9rem;border-radius:12px;background:var(--vidrio);border:1px solid var(--borde);font-size:.78rem;pointer-events:none;white-space:nowrap}
+
+/* ---------- Barras ---------- */
+#top{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 22px;background:linear-gradient(to bottom,rgba(8,3,6,.72),rgba(8,3,6,0));pointer-events:none}
+#top>*{pointer-events:auto}
+.marca small{display:block;font-size:.64rem;letter-spacing:.22em;text-transform:uppercase;color:var(--rosa);font-weight:700}
+.marca strong{font-size:1rem;font-weight:700}
+.acciones{display:flex;gap:.4rem;flex-wrap:wrap;justify-content:flex-end}
+.btn-hud{display:inline-flex;align-items:center;gap:.45rem;padding:.55rem .85rem;border-radius:999px;border:1px solid var(--borde);background:rgba(20,8,13,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);cursor:pointer;font-size:.8rem;font-weight:600;transition:background .2s,transform .15s,border-color .2s;white-space:nowrap}
+.btn-hud:hover{background:rgba(122,18,46,.85)}
+.btn-hud:active{transform:scale(.97)}
+.btn-hud.on{background:var(--rojo);border-color:transparent}
+.btn-hud:focus-visible,.btn:focus-visible,.seg button:focus-visible{outline:2px solid var(--rosa);outline-offset:2px}
+.btn-hud:disabled{opacity:.45;cursor:not-allowed}
+
+#bottom{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);transform:translateX(-50%);display:flex;gap:.45rem;align-items:center;flex-wrap:wrap;justify-content:center;width:max-content;max-width:calc(100% - 24px);padding:.5rem;border-radius:999px;background:var(--vidrio);border:1px solid var(--borde);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 12px 30px rgba(0,0,0,.4)}
+.seg{display:inline-flex;padding:3px;border-radius:999px;background:rgba(255,255,255,.08)}
+.seg button{border:0;background:none;padding:.42rem .75rem;border-radius:999px;cursor:pointer;font-size:.76rem;font-weight:600;opacity:.8;transition:background .2s}
+.seg button.on{background:var(--rojo);opacity:1}
+.volumen{display:flex;align-items:center;gap:.5rem;padding:0 .3rem 0 0}
+.volumen input{width:110px;accent-color:var(--rojo)}
+.volumen output{min-width:2.2ch;font-variant-numeric:tabular-nums;font-size:.78rem;font-weight:700;text-align:right}
+
+#mini{position:absolute;right:16px;top:calc(env(safe-area-inset-top,0px) + 74px);width:186px;height:186px;border-radius:50%;border:2px solid rgba(255,255,255,.2);box-shadow:0 10px 30px rgba(0,0,0,.45);background:#120609;cursor:pointer}
+#joy{position:absolute;left:22px;bottom:calc(env(safe-area-inset-bottom,0px) + 96px);width:128px;height:128px;border-radius:50%;background:rgba(18,7,12,.45);border:1px solid var(--borde);display:none;touch-action:none}
+#perilla{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px 0 0 -26px;border-radius:50%;background:rgba(232,165,180,.85);box-shadow:0 6px 18px rgba(0,0,0,.35);pointer-events:none}
+#verticales{position:absolute;right:18px;bottom:calc(env(safe-area-inset-bottom,0px) + 100px);display:none;flex-direction:column;gap:10px}
+body.vuelo #verticales{display:flex}
+#verticales button{width:56px;height:56px;border-radius:50%;border:1px solid var(--borde);background:var(--vidrio);cursor:pointer;font-size:1.05rem;touch-action:none}
+@media (pointer:coarse){#joy{display:block}kbd{display:none}}
+@media (max-width:720px){
+  .marca{display:none}
+  .solo-pc,.txt-ocultable{display:none}
+  #top{justify-content:flex-end}
+  #mini{width:128px;height:128px;top:calc(env(safe-area-inset-top,0px) + 66px)}
+  .volumen input{width:84px}
+  #bottom{border-radius:20px}
+}
+
+#aviso{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 96px);transform:translate(-50%,8px);opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;padding:.6rem 1rem;border-radius:12px;background:var(--vidrio);border:1px solid var(--borde);font-size:.82rem;max-width:90%;text-align:center;z-index:12}
+#aviso.on{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- Capas ---------- */
+.capa{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:24px;background:linear-gradient(90deg,rgba(8,3,6,.88) 0%,rgba(8,3,6,.5) 55%,rgba(8,3,6,.2) 100%)}
+#pausaCapa{background:rgba(8,3,6,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.intro-caja{max-width:540px;animation:subir .9s cubic-bezier(.2,.7,.2,1) both}
+.intro-caja.centrado{text-align:center;margin:auto}
+.titulo{font-size:clamp(2.1rem,6vw,3.6rem);line-height:1.02;font-weight:800;margin:.35rem 0 .9rem;letter-spacing:-.01em}
+.titulo.pequeno{font-size:clamp(1.5rem,4vw,2rem)}
+.titulo b{background:linear-gradient(90deg,#fff,var(--rosa) 60%,var(--rojo));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{color:rgba(255,255,255,.82);line-height:1.6;font-size:.98rem;margin:.5rem 0}
+.acciones-intro{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1.4rem;justify-content:inherit}
+.intro-caja.centrado .acciones-intro{justify-content:center}
+.btn{display:inline-flex;align-items:center;gap:.55rem;padding:.9rem 1.3rem;border-radius:999px;border:0;background:linear-gradient(135deg,var(--rojo),var(--vino));font-weight:700;cursor:pointer;box-shadow:0 12px 30px rgba(192,48,79,.35);transition:transform .2s,filter .2s}
+.btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.btn.sec{background:rgba(255,255,255,.08);border:1px solid var(--borde);box-shadow:none}
+.nota-audio{margin-top:1.2rem;font-size:.8rem;color:rgba(255,255,255,.6);display:flex;gap:.5rem;align-items:center}
+.intro-caja.centrado .nota-audio{justify-content:center}
+@keyframes subir{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+/* ---------- Modales ---------- */
+.modal{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(5,2,4,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.tarjeta{position:relative;width:min(720px,100%);max-height:92vh;overflow:auto;padding:1.5rem;border-radius:20px;background:rgba(22,9,15,.95);border:1px solid var(--borde);box-shadow:0 30px 80px rgba(0,0,0,.6);animation:subir .35s both}
+.tarjeta.ancha{width:min(1080px,100%)}
+.tarjeta h3{margin:.25rem 0 .8rem;font-size:1.3rem;font-weight:700;padding-right:2rem}
+.tarjeta h4.sub{margin:1.1rem 0 .5rem;font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--rosa)}
+.eti{font-size:.66rem;letter-spacing:.22em;text-transform:uppercase;color:var(--rosa);font-weight:700}
+.nota{font-size:.84rem;color:rgba(255,255,255,.65);line-height:1.5;margin:.2rem 0 0}
+.cerrar{position:absolute;right:12px;top:12px;width:36px;height:36px;border-radius:50%;border:1px solid var(--borde);background:rgba(255,255,255,.06);cursor:pointer}
+.cerrar:hover{background:rgba(122,18,46,.8)}
+.mapa-caja{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:1.2rem;align-items:start}
+#mapaGrande{width:100%;height:auto;aspect-ratio:1/1;border-radius:14px;background:#120609;cursor:crosshair;display:block;border:1px solid var(--borde)}
+.lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:.4rem}
+.lista button{padding:.55rem .6rem;border-radius:10px;border:1px solid var(--borde);background:rgba(255,255,255,.05);cursor:pointer;font-size:.78rem;font-weight:600;text-align:left;transition:background .2s}
+.lista button:hover{background:rgba(122,18,46,.6)}
+.guia-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:.7rem}
+.item{padding:.85rem;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid var(--borde)}
+.item strong{font-size:.9rem}
+.item i{color:var(--rosa);margin-right:.4rem}
+.item p{margin:.4rem 0 0;font-size:.82rem;line-height:1.5;color:rgba(255,255,255,.78)}
+.fila{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:.75rem 0;border-bottom:1px solid var(--borde);font-size:.9rem}
+.fila select{background:rgba(255,255,255,.08);border:1px solid var(--borde);border-radius:10px;padding:.45rem .6rem}
+.fila select option{background:#1c0c13}
+.fila input[type=range]{width:160px;accent-color:var(--rojo)}
+.fila input[type=checkbox]{width:18px;height:18px;accent-color:var(--rojo)}
+.pie{display:flex;justify-content:space-between;align-items:center;gap:.6rem;margin-top:1.1rem;flex-wrap:wrap}
+.btn-texto{background:none;border:0;cursor:pointer;color:var(--rosa);font-weight:600;font-size:.85rem;padding:.4rem .2rem}
+
+#fundido{position:fixed;inset:0;z-index:40;background:#0b0508;opacity:0;pointer-events:none;transition:opacity .35s}
+#fundido.on{opacity:1}
+
+@media (max-width:760px){
+  .mapa-caja{grid-template-columns:1fr}
+  .fila input[type=range]{width:120px}
+}
+</style>
 </head>
-<body data-menu="recorrido" data-carga="900" data-reveal="inmediato" data-umbral=".12">
-<a href="#recorrido" class="skip">Saltar al contenido</a>
+<body>
 
-<div id="loader"><div class="ld"><h2>CETIS 69</h2><p>MUSEO DIGITAL</p><div class="bar"><i></i></div></div></div>
+<div id="cargador">
+  <div class="ld">
+    <div class="anillo" id="anillo"><b id="pct">0%</b></div>
+    <h2>CETIS 69</h2>
+    <p id="estado">Preparando el museo…</p>
+    <div class="barra"><i id="progreso"></i></div>
+    <small id="consejo"></small>
+  </div>
+</div>
 
-<nav id="nav"></nav>
-
-<section id="recorrido">
- <div class="rv">
-  <div class="eyebrow">Recorrido virtual</div>
-  <h1 class="title">Camina por el <b>museo</b></h1>
-  <p class="lead">Explora las salas del Museo Digital CETIS 69 en primera persona, desde tu computadora o tu celular.</p>
- </div>
-
- <div class="visor" id="visor">
+<div id="app">
   <div id="escena"></div>
-  <div class="mira"></div>
-  <canvas class="mapa" id="mapa" width="300" height="300"></canvas>
-  <div class="joystick" id="joystick"><div class="perilla" id="perilla"></div></div>
+  <div id="etiquetas"></div>
+  <div id="mira"></div>
+  <div id="tip" class="oculto"></div>
 
-  <div class="hud">
-   <button type="button" class="pausa" id="pausar"><i class="fa-solid fa-pause"></i> Pausa</button>
-   <div class="derecha">
-    <button type="button" id="botonHerr" class="oculto"><i class="fa-solid fa-screwdriver-wrench"></i> Admin</button>
-    <button type="button" id="botonMapa"><i class="fa-solid fa-map"></i> Mapa<span class="solo-pc"> · Tab</span></button>
-    <button type="button" id="botonGuia" aria-label="Guía rápida">?<span class="solo-pc"> · H</span></button>
-    <button type="button" id="botonVuelo"><i class="fa-solid fa-dove"></i> Vuelo<span class="solo-pc"> · F</span></button>
-    <button type="button" id="sonido">Sonido</button>
-    <div class="ambientes" id="ambientes" role="group" aria-label="Iluminación">
-     <button type="button" data-a="dia">Día</button>
-     <button type="button" data-a="galeria">Atardecer</button>
-     <button type="button" data-a="noche">Noche</button>
+  <header id="top">
+    <div class="marca">
+      <small>Museo Digital · CETIS 69</small>
+      <strong>Recorrido virtual</strong>
     </div>
-   </div>
-  </div>
-
-  <div class="cargando" id="cargando">
-   <div class="motas" id="motas"></div>
-   <div class="tarjeta-carga">
-     <div class="orbe">
-      <svg viewBox="0 0 200 200" aria-hidden="true">
-       <circle class="a1" cx="100" cy="100" r="94" fill="none" stroke="#e8a5b4" stroke-width="2.5" stroke-dasharray="60 40 8 40" stroke-linecap="round"/>
-       <circle class="a2" cx="100" cy="100" r="78" fill="none" stroke="#ffffff" stroke-opacity=".6" stroke-width="1.5" stroke-dasharray="3 9"/>
-       <circle class="a3" cx="100" cy="100" r="62" fill="none" stroke="#c0304f" stroke-width="4" stroke-dasharray="90 300" stroke-linecap="round"/>
-      </svg>
-      <b id="porcentaje">0%</b>
-     </div>
-     <div class="info-carga">
-       <h3>CETIS 69</h3>
-       <p id="estado">Cargando el museo</p>
-       <div class="barra"><i id="progreso"></i></div>
-       <small id="consejo"></small>
-     </div>
-   </div>
-  </div>
-
-  <div class="cubierta oculto" id="cubierta">
-   <div class="eyebrow">Museo Digital</div>
-   <h2 class="title">Recorrido <b>virtual</b></h2>
-   <p class="lead">Camina libremente por el museo y cambia la iluminación para verlo de día, al atardecer o de noche.</p>
-   <p class="lead">Dentro encontrarás una guía rápida y un mapa para ir directo a cualquier lugar.</p>
-   <div class="acciones">
-    <button type="button" class="btn sec oculto" id="botonAcceso">Acceso admin</button>
-    <button type="button" class="btn" id="entrar"><span id="textoEntrar">Entrar al museo</span> <i class="fa-solid fa-arrow-right-long"></i></button>
-    <button type="button" class="btn sec oculto" id="salir">Salir</button>
-   </div>
-  </div>
-
-  <div id="badgeVuelo" class="oculto"></div>
-  <div id="controlesVuelo">
-   <button type="button" id="botonSubir" aria-label="Subir"><i class="fa-solid fa-arrow-up"></i></button>
-   <button type="button" id="botonBajar" aria-label="Bajar"><i class="fa-solid fa-arrow-down"></i></button>
-  </div>
-  <div id="sugerencia" class="oculto"></div>
-  <button type="button" class="btn sec oculto" id="botonSentar"></button>
-
-  <div class="mv-modal oculto" id="panelInfo" role="dialog" aria-modal="true" aria-labelledby="infoTitulo">
-   <div class="mv-tarjeta">
-    <button type="button" class="mv-cerrar" id="cerrarInfo" aria-label="Cerrar">&#10005;</button>
-    <small id="infoEtiqueta"></small>
-    <h3 id="infoTitulo"></h3>
-    <div id="infoCuerpo"></div>
-   </div>
-  </div>
-
-  <div class="mv-modal oculto" id="mapaGrande" role="dialog" aria-modal="true" aria-label="Mapa del museo">
-   <div class="mv-mapa-caja">
-    <canvas id="mapaCanvas" width="900" height="900"></canvas>
-    <div class="mv-tarjeta mv-lateral">
-     <button type="button" class="mv-cerrar" id="cerrarMapa" aria-label="Cerrar">&#10005;</button>
-     <small>Mapa del museo</small>
-     <h3>¿A dónde quieres ir?</h3>
-     <div class="paradas-bloque oculto" id="paradasBloque">
-      <div class="paradas" id="paradas"></div>
-     </div>
-     <p class="nota">Toca un punto del mapa o un botón de la lista.</p>
+    <div class="acciones">
+      <button class="btn-hud" id="bMapa" type="button" aria-label="Mapa"><i class="fa-solid fa-map"></i><span class="txt-ocultable"> Mapa</span><kbd class="solo-pc">M</kbd></button>
+      <button class="btn-hud" id="bGuia" type="button" aria-label="Guía rápida"><i class="fa-solid fa-circle-question"></i><span class="txt-ocultable"> Guía</span><kbd class="solo-pc">H</kbd></button>
+      <button class="btn-hud" id="bAjustes" type="button" aria-label="Ajustes"><i class="fa-solid fa-sliders"></i><span class="txt-ocultable"> Ajustes</span></button>
+      <button class="btn-hud" id="bPantalla" type="button" aria-label="Pantalla completa"><i class="fa-solid fa-expand"></i></button>
     </div>
-   </div>
+  </header>
+
+  <canvas id="mini" width="260" height="260" class="oculto" title="Abrir mapa" aria-label="Minimapa"></canvas>
+
+  <div id="joy"><div id="perilla"></div></div>
+  <div id="verticales">
+    <button type="button" id="bSubir" aria-label="Subir"><i class="fa-solid fa-arrow-up"></i></button>
+    <button type="button" id="bBajar" aria-label="Bajar"><i class="fa-solid fa-arrow-down"></i></button>
   </div>
 
-  <div class="mv-modal oculto" id="guia" role="dialog" aria-modal="true" aria-labelledby="guiaTitulo">
-   <div class="mv-tarjeta">
-    <button type="button" class="mv-cerrar" id="cerrarGuia" aria-label="Cerrar">&#10005;</button>
-    <small>Guía rápida</small>
-    <h3 id="guiaTitulo">Cómo recorrer el museo</h3>
-    <div class="mv-guia-grid" id="guiaGrid"></div>
-    <button type="button" class="btn" id="guiaOk" style="margin-top:1.1rem">Entendido</button>
-   </div>
+  <div id="bottom">
+    <button class="btn-hud" id="bPausa" type="button"><i class="fa-solid fa-pause"></i><span class="txt-ocultable"> Pausa</span></button>
+    <button class="btn-hud" id="bVuelo" type="button"><i class="fa-solid fa-dove"></i><span class="txt-ocultable"> Vuelo</span><kbd class="solo-pc">F</kbd></button>
+    <div class="seg" id="seg" role="group" aria-label="Iluminación">
+      <button type="button" data-amb="dia">Día</button>
+      <button type="button" data-amb="atardecer">Atardecer</button>
+      <button type="button" data-amb="noche">Noche</button>
+    </div>
+    <div class="volumen">
+      <button class="btn-hud" id="bSonido" type="button"></button>
+      <input type="range" id="volumen" min="0" max="100" step="1" value="45" aria-label="Volumen de los altavoces">
+      <output id="volOut" for="volumen">45</output>
+    </div>
   </div>
 
-  <div class="mv-modal oculto" id="loginAdmin" role="dialog" aria-modal="true" aria-labelledby="loginTitulo">
-   <div class="mv-tarjeta">
-    <button type="button" class="mv-cerrar" id="cerrarLogin" aria-label="Cerrar">&#10005;</button>
-    <small>Acceso administrador</small>
-    <h3 id="loginTitulo">Iniciar sesión</h3>
-    <div class="pp-col">
-     <input type="email" id="loginCorreo" placeholder="Correo" autocomplete="username">
-     <input type="password" id="loginClave" placeholder="Contraseña" autocomplete="current-password">
+  <div id="aviso" role="status" aria-live="polite"></div>
+
+  <section id="intro" class="capa">
+    <div class="intro-caja">
+      <div class="eyebrow">Museo Digital · Ciudad Obregón</div>
+      <h1 class="titulo">Camina por el <b>museo</b></h1>
+      <p class="lead">Recorre las salas del Museo Digital CETIS 69 en primera persona, desde tu computadora o tu celular.</p>
+      <p class="lead">Los postes del recorrido reproducen MUDICET69. Entre más cerca estés de un poste, más se escucha.</p>
+      <div class="acciones-intro">
+        <button class="btn" id="entrar" type="button">Entrar al museo <i class="fa-solid fa-arrow-right-long"></i></button>
+        <button class="btn sec" id="verGuiaIntro" type="button"><i class="fa-solid fa-circle-question"></i> Cómo recorrerlo</button>
+      </div>
+      <p class="nota-audio"><i class="fa-solid fa-volume-high"></i> El audio se activa al entrar, como lo exigen los navegadores.</p>
     </div>
-    <p class="pp-txt" id="loginMsg"></p>
-    <button type="button" class="btn" id="loginEntrar">Entrar</button>
-   </div>
+  </section>
+
+  <section id="pausaCapa" class="capa oculto">
+    <div class="intro-caja centrado">
+      <div class="eyebrow">Pausado</div>
+      <h2 class="titulo pequeno">Tu recorrido está en pausa</h2>
+      <div class="acciones-intro"><button class="btn" id="continuar" type="button">Continuar</button></div>
+      <p class="nota-audio">Pulsa Esc en cualquier momento para pausar.</p>
+    </div>
+  </section>
+
+  <div class="modal oculto" id="mMapa" role="dialog" aria-modal="true" aria-label="Mapa del museo">
+    <div class="tarjeta ancha">
+      <button class="cerrar" data-cerrar type="button" aria-label="Cerrar">&#10005;</button>
+      <div class="mapa-caja">
+        <canvas id="mapaGrande" width="1000" height="1000" aria-label="Mapa interactivo"></canvas>
+        <div>
+          <small class="eti">Mapa del museo</small>
+          <h3>¿A dónde quieres ir?</h3>
+          <p class="nota">Toca un punto del mapa o elige un lugar. Te llevaremos directo allí.</p>
+          <h4 class="sub">Lugares</h4>
+          <div class="lista" id="listaPois"></div>
+          <h4 class="sub">Paradas</h4>
+          <div class="lista" id="listaParadas"></div>
+          <h4 class="sub">Altavoces</h4>
+          <div class="lista" id="listaAltavoces"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div id="panelPro" class="oculto">
-   <div class="pp-fila"><b style="letter-spacing:.2em">HERRAMIENTAS</b><span style="flex:1"></span><button type="button" id="ppCerrar">&#10005;</button></div>
-   <p class="pp-txt" id="ppEstado"></p>
-   <details open><summary>Colocar vitrina</summary>
-    <div class="pp-fila"><button type="button" data-modo-admin="colocar">Activar colocación</button></div>
-    <p class="pp-txt">Mueve el mouse sobre el piso, gira con la rueda y haz clic para colocarla. Queda guardada y visible para todos. El JSON se copia para pegarlo en puntos.js si lo necesitas.</p>
-   </details>
-   <details open><summary>Seleccionar y mover</summary>
-    <p class="pp-txt" id="ppSel">Haz clic en un objeto del museo para seleccionarlo.</p>
-    <div class="pp-fila">
-     <button type="button" data-gizmo="translate">Mover</button>
-     <button type="button" data-gizmo="rotate">Girar</button>
-     <button type="button" data-gizmo="scale">Escalar</button>
+  <div class="modal oculto" id="mGuia" role="dialog" aria-modal="true" aria-labelledby="guiaTitulo">
+    <div class="tarjeta">
+      <button class="cerrar" data-cerrar type="button" aria-label="Cerrar">&#10005;</button>
+      <small class="eti">Guía rápida</small>
+      <h3 id="guiaTitulo">Cómo recorrer el museo</h3>
+      <div class="guia-grid">
+        <div class="item"><strong><i class="fa-solid fa-person-walking"></i>Moverte</strong><p>W A S D o flechas. En celular, usa el joystick de la esquina.</p></div>
+        <div class="item"><strong><i class="fa-solid fa-eye"></i>Mirar</strong><p>Haz clic en la escena y mueve el mouse, o desliza el dedo en la pantalla.</p></div>
+        <div class="item"><strong><i class="fa-solid fa-bolt"></i>Correr y saltar</strong><p>Mantén Shift para correr. Espacio para saltar.</p></div>
+        <div class="item"><strong><i class="fa-solid fa-dove"></i>Vuelo</strong><p>F activa el vuelo. Espacio sube y Ctrl baja.</p></div>
+        <div class="item"><strong><i class="fa-solid fa-map"></i>Mapa</strong><p>M o Tab. Toca un punto o un botón para viajar directo a cualquier lugar.</p></div>
+        <div class="item"><strong><i class="fa-solid fa-lightbulb"></i>Iluminación</strong><p>1 día, 2 atardecer, 3 noche. El cambio es gradual.</p></div>
+        <div class="item"><strong><i class="fa-solid fa-volume-high"></i>Sonido</strong><p>N silencia. Cada poste-bocina reproduce MUDICET69 y se escucha más de cerca.</p></div>
+        <div class="item"><strong><i class="fa-solid fa-pause"></i>Pausa</strong><p>Esc pausa el recorrido. En celular usa el botón Pausa de la barra.</p></div>
+      </div>
+      <div class="pie">
+        <span class="nota">Consejo: mira un poste-bocina para ver su número.</span>
+        <button class="btn" data-cerrar type="button">Entendido</button>
+      </div>
     </div>
-    <div class="pp-fila">
-     <button type="button" id="ppOcultar">Ocultar / Mostrar</button>
-     <button type="button" id="ppAislar">Aislar</button>
-     <button type="button" id="ppRestablecer">Restablecer</button>
-    </div>
-    <label class="pp-ctl">Color <input type="color" id="ppColor"></label>
-    <label class="pp-ctl">Rugosidad <input type="range" id="ppRug" min="0" max="1" step="0.01" value="0.5"></label>
-    <div class="pp-fila"><button type="button" id="ppGuardarMat">Guardar material</button></div>
-   </details>
-   <details><summary>Colisiones, medidas y foto</summary>
-    <label class="pp-chk"><input type="checkbox" id="ppColis"> Ver colisiones</label>
-    <div class="pp-fila">
-     <button type="button" data-modo-admin="regla" id="ppRegla">Medir distancia</button>
-     <span id="ppReglaOut"></span>
-    </div>
-    <div class="pp-fila"><button type="button" id="ppFoto">Tomar foto</button><button type="button" id="ppVideoSig">Siguiente video</button></div>
-   </details>
-   <details><summary>Rendimiento</summary>
-    <label class="pp-chk"><input type="checkbox" data-fx="sombras" checked> Sombras</label>
-    <label class="pp-chk"><input type="checkbox" data-fx="halos" checked> Halos de luz</label>
-    <label class="pp-chk"><input type="checkbox" data-fx="arboles" checked> Árboles</label>
-    <label class="pp-chk"><input type="checkbox" data-fx="pasto" checked> Pasto</label>
-    <label class="pp-chk"><input type="checkbox" data-fx="video" checked> Video de la pantalla</label>
-    <label class="pp-chk"><input type="checkbox" data-fx="auditorio" checked> Luces del auditorio</label>
-    <label class="pp-chk"><input type="checkbox" data-fx="chorros" checked> Chorros de fuente</label>
-    <label class="pp-ctl">Resolución
-     <select id="ppRes">
-      <option value="auto">Automática</option>
-      <option value="0.5">0.5</option>
-      <option value="0.75">0.75</option>
-      <option value="1">1</option>
-      <option value="1.5">1.5</option>
-      <option value="2">2</option>
-     </select>
-    </label>
-   </details>
-   <details open><summary>Iluminación</summary>
-    <label class="pp-ctl">Hora <output id="ppHoraOut">14:00</output>
-     <input type="range" id="ppHora" min="0" max="24" step="0.1" value="14">
-    </label>
-    <div class="pp-fila">
-     <button type="button" id="ppExp">Exportar JSON</button>
-     <button type="button" id="ppImp">Importar JSON</button>
-     <button type="button" id="ppPub">Publicar a todos</button>
-    </div>
-    <textarea id="ppJson" class="pp-area" placeholder="Pega aquí un preset JSON"></textarea>
-   </details>
-   <details><summary>Lugares guardados</summary>
-    <div class="pp-fila"><button type="button" id="ppParada">Guardar posición</button><button type="button" id="ppExportPts">Exportar puntos.js</button></div>
-    <div id="ppParadas"></div>
-   </details>
-   <details><summary>Luces</summary>
-    <label class="pp-chk"><input type="checkbox" id="ppConos"> Mostrar conos de luz</label>
-    <div id="ppLuces"></div>
-   </details>
-   <div class="pp-fila"><button type="button" id="ppSalirSesion">Cerrar sesión</button></div>
   </div>
- </div>
-</section>
 
-<footer></footer>
+  <div class="modal oculto" id="mAjustes" role="dialog" aria-modal="true" aria-labelledby="ajustesTitulo">
+    <div class="tarjeta">
+      <button class="cerrar" data-cerrar type="button" aria-label="Cerrar">&#10005;</button>
+      <small class="eti">Preferencias</small>
+      <h3 id="ajustesTitulo">Ajustes</h3>
+      <div class="fila"><span>Calidad gráfica</span>
+        <select id="calidad" aria-label="Calidad gráfica">
+          <option value="alta">Alta</option>
+          <option value="media">Media</option>
+          <option value="baja">Baja</option>
+        </select>
+      </div>
+      <div class="fila"><span>Sombras</span><input type="checkbox" id="chkSombras"></div>
+      <div class="fila"><span>Etiquetas flotantes</span><input type="checkbox" id="chkEtiquetas"></div>
+      <div class="fila"><span>Minimapa</span><input type="checkbox" id="chkMini"></div>
+      <div class="fila"><span>Sensibilidad de la mirada <output id="sensOut">1.0</output></span><input type="range" id="sens" min="0.4" max="2.5" step="0.1" value="1"></div>
+      <div class="pie">
+        <button class="btn-texto" id="reiniciarAjustes" type="button">Restablecer ajustes</button>
+        <button class="btn" data-cerrar type="button">Listo</button>
+      </div>
+    </div>
+  </div>
 
-<script src="comun.js"></script>
+  <div id="fundido"></div>
+</div>
+
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/","three-mesh-bvh":"https://cdn.jsdelivr.net/npm/three-mesh-bvh@0.7.3/src/index.js"}}
 </script>
-<script type="module" src="museo.js"></script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from 'three-mesh-bvh';
+
+THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
+THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
+THREE.Mesh.prototype.raycast = acceleratedRaycast;
+
+/* =========================================================
+   CONFIGURACIÓN
+   ========================================================= */
+const MODELO = 'museo3_1.glb';
+const AUDIO = 'MUDICET69.mp4';
+const VOL_DEFECTO = 45;     // 0–100. 45 = volumen real de 0.45 en el poste más cercano
+const N_ALTAVOCES = 7;      // poste-bocina1 … poste-bocina7
+
+const $ = (id) => document.getElementById(id);
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const ABAJO = new THREE.Vector3(0, -1, 0);
+const CENTRO = new THREE.Vector2(0, 0);
+
+/* =========================================================
+   PREFERENCIAS (se guardan en este navegador)
+   ========================================================= */
+let previo = {};
+try { previo = JSON.parse(localStorage.getItem('cetis69-recorrido') || '{}'); } catch (_) {}
+
+const cfg = {
+  volumen: clamp(Number(previo.volumen ?? VOL_DEFECTO), 0, 100),
+  sonido: previo.sonido ?? true,
+  ambiente: previo.ambiente ?? 'dia',
+  calidad: previo.calidad ?? (matchMedia('(pointer:coarse)').matches ? 'media' : 'alta'),
+  sombras: previo.sombras ?? true,
+  etiquetas: previo.etiquetas ?? true,
+  minimapa: previo.minimapa ?? true,
+  sensibilidad: Number(previo.sensibilidad ?? 1),
+  guiaVista: previo.guiaVista ?? false
+};
+function guardar() { try { localStorage.setItem('cetis69-recorrido', JSON.stringify(cfg)); } catch (_) {} }
+
+/* =========================================================
+   ESTADO
+   ========================================================= */
+const estado = { cargado: false, entrado: false, pausado: false, vuelo: false, modal: null, audioListo: false, audioFalla: false };
+const jug = { x: 0, z: 0, feet: 0, vy: 0, yaw: 0, pitch: 0, enSuelo: false };
+const teclas = new Set();
+const joy = { x: 0, y: 0, id: null };
+let vertical = 0;          // botones táctiles de subir/bajar en vuelo
+let saltarPedido = false;
+let modelo = null;
+let plano = null;          // { base, minX, minZ, lado }
+let emisivos = [];
+let spawnPos = new THREE.Vector3();
+const centroM = new THREE.Vector3();
+
+/* =========================================================
+   RENDER, ESCENA Y CÁMARA
+   ========================================================= */
+const escenaEl = $('escena');
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+escenaEl.appendChild(renderer.domElement);
+
+const escena = new THREE.Scene();
+escena.fog = new THREE.Fog(0xd6ebf7, 120, 340);
+
+const camara = new THREE.PerspectiveCamera(70, 1, 0.05, 1500);
+const listener = new THREE.AudioListener();
+camara.add(listener);
+escena.add(camara);
+
+const hemi = new THREE.HemisphereLight(0xbfe6ff, 0x6b5a4a, 1.1);
+escena.add(hemi);
+
+const sol = new THREE.DirectionalLight(0xfff1dc, 2.6);
+sol.castShadow = true;
+sol.shadow.mapSize.set(1024, 1024);
+sol.shadow.camera.left = -70; sol.shadow.camera.right = 70;
+sol.shadow.camera.top = 70; sol.shadow.camera.bottom = -70;
+sol.shadow.camera.near = 1; sol.shadow.camera.far = 420;
+sol.shadow.bias = -0.0004;
+sol.shadow.normalBias = 0.03;
+escena.add(sol, sol.target);
+
+/* ---------- Ambientes (día, atardecer, noche) ---------- */
+const AMBIENTES = {
+  dia: {
+    cielo: 0x4a94dc, horizonte: 0xdcefff, suelo: 0x8c7f73, niebla: 0xd6ebf7, nIni: 120, nFin: 340,
+    hemi: 1.1, hemiCielo: 0xbfe6ff, hemiSuelo: 0x6b5a4a,
+    sol: 2.6, solColor: 0xfff1dc, solDir: [-0.5, 0.85, 0.35], exp: 1.0, emisivo: 0.35, halo: 0
+  },
+  atardecer: {
+    cielo: 0x2b2c6b, horizonte: 0xf6a06c, suelo: 0x4a2b3a, niebla: 0xe8977a, nIni: 90, nFin: 300,
+    hemi: 0.85, hemiCielo: 0xffb38a, hemiSuelo: 0x3a2530,
+    sol: 2.2, solColor: 0xffb070, solDir: [-0.9, 0.28, -0.3], exp: 1.05, emisivo: 1.0, halo: 0.35
+  },
+  noche: {
+    cielo: 0x04060d, horizonte: 0x1a2140, suelo: 0x0b0910, niebla: 0x141a33, nIni: 70, nFin: 230,
+    hemi: 0.4, hemiCielo: 0x3a4a8a, hemiSuelo: 0x111018,
+    sol: 0.6, solColor: 0x9fb4ff, solDir: [0.6, 0.8, -0.5], exp: 0.9, emisivo: 2.4, halo: 1
+  }
+};
+function preparar(a) {
+  return {
+    cielo: new THREE.Color(a.cielo), horizonte: new THREE.Color(a.horizonte), suelo: new THREE.Color(a.suelo),
+    niebla: new THREE.Color(a.niebla), nIni: a.nIni, nFin: a.nFin,
+    hemi: a.hemi, hemiCielo: new THREE.Color(a.hemiCielo), hemiSuelo: new THREE.Color(a.hemiSuelo),
+    sol: a.sol, solColor: new THREE.Color(a.solColor), solDir: new THREE.Vector3(...a.solDir).normalize(),
+    exp: a.exp, emisivo: a.emisivo, halo: a.halo
+  };
+}
+let actual = preparar(AMBIENTES[cfg.ambiente] || AMBIENTES.dia);
+let destino = preparar(AMBIENTES[cfg.ambiente] || AMBIENTES.dia);
+function mezclar(o, d, t) {
+  for (const k in o) {
+    const a = o[k], b = d[k];
+    if (typeof a === 'number') o[k] = a + (b - a) * t;
+    else a.lerp(b, t);
+  }
+}
+
+/* ---------- Cielo en gradiente ---------- */
+const cieloMat = new THREE.ShaderMaterial({
+  uniforms: {
+    cielo: { value: new THREE.Color() },
+    horizonte: { value: new THREE.Color() },
+    suelo: { value: new THREE.Color() }
+  },
+  vertexShader: `
+    varying vec3 vDir;
+    void main(){
+      vDir = normalize(position);
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }`,
+  fragmentShader: `
+    uniform vec3 cielo; uniform vec3 horizonte; uniform vec3 suelo; varying vec3 vDir;
+    void main(){
+      float h = vDir.y;
+      vec3 c = h >= 0.0 ? mix(horizonte, cielo, smoothstep(0.0, 0.5, h))
+                        : mix(horizonte, suelo, smoothstep(0.0, 0.15, -h));
+      gl_FragColor = vec4(c, 1.0);
+      #include <tonemapping_fragment>
+      #include <colorspace_fragment>
+    }`,
+  side: THREE.BackSide, depthWrite: false, fog: false
+});
+const cielo = new THREE.Mesh(new THREE.SphereGeometry(1000, 32, 16), cieloMat);
+cielo.frustumCulled = false;
+cielo.renderOrder = -1;
+escena.add(cielo);
+
+/* ---------- Halos de luz para las lámparas (noche) ---------- */
+function texturaHalo() {
+  const c = document.createElement('canvas');
+  c.width = c.height = 128;
+  const g = c.getContext('2d');
+  const gr = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  gr.addColorStop(0, 'rgba(255,225,170,1)');
+  gr.addColorStop(0.25, 'rgba(255,170,90,.55)');
+  gr.addColorStop(1, 'rgba(255,140,60,0)');
+  g.fillStyle = gr;
+  g.fillRect(0, 0, 128, 128);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+const matHalo = new THREE.SpriteMaterial({
+  map: texturaHalo(), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending
+});
+
+/* =========================================================
+   COLISIONES, SUELO Y LISTAS
+   ========================================================= */
+const rayoSuelo = new THREE.Raycaster();
+const rayoPared = new THREE.Raycaster();
+rayoPared.firstHitOnly = true;
+const rayoMira = new THREE.Raycaster();
+const colisionables = [];
+const altavoces = [];
+const marcadores = [];      // { x, z, color, r, etiqueta }
+const etiquetas = [];       // { el, pos, dmax, v }
+const paradasLista = [];
+const poisLista = [];
+
+function nombreMalla(o) {
+  for (let p = o; p; p = p.parent) if (p.name) return p.name;
+  return '';
+}
+
+function sueloEn(x, z, yOrigen, largo = 2.4) {
+  rayoSuelo.set(new THREE.Vector3(x, yOrigen, z), ABAJO);
+  rayoSuelo.far = largo;
+  const h = rayoSuelo.intersectObjects(colisionables, false);
+  return h.length ? h[0].point.y : null;
+}
+
+function bloqueado(x, z, pies, dx, dz, dist) {
+  const L = Math.hypot(dx, dz);
+  if (L < 1e-6) return false;
+  const dir = new THREE.Vector3(dx / L, 0, dz / L);
+  for (const h of [0.75, 1.35]) {           // a la altura de las rodillas y del pecho
+    rayoPared.set(new THREE.Vector3(x, pies + h, z), dir);
+    rayoPared.far = dist + 0.3;
+    if (rayoPared.intersectObjects(colisionables, false).length) return true;
+  }
+  return false;
+}
+
+function mirar(dx, dy, mult = 1) {
+  const k = 0.0022 * cfg.sensibilidad * mult;
+  jug.yaw -= dx * k;
+  jug.pitch = clamp(jug.pitch - dy * k, -1.4, 1.4);
+}
+
+function mover(dt) {
+  let ix = 0, iz = 0;
+  if (teclas.has('KeyW') || teclas.has('ArrowUp')) iz += 1;
+  if (teclas.has('KeyS') || teclas.has('ArrowDown')) iz -= 1;
+  if (teclas.has('KeyD') || teclas.has('ArrowRight')) ix += 1;
+  if (teclas.has('KeyA') || teclas.has('ArrowLeft')) ix -= 1;
+  ix += joy.x; iz += joy.y;
+  const m = Math.hypot(ix, iz);
+  if (m > 1) { ix /= m; iz /= m; }
+
+  const corre = (teclas.has('ShiftLeft') || teclas.has('ShiftRight')) ? 2.2 : 1;
+  const v = (estado.vuelo ? 13 : 4.6) * corre;
+  const s = Math.sin(jug.yaw), c = Math.cos(jug.yaw);
+  const dx = (ix * c - iz * s) * v * dt;
+  const dz = (-ix * s - iz * c) * v * dt;
+
+  if (estado.vuelo) {
+    const subir = (teclas.has('Space') ? 1 : 0) - ((teclas.has('ControlLeft') || teclas.has('ControlRight') || teclas.has('KeyC')) ? 1 : 0) + vertical;
+    jug.x += dx;
+    jug.z += dz;
+    jug.feet += clamp(subir, -1, 1) * v * dt;
+    jug.vy = 0;
+    return;
+  }
+  // Eje por eje: así el jugador se desliza junto a las paredes
+  if (Math.abs(dx) > 1e-5 && !bloqueado(jug.x, jug.z, jug.feet, dx, 0, Math.abs(dx))) jug.x += dx;
+  if (Math.abs(dz) > 1e-5 && !bloqueado(jug.x, jug.z, jug.feet, 0, dz, Math.abs(dz))) jug.z += dz;
+}
+
+function fisica(dt) {
+  if (estado.vuelo) return;
+  const g = sueloEn(jug.x, jug.z, jug.feet + 0.8);
+  if (saltarPedido && jug.enSuelo) { jug.vy = 6.4; jug.enSuelo = false; }
+  saltarPedido = false;
+
+  if (jug.vy <= 0 && g !== null && g >= jug.feet - 0.75) {
+    jug.feet = g; jug.vy = 0; jug.enSuelo = true;           // pisa o sube escalones
+  } else {
+    jug.enSuelo = false;
+    jug.vy -= 24 * dt;
+    jug.feet += jug.vy * dt;
+    if (g !== null && jug.feet < g) { jug.feet = g; jug.vy = 0; jug.enSuelo = true; }
+  }
+  if (jug.feet < -40) respawn();
+}
+
+function respawn() {
+  jug.x = spawnPos.x; jug.z = spawnPos.z;
+  jug.feet = sueloEn(spawnPos.x, spawnPos.z, spawnPos.y + 1.5, 4) ?? spawnPos.y;
+  jug.vy = 0;
+}
+
+function aplicarCamara() {
+  camara.position.set(jug.x, jug.feet + 1.6, jug.z);
+  camara.rotation.set(jug.pitch, jug.yaw, 0, 'YXZ');
+}
+
+/* =========================================================
+   AUDIO: MUDICET69 en cada poste-bocina
+   Un solo buffer decodificado y 7 fuentes posicionales sincronizadas.
+   Volumen base 0.45 (45/100); la atenuación por distancia lo baja al alejarse.
+   ========================================================= */
+function efectivo() { return cfg.sonido ? cfg.volumen / 100 : 0; }
+
+function aplicarVolumen() {
+  altavoces.forEach((a) => a.sonido.setVolume(efectivo()));
+  pintarSonido();
+}
+
+function pintarSonido() {
+  $('volumen').value = cfg.volumen;
+  $('volOut').textContent = Math.round(cfg.volumen);
+  const b = $('bSonido');
+  b.disabled = !altavoces.length;
+  b.classList.toggle('on', cfg.sonido && altavoces.length > 0);
+  b.innerHTML = cfg.sonido
+    ? '<i class="fa-solid fa-volume-high"></i><span class="txt-ocultable"> Sonido</span>'
+    : '<i class="fa-solid fa-volume-xmark"></i><span class="txt-ocultable"> Silencio</span>';
+  b.title = altavoces.length ? '' : 'No se encontró MUDICET69.mp4';
+}
+
+async function cargarAudio() {
+  try {
+    const r = await fetch(AUDIO);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const datos = await r.arrayBuffer();
+    return await listener.context.decodeAudioData(datos);
+  } catch (err) {
+    console.warn('Audio no disponible:', err);
+    estado.audioFalla = true;
+    return null;
+  }
+}
+
+function crearAltavoces(buffer) {
+  if (!buffer) return;
+  for (let i = 1; i <= N_ALTAVOCES; i++) {
+    const obj = escena.getObjectByName(`poste-bocina${i}`);
+    if (!obj) continue;
+    const caja = new THREE.Box3().setFromObject(obj);
+    const ancla = new THREE.Object3D();
+    // Punto de salida del sonido: un poco por debajo de la cima del poste
+    ancla.position.set((caja.min.x + caja.max.x) / 2, caja.max.y - 1.4, (caja.min.z + caja.max.z) / 2);
+    escena.add(ancla);
+
+    const sonido = new THREE.PositionalAudio(listener);
+    sonido.setBuffer(buffer);
+    sonido.setLoop(true);
+    sonido.setDistanceModel('inverse');
+    sonido.setRefDistance(4);
+    sonido.setRolloffFactor(1.6);
+    sonido.setMaxDistance(70);
+    sonido.setVolume(efectivo());
+    ancla.add(sonido);
+
+    altavoces.push({ n: i, ancla, sonido, pos: ancla.position.clone() });
+  }
+}
+
+function iniciarAudio() {
+  if (estado.audioListo || !altavoces.length) return;
+  estado.audioListo = true;
+  altavoces.forEach((a) => a.sonido.play());
+}
+
+/* =========================================================
+   INTERFAZ
+   ========================================================= */
+let avisoT = 0;
+function avisar(texto, ms = 2600) {
+  const el = $('aviso');
+  el.textContent = texto;
+  el.classList.add('on');
+  clearTimeout(avisoT);
+  avisoT = setTimeout(() => el.classList.remove('on'), ms);
+}
+
+function abrirModal(m) {
+  if (estado.modal) cerrarModal();
+  estado.modal = m;
+  m.classList.remove('oculto');
+  teclas.clear();
+  if (document.pointerLockElement) document.exitPointerLock();
+  if (m.id === 'mMapa') dibujarMapaGrande();
+  if (m.id === 'mAjustes') pintarAjustes();
+}
+function cerrarModal() {
+  if (!estado.modal) return;
+  estado.modal.classList.add('oculto');
+  estado.modal = null;
+}
+function toggleModal(id) {
+  const m = $(id);
+  estado.modal === m ? cerrarModal() : abrirModal(m);
+}
+
+function pedirPuntero() {
+  if (!matchMedia('(pointer:fine)').matches || document.pointerLockElement) return;
+  const p = escenaEl.requestPointerLock?.();
+  if (p && p.catch) p.catch(() => {});
+}
+
+function pausar(on) {
+  estado.pausado = on;
+  $('pausaCapa').classList.toggle('oculto', !on);
+  if (on) teclas.clear();
+  const b = $('bPausa');
+  b.innerHTML = on ? '<i class="fa-solid fa-play"></i><span class="txt-ocultable"> Seguir</span>'
+                   : '<i class="fa-solid fa-pause"></i><span class="txt-ocultable"> Pausa</span>';
+}
+
+function setAmbiente(nombre) {
+  if (!AMBIENTES[nombre]) return;
+  cfg.ambiente = nombre;
+  destino = preparar(AMBIENTES[nombre]);
+  pintarAmbiente();
+  guardar();
+}
+function pintarAmbiente() {
+  document.querySelectorAll('#seg button').forEach((b) => b.classList.toggle('on', b.dataset.amb === cfg.ambiente));
+}
+
+function alternarVuelo() {
+  estado.vuelo = !estado.vuelo;
+  jug.vy = 0;
+  $('bVuelo').classList.toggle('on', estado.vuelo);
+  document.body.classList.toggle('vuelo', estado.vuelo);
+  avisar(estado.vuelo ? 'Vuelo activado: Espacio sube, Ctrl baja' : 'Modo caminar');
+}
+
+function alternarSonido() {
+  cfg.sonido = !cfg.sonido;
+  if (cfg.sonido && cfg.volumen === 0) cfg.volumen = VOL_DEFECTO;
+  aplicarVolumen();
+  guardar();
+  avisar(cfg.sonido ? `Sonido activado al ${Math.round(cfg.volumen)}%` : 'Sonido silenciado');
+}
+
+function pantallaCompleta() {
+  if (!document.fullscreenElement) {
+    const p = document.documentElement.requestFullscreen?.();
+    if (p && p.catch) p.catch(() => {});
+  } else {
+    document.exitFullscreen?.();
+  }
+}
+
+function etiqueta(texto, pos, dmax, clase = '') {
+  const el = document.createElement('div');
+  el.className = 'etq ' + clase;
+  el.innerHTML = texto;
+  $('etiquetas').appendChild(el);
+  etiquetas.push({ el, pos, dmax, v: new THREE.Vector3() });
+}
+
+function actualizarEtiquetas() {
+  const W = escenaEl.clientWidth, H = escenaEl.clientHeight;
+  for (const e of etiquetas) {
+    const d = e.pos.distanceTo(camara.position);
+    if (!cfg.etiquetas || !estado.entrado || d > e.dmax || d < 2.5) { e.el.style.display = 'none'; continue; }
+    e.v.copy(e.pos).project(camara);
+    if (e.v.z > 1 || Math.abs(e.v.x) > 1.1 || Math.abs(e.v.y) > 1.1) { e.el.style.display = 'none'; continue; }
+    e.el.style.display = '';
+    e.el.style.transform = `translate(${((e.v.x + 1) / 2) * W}px, ${((1 - e.v.y) / 2) * H}px) translate(-50%,-120%)`;
+  }
+}
+
+/* Detecta el poste que se mira desde el centro de la pantalla */
+function nombreAltavozMirado() {
+  rayoMira.setFromCamera(CENTRO, camara);
+  rayoMira.far = 30;
+  const h = rayoMira.intersectObjects(colisionables, false);
+  if (!h.length) return -1;
+  for (let p = h[0].object; p; p = p.parent) {
+    const m = /^poste-bocina(\d+)$/.exec(p.name || '');
+    if (m) return Number(m[1]);
+  }
+  return -1;
+}
+function detectarMira() {
+  const n = nombreAltavozMirado();
+  $('mira').classList.toggle('activa', n > 0);
+  const tip = $('tip');
+  if (n > 0) {
+    tip.textContent = cfg.sonido ? `Altavoz ${n} · MUDICET69 · ${Math.round(cfg.volumen)}%` : `Altavoz ${n} · en silencio`;
+    tip.classList.remove('oculto');
+  } else {
+    tip.classList.add('oculto');
+  }
+}
+
+/* =========================================================
+   TELETRANSPORTE
+   ========================================================= */
+function irA(x, z, yRef = null) {
+  cerrarModal();
+  const origen = yRef !== null ? yRef + 1.2 : jug.feet + 3;
+  const largo = yRef !== null ? 3 : 6;
+  const f = $('fundido');
+  f.classList.add('on');
+  setTimeout(() => {
+    const g = sueloEn(x, z, origen, largo);
+    jug.x = x;
+    jug.z = z;
+    jug.feet = g ?? (yRef ?? jug.feet);
+    jug.vy = 0;
+    jug.enSuelo = true;
+    f.classList.remove('on');
+  }, 380);
+}
+
+/* =========================================================
+   MAPAS: plano horneado desde la geometría real y minimapa
+   ========================================================= */
+function hornearMapa() {
+  const caja = new THREE.Box3().setFromObject(modelo);
+  const cx = (caja.min.x + caja.max.x) / 2, cz = (caja.min.z + caja.max.z) / 2;
+  const lado = Math.max(caja.max.x - caja.min.x, caja.max.z - caja.min.z) * 1.02;
+  const tam = 1400;
+
+  const r = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+  r.setPixelRatio(1);
+  r.setSize(tam, tam, false);
+  r.setClearColor(0x140a0f, 1);
+
+  // Vista cenital ortográfica; norte (-Z) arriba. Alto = más claro.
+  const ortho = new THREE.OrthographicCamera(-lado / 2, lado / 2, lado / 2, -lado / 2, 0.5, 2000);
+  ortho.position.set(cx, 900, cz);
+  ortho.up.set(0, 0, -1);
+  ortho.lookAt(cx, 0, cz);
+  ortho.updateMatrixWorld(true);
+
+  const mat = new THREE.ShaderMaterial({
+    vertexShader: `
+      varying float vY;
+      void main(){
+        vec4 wp = modelMatrix * vec4(position, 1.0);
+        vY = wp.y;
+        gl_Position = projectionMatrix * viewMatrix * wp;
+      }`,
+    fragmentShader: `
+      varying float vY;
+      void main(){
+        float t = clamp((vY + 1.0) / 14.0, 0.0, 1.0);
+        gl_FragColor = vec4(mix(vec3(0.20,0.12,0.15), vec3(0.95,0.88,0.90), t), 1.0);
+      }`
+  });
+
+  // Se mueve el modelo a una escena temporal solo para hornear
+  escena.remove(modelo);
+  const escBake = new THREE.Scene();
+  escBake.overrideMaterial = mat;
+  escBake.add(modelo);
+  r.render(escBake, ortho);
+  escBake.remove(modelo);
+  escena.add(modelo);
+
+  const base = document.createElement('canvas');
+  base.width = base.height = tam;
+  base.getContext('2d').drawImage(r.domElement, 0, 0);
+  r.dispose();
+  r.forceContextLoss?.();
+
+  return { base, minX: cx - lado / 2, minZ: cz - lado / 2, lado };
+}
+
+function dibujarMini() {
+  const mini = $('mini');
+  const visible = cfg.minimapa && estado.entrado && !!plano;
+  mini.classList.toggle('oculto', !visible);
+  if (!visible) return;
+
+  const g = mini.getContext('2d');
+  const W = mini.width, H = mini.height, R = 42;   // metros visibles desde el centro
+  const k = plano.base.width / plano.lado;
+  const sx = (jug.x - plano.minX) * k, sy = (jug.z - plano.minZ) * k, h = R * k;
+  const esc = W / (2 * R);
+
+  g.save();
+  g.clearRect(0, 0, W, H);
+  g.beginPath();
+  g.arc(W / 2, H / 2, W / 2, 0, Math.PI * 2);
+  g.clip();
+  g.drawImage(plano.base, sx - h, sy - h, 2 * h, 2 * h, 0, 0, W, H);
+
+  for (const m of marcadores) {
+    const px = W / 2 + (m.x - jug.x) * esc, py = H / 2 + (m.z - jug.z) * esc;
+    if (px < -6 || px > W + 6 || py < -6 || py > H + 6) continue;
+    g.fillStyle = m.color;
+    g.beginPath();
+    g.arc(px, py, m.r, 0, Math.PI * 2);
+    g.fill();
+  }
+
+  // Flecha del jugador (dirección de la mirada)
+  const fx = -Math.sin(jug.yaw), fy = -Math.cos(jug.yaw);
+  const cxp = W / 2, cyp = H / 2;
+  g.fillStyle = '#ffffff';
+  g.beginPath();
+  g.moveTo(cxp + fx * 13, cyp + fy * 13);
+  g.lineTo(cxp - fx * 8 - fy * 7, cyp - fy * 8 + fx * 7);
+  g.lineTo(cxp - fx * 8 + fy * 7, cyp - fy * 8 - fx * 7);
+  g.closePath();
+  g.fill();
+  g.restore();
+}
+
+function dibujarMapaGrande() {
+  if (!plano) return;
+  const c = $('mapaGrande'), g = c.getContext('2d'), W = c.width, H = c.height;
+  g.clearRect(0, 0, W, H);
+  g.drawImage(plano.base, 0, 0, W, H);
+
+  const aPx = (x) => (x - plano.minX) / plano.lado * W;
+  const aPy = (z) => (z - plano.minZ) / plano.lado * H;
+
+  for (const m of marcadores) {
+    const px = aPx(m.x), py = aPy(m.z);
+    g.beginPath();
+    g.arc(px, py, m.r * 2.4, 0, Math.PI * 2);
+    g.fillStyle = m.color;
+    g.fill();
+    g.lineWidth = 3;
+    g.strokeStyle = 'rgba(0,0,0,.6)';
+    g.stroke();
+    if (m.etiqueta) {
+      g.font = '600 26px Montserrat, sans-serif';
+      g.lineWidth = 6;
+      g.strokeStyle = 'rgba(8,3,6,.85)';
+      g.strokeText(m.etiqueta, px + 16, py + 9);
+      g.fillStyle = '#fff';
+      g.fillText(m.etiqueta, px + 16, py + 9);
+    }
+  }
+
+  const px = aPx(jug.x), py = aPy(jug.z);
+  const fx = -Math.sin(jug.yaw), fy = -Math.cos(jug.yaw);
+  g.beginPath(); g.arc(px, py, 18, 0, Math.PI * 2); g.fillStyle = 'rgba(192,48,79,.35)'; g.fill();
+  g.beginPath(); g.arc(px, py, 8, 0, Math.PI * 2); g.fillStyle = '#fff'; g.fill();
+  g.beginPath();
+  g.moveTo(px + fx * 32, py + fy * 32);
+  g.lineTo(px - fy * 12, py + fx * 12);
+  g.lineTo(px + fy * 12, py - fx * 12);
+  g.closePath();
+  g.fill();
+}
+
+function boton(contenedor, texto, fn) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.textContent = texto;
+  b.addEventListener('click', fn);
+  contenedor.appendChild(b);
+}
+
+function construirListas() {
+  const pois = $('listaPois'), pars = $('listaParadas'), alts = $('listaAltavoces');
+  poisLista.forEach((p) => boton(pois, p.nombre, () => irA(p.x, p.z, p.y)));
+  paradasLista.forEach((p) => boton(pars, p.nombre, () => irA(p.x, p.z, p.y)));
+  altavoces.forEach((a) => boton(alts, `Altavoz ${a.n}`, () => irA(a.pos.x + 2.5, a.pos.z, 0)));
+}
+
+/* =========================================================
+   CALIDAD Y AJUSTES
+   ========================================================= */
+const CALIDAD = {
+  alta:  { pr: 2,   mapa: 2048, sombras: true },
+  media: { pr: 1.5, mapa: 1024, sombras: true },
+  baja:  { pr: 1,   mapa: 512,  sombras: false }
+};
+function aplicarCalidad() {
+  const q = CALIDAD[cfg.calidad] || CALIDAD.media;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, q.pr));
+  renderer.shadowMap.enabled = cfg.sombras && q.sombras;
+  if (sol.shadow.mapSize.x !== q.mapa) {
+    sol.shadow.mapSize.set(q.mapa, q.mapa);
+    if (sol.shadow.map) { sol.shadow.map.dispose(); sol.shadow.map = null; }
+  }
+  onResize();
+}
+function pintarAjustes() {
+  $('calidad').value = cfg.calidad;
+  $('chkSombras').checked = cfg.sombras;
+  $('chkEtiquetas').checked = cfg.etiquetas;
+  $('chkMini').checked = cfg.minimapa;
+  $('sens').value = cfg.sensibilidad;
+  $('sensOut').textContent = cfg.sensibilidad.toFixed(1);
+}
+
+function onResize() {
+  const w = escenaEl.clientWidth || 1, h = escenaEl.clientHeight || 1;
+  renderer.setSize(w, h, false);
+  camara.aspect = w / h;
+  camara.fov = w / h < 0.8 ? 80 : 70;
+  camara.updateProjectionMatrix();
+}
+new ResizeObserver(onResize).observe(escenaEl);
+
+/* =========================================================
+   AMBIENTE Y SOL SEGUIDOR
+   ========================================================= */
+function aplicarAmbiente() {
+  const u = cieloMat.uniforms;
+  u.cielo.value.copy(actual.cielo);
+  u.horizonte.value.copy(actual.horizonte);
+  u.suelo.value.copy(actual.suelo);
+  escena.fog.color.copy(actual.niebla);
+  escena.fog.near = actual.nIni;
+  escena.fog.far = actual.nFin;
+  hemi.color.copy(actual.hemiCielo);
+  hemi.groundColor.copy(actual.hemiSuelo);
+  hemi.intensity = actual.hemi;
+  renderer.toneMappingExposure = actual.exp;
+  matHalo.opacity = actual.halo * 0.85;
+  for (const m of emisivos) m.emissiveIntensity = m.userData.emBase * actual.emisivo;
+}
+
+const tmpV = new THREE.Vector3();
+function actualizarSol() {
+  const foco = estado.entrado ? jug : centroM;
+  sol.target.position.set(foco.x, 0, foco.z);
+  tmpV.copy(actual.solDir);
+  sol.position.copy(sol.target.position).addScaledVector(tmpV, 160);
+  sol.intensity = actual.sol;
+  sol.color.copy(actual.solColor);
+}
+
+/* =========================================================
+   CARGA Y MONTAJE
+   ========================================================= */
+const CONSEJOS = [
+  'Consejo: mantén Shift para correr.',
+  'Consejo: pulsa M para ver el mapa y viajar a cualquier lugar.',
+  'Consejo: los postes-bocina se escuchan más cerca de ellos.',
+  'Consejo: F activa el modo vuelo.'
+];
+let ci = 0;
+const consejoT = setInterval(() => { $('consejo').textContent = CONSEJOS[ci++ % CONSEJOS.length]; }, 2600);
+$('consejo').textContent = CONSEJOS[0];
+
+function barra(p, txt) {
+  const v = clamp(Math.round(p * 100), 0, 100);
+  $('pct').textContent = v + '%';
+  $('progreso').style.width = v + '%';
+  $('anillo').style.setProperty('--p', v);
+  if (txt) $('estado').textContent = txt;
+}
+
+function cargarModelo() {
+  return new Promise((ok, fail) => {
+    new GLTFLoader().load(
+      MODELO,
+      ok,
+      (ev) => { if (ev.lengthComputable) barra(0.85 * ev.loaded / ev.total, 'Cargando el museo…'); },
+      fail
+    );
+  });
+}
+
+function montar(gltf, buffer) {
+  modelo = gltf.scene;
+  escena.add(modelo);
+  escena.updateMatrixWorld(true);
+
+  const emis = new Set();
+  modelo.traverse((o) => {
+    if (!o.isMesh) return;
+    o.castShadow = true;
+    o.receiveShadow = true;
+    if (o.geometry && o.geometry.computeBoundsTree) o.geometry.computeBoundsTree();
+    if (!/^(luz|luces|reflector|aud_luces)/i.test(nombreMalla(o))) colisionables.push(o);
+    const mats = Array.isArray(o.material) ? o.material : [o.material];
+    for (const m of mats) {
+      if (m && m.emissive && m.emissive.getHex() !== 0 && !emis.has(m)) {
+        emis.add(m);
+        m.userData.emBase = m.emissiveIntensity ?? 1;
+      }
+    }
+  });
+  emisivos = [...emis];
+
+  const caja = new THREE.Box3().setFromObject(modelo);
+  centroM.set((caja.min.x + caja.max.x) / 2, 0, (caja.min.z + caja.max.z) / 2);
+
+  const pos = (nombre) => {
+    const o = escena.getObjectByName(nombre);
+    if (!o) return null;
+    const v = new THREE.Vector3();
+    o.getWorldPosition(v);
+    return v;
+  };
+
+  // Halos en las lámparas (se ven de noche)
+  for (const o of modelo.children) {
+    if (!/^(lampara|luz-led|luces)/.test(o.name)) continue;
+    const b = new THREE.Box3().setFromObject(o);
+    if (b.isEmpty()) continue;
+    const s = new THREE.Sprite(matHalo);
+    s.position.set((b.min.x + b.max.x) / 2, b.max.y - 0.4, (b.min.z + b.max.z) / 2);
+    s.scale.setScalar(5.5);
+    escena.add(s);
+  }
+
+  // Mapa horneado desde la geometría real
+  plano = hornearMapa();
+
+  // Altavoces con MUDICET69
+  crearAltavoces(buffer);
+  altavoces.forEach((a) => {
+    marcadores.push({ x: a.pos.x, z: a.pos.z, color: '#ff8fa6', r: 3.2 });
+    etiqueta(`<i class="fa-solid fa-volume-high"></i>Altavoz ${a.n}`, a.pos.clone().setY(a.pos.y + 1.2), 45, 'altavoz');
+  });
+
+  // Lugares y paradas
+  const pois = [['poi_museo', 'Museo'], ['poi_mural', 'Mural'], ['poi_pantera', 'Pantera'], ['poi_letras', 'Letras CETIS 69']];
+  for (const [nombre, texto] of pois) {
+    const v = pos(nombre);
+    if (!v) continue;
+    poisLista.push({ nombre: texto, x: v.x, z: v.z, y: v.y });
+    marcadores.push({ x: v.x, z: v.z, color: '#ffffff', r: 3.4, etiqueta: texto });
+    etiqueta(texto, v.clone().setY(v.y + 3), 120);
+  }
+  for (let i = 1; i <= 8; i++) {
+    const v = pos(`parada_${i}`);
+    if (!v) continue;
+    paradasLista.push({ nombre: `Parada ${i}`, x: v.x, z: v.z, y: v.y });
+    marcadores.push({ x: v.x, z: v.z, color: 'rgba(255,255,255,.55)', r: 2 });
+  }
+  construirListas();
+
+  // Punto de inicio: mirando hacia el museo
+  const sp = pos('spawn') || new THREE.Vector3(0, 0.4, 0);
+  const mus = pos('poi_museo') || centroM;
+  spawnPos = sp.clone();
+  jug.x = sp.x;
+  jug.z = sp.z;
+  jug.feet = sueloEn(sp.x, sp.z, sp.y + 1.5, 4) ?? sp.y;
+  jug.yaw = Math.atan2(-(mus.x - sp.x), -(mus.z - sp.z));
+  jug.pitch = -0.08;
+
+  pintarSonido();
+  pintarAmbiente();
+  aplicarCalidad();
+  aplicarAmbiente();
+}
+
+async function arrancar() {
+  barra(0.02, 'Cargando el museo…');
+  try {
+    const [gltf, buffer] = await Promise.all([cargarModelo(), cargarAudio()]);
+    barra(0.95, 'Preparando salas y sonido…');
+    montar(gltf, buffer);
+    estado.cargado = true;
+    barra(1, 'Listo');
+  } catch (err) {
+    console.error(err);
+    $('estado').textContent = 'No se pudo abrir el museo. Revisa que museo3_1.glb esté junto a este archivo y que la página se abra desde un servidor web (no con doble clic).';
+    return;
+  }
+  clearInterval(consejoT);
+  setTimeout(() => $('cargador').classList.add('salir'), 300);
+}
+
+/* =========================================================
+   ENTRAR, PAUSA Y ENTRADAS
+   ========================================================= */
+async function entrar() {
+  if (!estado.cargado || estado.entrado) return;
+  const ctx = listener.context;
+  try { if (ctx.state !== 'running') await ctx.resume(); } catch (_) {}
+  iniciarAudio();
+  estado.entrado = true;
+  $('intro').classList.add('oculto');
+  pintarSonido();
+
+  if (!cfg.guiaVista) {
+    cfg.guiaVista = true;
+    guardar();
+    abrirModal($('mGuia'));
+  } else {
+    pedirPuntero();
+  }
+  if (estado.audioFalla) {
+    avisar('No encontré MUDICET69.mp4 junto al museo. El recorrido sigue sin audio.', 6000);
+  }
+}
+
+$('entrar').addEventListener('click', entrar);
+$('verGuiaIntro').addEventListener('click', () => abrirModal($('mGuia')));
+$('continuar').addEventListener('click', () => { pausar(false); pedirPuntero(); });
+$('bPausa').addEventListener('click', () => {
+  pausar(!estado.pausado);
+  if (!estado.pausado) pedirPuntero();
+});
+$('bVuelo').addEventListener('click', alternarVuelo);
+$('bMapa').addEventListener('click', () => toggleModal('mMapa'));
+$('bGuia').addEventListener('click', () => toggleModal('mGuia'));
+$('bAjustes').addEventListener('click', () => toggleModal('mAjustes'));
+$('bPantalla').addEventListener('click', pantallaCompleta);
+$('bSonido').addEventListener('click', alternarSonido);
+$('mini').addEventListener('click', () => abrirModal($('mMapa')));
+
+document.querySelectorAll('#seg button').forEach((b) =>
+  b.addEventListener('click', () => setAmbiente(b.dataset.amb))
+);
+document.querySelectorAll('[data-cerrar]').forEach((b) => b.addEventListener('click', cerrarModal));
+document.querySelectorAll('.modal').forEach((m) =>
+  m.addEventListener('click', (e) => { if (e.target === m) cerrarModal(); })
+);
+document.querySelectorAll('#app button').forEach((b) =>
+  b.addEventListener('click', () => b.blur())
+);
+
+$('volumen').addEventListener('input', (e) => {
+  cfg.volumen = Number(e.target.value);
+  if (cfg.volumen > 0 && !cfg.sonido) cfg.sonido = true;
+  $('volOut').textContent = Math.round(cfg.volumen);
+  aplicarVolumen();
+  guardar();
+});
+
+$('calidad').addEventListener('change', (e) => { cfg.calidad = e.target.value; aplicarCalidad(); guardar(); });
+$('chkSombras').addEventListener('change', (e) => { cfg.sombras = e.target.checked; aplicarCalidad(); guardar(); });
+$('chkEtiquetas').addEventListener('change', (e) => { cfg.etiquetas = e.target.checked; guardar(); });
+$('chkMini').addEventListener('change', (e) => { cfg.minimapa = e.target.checked; guardar(); });
+$('sens').addEventListener('input', (e) => {
+  cfg.sensibilidad = Number(e.target.value);
+  $('sensOut').textContent = cfg.sensibilidad.toFixed(1);
+  guardar();
+});
+$('reiniciarAjustes').addEventListener('click', () => {
+  Object.assign(cfg, {
+    calidad: matchMedia('(pointer:coarse)').matches ? 'media' : 'alta',
+    sombras: true, etiquetas: true, minimapa: true, sensibilidad: 1
+  });
+  aplicarCalidad();
+  pintarAjustes();
+  guardar();
+  avisar('Ajustes restablecidos');
+});
+
+$('mapaGrande').addEventListener('click', (e) => {
+  if (!plano) return;
+  const r = e.currentTarget.getBoundingClientRect();
+  const u = (e.clientX - r.left) / r.width;
+  const v = (e.clientY - r.top) / r.height;
+  irA(plano.minX + u * plano.lado, plano.minZ + v * plano.lado, null);
+});
+
+// Mirar y tocar (mouse, táctil)
+escenaEl.addEventListener('pointerdown', (e) => {
+  if (!estado.cargado || !estado.entrado || estado.modal) return;
+  if (listener.context.state === 'suspended') listener.context.resume().catch(() => {});
+  if (e.pointerType === 'touch') {
+    tactil.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    return;
+  }
+  if (e.button === 0 && !document.pointerLockElement) pedirPuntero();
+});
+escenaEl.addEventListener('pointermove', (e) => {
+  if (!estado.entrado || estado.modal || estado.pausado) return;
+  if (e.pointerType === 'touch') {
+    const p = tactil.get(e.pointerId);
+    if (!p) return;
+    mirar(e.clientX - p.x, e.clientY - p.y, 1.3);
+    p.x = e.clientX; p.y = e.clientY;
+    return;
+  }
+  if (document.pointerLockElement || (e.buttons & 1)) mirar(e.movementX, e.movementY);
+});
+const tactil = new Map();
+const soltarTactil = (e) => tactil.delete(e.pointerId);
+escenaEl.addEventListener('pointerup', soltarTactil);
+escenaEl.addEventListener('pointercancel', soltarTactil);
+
+// Joystick táctil
+const joyEl = $('joy');
+function moverJoy(e) {
+  const r = joyEl.getBoundingClientRect();
+  const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  let dx = e.clientX - cx, dy = e.clientY - cy;
+  const R = r.width / 2;
+  const d = Math.hypot(dx, dy);
+  const k = d > R ? R / d : 1;
+  dx *= k; dy *= k;
+  joy.x = dx / R;
+  joy.y = -dy / R;
+  $('perilla').style.transform = `translate(${dx}px, ${dy}px)`;
+}
+joyEl.addEventListener('pointerdown', (e) => {
+  joyEl.setPointerCapture(e.pointerId);
+  joy.id = e.pointerId;
+  moverJoy(e);
+});
+joyEl.addEventListener('pointermove', (e) => { if (e.pointerId === joy.id) moverJoy(e); });
+const finJoy = (e) => {
+  if (e.pointerId !== joy.id) return;
+  joy.id = null; joy.x = 0; joy.y = 0;
+  $('perilla').style.transform = '';
+};
+joyEl.addEventListener('pointerup', finJoy);
+joyEl.addEventListener('pointercancel', finJoy);
+
+// Botones de vuelo táctiles (mantener presionado)
+function presionar(el, v) {
+  el.addEventListener('pointerdown', (e) => { vertical = v; el.setPointerCapture(e.pointerId); });
+  const fin = () => { vertical = 0; };
+  el.addEventListener('pointerup', fin);
+  el.addEventListener('pointercancel', fin);
+}
+presionar($('bSubir'), 1);
+presionar($('bBajar'), -1);
+
+document.addEventListener('pointerlockchange', () => {
+  if (!document.pointerLockElement && estado.entrado && !estado.modal && matchMedia('(pointer:fine)').matches) {
+    pausar(true);
+  }
+});
+
+// Teclado
+window.addEventListener('keydown', (e) => {
+  if (e.target && e.target.matches && e.target.matches('input,select,textarea')) return;
+  if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+  teclas.add(e.code);
+  if (e.code === 'Tab') e.preventDefault();
+  if (e.repeat || !estado.entrado) return;
+
+  if (e.code === 'Escape') {
+    if (estado.modal) cerrarModal();
+    return;
+  }
+  if (estado.modal) return;
+
+  switch (e.code) {
+    case 'Space':
+      if (!estado.vuelo) saltarPedido = true;
+      break;
+    case 'KeyM': case 'Tab': toggleModal('mMapa'); break;
+    case 'KeyH': toggleModal('mGuia'); break;
+    case 'KeyF': alternarVuelo(); break;
+    case 'KeyN': alternarSonido(); break;
+    case 'Digit1': setAmbiente('dia'); break;
+    case 'Digit2': setAmbiente('atardecer'); break;
+    case 'Digit3': setAmbiente('noche'); break;
+  }
+});
+window.addEventListener('keyup', (e) => teclas.delete(e.code));
+window.addEventListener('blur', () => { teclas.clear(); vertical = 0; joy.x = 0; joy.y = 0; });
+
+document.addEventListener('visibilitychange', () => {
+  const ctx = listener.context;
+  if (document.hidden) ctx.suspend?.().catch?.(() => {});
+  else if (estado.entrado) ctx.resume?.().catch?.(() => {});
+});
+
+/* =========================================================
+   BUCLE PRINCIPAL
+   ========================================================= */
+const reloj = new THREE.Clock();
+let tiempo = 0;
+function bucle() {
+  requestAnimationFrame(bucle);
+  const dt = Math.min(reloj.getDelta(), 0.05);
+  tiempo += dt;
+
+  if (estado.cargado) {
+    mezclar(actual, destino, 1 - Math.exp(-dt * 2.5));
+    aplicarAmbiente();
+
+    if (!estado.entrado) {
+      // Vista de presentación: órbita lenta alrededor del museo
+      const R = 175, a = tiempo * 0.05;
+      camara.position.set(centroM.x + Math.cos(a) * R, 75, centroM.z + Math.sin(a) * R);
+      camara.lookAt(centroM.x, 6, centroM.z);
+    } else {
+      if (!estado.pausado && !estado.modal) {
+        mover(dt);
+        fisica(dt);
+      }
+      aplicarCamara();
+      if (!estado.modal) detectarMira();
+    }
+
+    cielo.position.copy(camara.position);
+    actualizarSol();
+    actualizarEtiquetas();
+    dibujarMini();
+  }
+
+  renderer.render(escena, camara);
+}
+
+onResize();
+bucle();
+arrancar();
+</script>
 </body>
 </html>
